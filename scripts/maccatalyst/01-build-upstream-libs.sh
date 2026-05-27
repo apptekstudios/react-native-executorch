@@ -77,7 +77,11 @@ ET_BUILD="$ET_SRC/cmake-out-maccatalyst"
 
 if [ ! -d "$ET_SRC/.git" ]; then
   echo "==> Cloning ExecuTorch ($EXECUTORCH_REF)"
-  git clone --recursive "$EXECUTORCH_REPO" "$ET_SRC"
+  # Important: do NOT use --recursive here. Some refs (e.g. v0.5.0) have
+  # `shim/` as a regular tracked directory while HEAD has it as a submodule,
+  # so submodule-at-HEAD files conflict with the ref's tracked content during
+  # `git checkout`. Init submodules AFTER the ref is checked out.
+  git clone --no-recurse-submodules "$EXECUTORCH_REPO" "$ET_SRC"
   git -C "$ET_SRC" checkout "$EXECUTORCH_REF"
   git -C "$ET_SRC" submodule update --init --recursive
 fi

@@ -372,11 +372,34 @@
 					"-force_load",
 					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libthreadpool_simulator.a",
 				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"$(inherited)",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libkernels_optimized_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libkernels_llm_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libkernels_torchao_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libkernels_quantized_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libbackend_xnnpack_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libbackend_coreml_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libbackend_mps_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libexecutorch_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libexecutorch_llm_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libthreadpool_maccatalyst.a",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.swmansion.Executorch;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -464,11 +487,34 @@
 					"-force_load",
 					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libthreadpool_simulator.a",
 				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"$(inherited)",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libkernels_optimized_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libkernels_llm_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libkernels_torchao_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libkernels_quantized_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libbackend_xnnpack_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libbackend_coreml_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libbackend_mps_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libexecutorch_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libexecutorch_llm_maccatalyst.a",
+					"-force_load",
+					"$(PROJECT_DIR)/../../../third-party/ios/libs/executorch/libthreadpool_maccatalyst.a",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.swmansion.Executorch;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;

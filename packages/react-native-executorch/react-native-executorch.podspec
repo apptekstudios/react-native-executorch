@@ -36,7 +36,14 @@ Pod::Spec.new do |s|
       "\"#{cpuinfo_binaries_path}/libcpuinfo.a\"",
     ].join(' '),
 
+    "OTHER_LDFLAGS[sdk=macosx*]" => [
+      '$(inherited)',
+      "\"#{pthreadpool_binaries_path}/maccatalyst-arm64-release/libpthreadpool.a\"",
+      "\"#{cpuinfo_binaries_path}/libcpuinfo.a\"",
+    ].join(' '),
+
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64',
+    'EXCLUDED_ARCHS[sdk=macosx*]' => 'x86_64',
   }
 
   s.pod_target_xcconfig = {
@@ -52,6 +59,7 @@ Pod::Spec.new do |s|
     "GCC_PREPROCESSOR_DEFINITIONS" => '$(inherited) ET_ON=1',
     "CLANG_CXX_LANGUAGE_STANDARD" => "c++20",
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64',
+    'EXCLUDED_ARCHS[sdk=macosx*]' => 'x86_64',
   }
 
   s.source_files = [

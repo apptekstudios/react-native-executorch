@@ -62,8 +62,8 @@ using NullabilityUnknownImpl
     = T;
 #endif
 
-} // namespace nullability_internal
+}  // namespace nullability_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_NULLABILITY_IMPL_H_
+#endif  // ABSL_BASE_INTERNAL_NULLABILITY_IMPL_H_

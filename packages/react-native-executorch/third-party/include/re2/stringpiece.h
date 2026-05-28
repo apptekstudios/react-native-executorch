@@ -13,6 +13,6 @@ namespace re2 {
 // continue to #include "re2/stringpiece.h" and use re2::StringPiece.
 using StringPiece = absl::string_view;
 
-} // namespace re2
+}  // namespace re2
 
-#endif // RE2_STRINGPIECE_H_
+#endif  // RE2_STRINGPIECE_H_

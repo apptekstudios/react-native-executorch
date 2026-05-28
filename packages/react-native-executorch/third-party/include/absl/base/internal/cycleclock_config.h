@@ -38,18 +38,18 @@ ABSL_INTERNAL_INLINE_CONSTEXPR(int32_t, kCycleClockShift, 1);
 // needlessly sacrifice precision.
 ABSL_INTERNAL_INLINE_CONSTEXPR(int32_t, kCycleClockShift, 0);
 #endif
-#else  // NDEBUG
+#else   // NDEBUG
 // In debug mode use a different shift to discourage depending on a
 // particular shift value.
 ABSL_INTERNAL_INLINE_CONSTEXPR(int32_t, kCycleClockShift, 2);
-#endif // NDEBUG
+#endif  // NDEBUG
 
 ABSL_INTERNAL_INLINE_CONSTEXPR(double, kCycleClockFrequencyScale,
                                1.0 / (1 << kCycleClockShift));
-#endif //  ABSL_USE_UNSCALED_CYCLECLOC
+#endif  //  ABSL_USE_UNSCALED_CYCLECLOC
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_CYCLECLOCK_CONFIG_H_
+#endif  // ABSL_BASE_INTERNAL_CYCLECLOCK_CONFIG_H_

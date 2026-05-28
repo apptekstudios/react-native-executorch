@@ -27,14 +27,14 @@ enum class ObjectKind { kUnknown, kBlockingCounter, kNotification };
 // `TraceWait` and `TraceContinue` record the start and end of a potentially
 // blocking wait operation on `object`. `object` typically represents a higher
 // level synchronization object such as `absl::Notification`.
-void TraceWait(const void *object, ObjectKind kind);
-void TraceContinue(const void *object, ObjectKind kind);
+void TraceWait(const void* object, ObjectKind kind);
+void TraceContinue(const void* object, ObjectKind kind);
 
 // `TraceSignal` records a signal on `object`.
-void TraceSignal(const void *object, ObjectKind kind);
+void TraceSignal(const void* object, ObjectKind kind);
 
 // `TraceObserved` records the non-blocking observation of a signaled object.
-void TraceObserved(const void *object, ObjectKind kind);
+void TraceObserved(const void* object, ObjectKind kind);
 
 // ---------------------------------------------------------------------------
 // Weak implementation detail:
@@ -47,35 +47,35 @@ void TraceObserved(const void *object, ObjectKind kind);
 // ---------------------------------------------------------------------------
 extern "C" {
 
-void ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceWait)(const void *object,
-                                                   ObjectKind kind);
-void ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceContinue)(const void *object,
-                                                       ObjectKind kind);
-void ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceSignal)(const void *object,
+  void ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceWait)(const void* object,
                                                      ObjectKind kind);
-void ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceObserved)(const void *object,
+  void ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceContinue)(const void* object,
+                                                         ObjectKind kind);
+  void ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceSignal)(const void* object,
                                                        ObjectKind kind);
+  void ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceObserved)(const void* object,
+                                                         ObjectKind kind);
 
-} // extern "C"
+}  // extern "C"
 
-inline void TraceWait(const void *object, ObjectKind kind) {
+inline void TraceWait(const void* object, ObjectKind kind) {
   ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceWait)(object, kind);
 }
 
-inline void TraceContinue(const void *object, ObjectKind kind) {
+inline void TraceContinue(const void* object, ObjectKind kind) {
   ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceContinue)(object, kind);
 }
 
-inline void TraceSignal(const void *object, ObjectKind kind) {
+inline void TraceSignal(const void* object, ObjectKind kind) {
   ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceSignal)(object, kind);
 }
 
-inline void TraceObserved(const void *object, ObjectKind kind) {
+inline void TraceObserved(const void* object, ObjectKind kind) {
   ABSL_INTERNAL_C_SYMBOL(AbslInternalTraceObserved)(object, kind);
 }
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_TRACING_H_
+#endif  // ABSL_BASE_INTERNAL_TRACING_H_

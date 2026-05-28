@@ -26,32 +26,32 @@ ABSL_NAMESPACE_BEGIN
 
 namespace strings_internal {
 class StringifySink {
-public:
+ public:
   void Append(size_t count, char ch);
 
   void Append(string_view v);
 
   // Support `absl::Format(&sink, format, args...)`.
-  friend void AbslFormatFlush(StringifySink *sink, absl::string_view v) {
+  friend void AbslFormatFlush(StringifySink* sink, absl::string_view v) {
     sink->Append(v);
   }
 
-private:
+ private:
   template <typename T>
-  friend string_view ExtractStringification(StringifySink &sink, const T &v);
+  friend string_view ExtractStringification(StringifySink& sink, const T& v);
 
   std::string buffer_;
 };
 
 template <typename T>
-string_view ExtractStringification(StringifySink &sink, const T &v) {
+string_view ExtractStringification(StringifySink& sink, const T& v) {
   AbslStringify(sink, v);
   return sink.buffer_;
 }
 
-} // namespace strings_internal
+}  // namespace strings_internal
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_STRINGIFY_SINK_H_
+#endif  // ABSL_STRINGS_INTERNAL_STRINGIFY_SINK_H_

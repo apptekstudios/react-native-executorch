@@ -98,16 +98,12 @@ static constexpr absl::LogSeverity kLogDebugFatal = absl::LogSeverity::kFatal;
 //
 // Returns the all-caps string representation (e.g. "INFO") of the specified
 // severity level if it is one of the standard levels and "UNKNOWN" otherwise.
-constexpr const char *LogSeverityName(absl::LogSeverity s) {
+constexpr const char* LogSeverityName(absl::LogSeverity s) {
   switch (s) {
-  case absl::LogSeverity::kInfo:
-    return "INFO";
-  case absl::LogSeverity::kWarning:
-    return "WARNING";
-  case absl::LogSeverity::kError:
-    return "ERROR";
-  case absl::LogSeverity::kFatal:
-    return "FATAL";
+    case absl::LogSeverity::kInfo: return "INFO";
+    case absl::LogSeverity::kWarning: return "WARNING";
+    case absl::LogSeverity::kError: return "ERROR";
+    case absl::LogSeverity::kFatal: return "FATAL";
   }
   return "UNKNOWN";
 }
@@ -118,10 +114,8 @@ constexpr const char *LogSeverityName(absl::LogSeverity s) {
 // normalize to `kError` (**NOT** `kFatal`).
 constexpr absl::LogSeverity NormalizeLogSeverity(absl::LogSeverity s) {
   absl::LogSeverity n = s;
-  if (n < absl::LogSeverity::kInfo)
-    n = absl::LogSeverity::kInfo;
-  if (n > absl::LogSeverity::kFatal)
-    n = absl::LogSeverity::kError;
+  if (n < absl::LogSeverity::kInfo) n = absl::LogSeverity::kInfo;
+  if (n > absl::LogSeverity::kFatal) n = absl::LogSeverity::kError;
   return n;
 }
 constexpr absl::LogSeverity NormalizeLogSeverity(int s) {
@@ -132,7 +126,7 @@ constexpr absl::LogSeverity NormalizeLogSeverity(int s) {
 //
 // The exact representation of a streamed `absl::LogSeverity` is deliberately
 // unspecified; do not rely on it.
-std::ostream &operator<<(std::ostream &os, absl::LogSeverity s);
+std::ostream& operator<<(std::ostream& os, absl::LogSeverity s);
 
 // Enums representing a lower bound for LogSeverity. APIs that only operate on
 // messages of at least a certain level (for example, `SetMinLogLevel()`) use
@@ -147,7 +141,7 @@ enum class LogSeverityAtLeast : int {
   kInfinity = 1000,
 };
 
-std::ostream &operator<<(std::ostream &os, absl::LogSeverityAtLeast s);
+std::ostream& operator<<(std::ostream& os, absl::LogSeverityAtLeast s);
 
 // Enums representing an upper bound for LogSeverity. APIs that only operate on
 // messages of at most a certain level (for example, buffer all messages at or
@@ -162,14 +156,14 @@ enum class LogSeverityAtMost : int {
   kFatal = static_cast<int>(absl::LogSeverity::kFatal),
 };
 
-std::ostream &operator<<(std::ostream &os, absl::LogSeverityAtMost s);
+std::ostream& operator<<(std::ostream& os, absl::LogSeverityAtMost s);
 
-#define COMPOP(op1, op2, T)                                                    \
-  constexpr bool operator op1(absl::T lhs, absl::LogSeverity rhs) {            \
-    return static_cast<absl::LogSeverity>(lhs) op1 rhs;                        \
-  }                                                                            \
-  constexpr bool operator op2(absl::LogSeverity lhs, absl::T rhs) {            \
-    return lhs op2 static_cast<absl::LogSeverity>(rhs);                        \
+#define COMPOP(op1, op2, T)                                         \
+  constexpr bool operator op1(absl::T lhs, absl::LogSeverity rhs) { \
+    return static_cast<absl::LogSeverity>(lhs) op1 rhs;             \
+  }                                                                 \
+  constexpr bool operator op2(absl::LogSeverity lhs, absl::T rhs) { \
+    return lhs op2 static_cast<absl::LogSeverity>(rhs);             \
   }
 
 // Comparisons between `LogSeverity` and `LogSeverityAtLeast`/
@@ -186,6 +180,6 @@ COMPOP(>=, <=, LogSeverityAtMost)
 #undef COMPOP
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_LOG_SEVERITY_H_
+#endif  // ABSL_BASE_LOG_SEVERITY_H_

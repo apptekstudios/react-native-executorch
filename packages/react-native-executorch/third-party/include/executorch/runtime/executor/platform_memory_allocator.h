@@ -8,10 +8,11 @@
 
 #pragma once
 
+#include <stdio.h>
 #include <cinttypes>
 #include <cstdint>
-#include <stdio.h>
 
+#include <c10/util/safe_numerics.h>
 #include <executorch/runtime/core/memory_allocator.h>
 #include <executorch/runtime/platform/log.h>
 #include <executorch/runtime/platform/platform.h>
@@ -26,29 +27,41 @@ namespace internal {
  * using the PAL fallback allocator method `et_pal_allocate`.
  */
 class PlatformMemoryAllocator final : public MemoryAllocator {
-private:
+ private:
   // We allocate a little more than requested and use that memory as a node in
   // a linked list, pushing the allocated buffers onto a list that's iterated
   // and freed when the KernelRuntimeContext is destroyed.
   struct AllocationNode {
-    void *data;
-    AllocationNode *next;
+    void* data;
+    AllocationNode* next;
   };
 
-  AllocationNode *head_ = nullptr;
+  AllocationNode* head_ = nullptr;
 
-public:
+ public:
   PlatformMemoryAllocator() : MemoryAllocator(0, nullptr) {}
 
-  void *allocate(size_t size, size_t alignment = kDefaultAlignment) override {
+  void* allocate(size_t size, size_t alignment = kDefaultAlignment) override {
     if (!isPowerOf2(alignment)) {
       ET_LOG(Error, "Alignment %zu is not a power of 2", alignment);
       return nullptr;
     }
 
-    // Allocate enough memory for the node, the data and the alignment bump.
-    size_t alloc_size = sizeof(AllocationNode) + size + alignment;
-    void *node_memory = runtime::pal_allocate(alloc_size);
+    // Check for overflow before computing total allocation size.
+    // Allocate enough for the node, data, and alignment bump (at most
+    // alignment - 1 extra bytes to align the data pointer).
+    size_t alloc_size = 0;
+    if (c10::add_overflows(sizeof(AllocationNode), size, &alloc_size) ||
+        c10::add_overflows(alloc_size, alignment - 1, &alloc_size)) {
+      ET_LOG(
+          Error,
+          "Allocation size overflow: size %zu, alignment %zu",
+          size,
+          alignment);
+      return nullptr;
+    }
+
+    void* node_memory = runtime::pal_allocate(alloc_size);
 
     // If allocation failed, log message and return nullptr.
     if (node_memory == nullptr) {
@@ -57,21 +70,24 @@ public:
     }
 
     // Compute data pointer.
-    uint8_t *data_ptr =
-        reinterpret_cast<uint8_t *>(node_memory) + sizeof(AllocationNode);
+    uint8_t* data_ptr =
+        reinterpret_cast<uint8_t*>(node_memory) + sizeof(AllocationNode);
 
     // Align the data pointer.
-    void *aligned_data_ptr = alignPointer(data_ptr, alignment);
+    void* aligned_data_ptr = alignPointer(data_ptr, alignment);
 
     // Assert that the alignment didn't overflow the allocated memory.
     ET_DCHECK_MSG(
         reinterpret_cast<uintptr_t>(aligned_data_ptr) + size <=
             reinterpret_cast<uintptr_t>(node_memory) + alloc_size,
         "aligned_data_ptr %p + size %zu > node_memory %p + alloc_size %zu",
-        aligned_data_ptr, size, node_memory, alloc_size);
+        aligned_data_ptr,
+        size,
+        node_memory,
+        alloc_size);
 
     // Construct the node.
-    AllocationNode *new_node = reinterpret_cast<AllocationNode *>(node_memory);
+    AllocationNode* new_node = reinterpret_cast<AllocationNode*>(node_memory);
     new_node->data = aligned_data_ptr;
     new_node->next = head_;
     head_ = new_node;
@@ -81,24 +97,26 @@ public:
   }
 
   void reset() override {
-    AllocationNode *current = head_;
+    AllocationNode* current = head_;
     while (current != nullptr) {
-      AllocationNode *next = current->next;
+      AllocationNode* next = current->next;
       runtime::pal_free(current);
       current = next;
     }
     head_ = nullptr;
   }
 
-  ~PlatformMemoryAllocator() override { reset(); }
+  ~PlatformMemoryAllocator() override {
+    reset();
+  }
 
-private:
+ private:
   // Disable copy and move.
-  PlatformMemoryAllocator(const PlatformMemoryAllocator &) = delete;
-  PlatformMemoryAllocator &operator=(const PlatformMemoryAllocator &) = delete;
-  PlatformMemoryAllocator(PlatformMemoryAllocator &&) noexcept = delete;
-  PlatformMemoryAllocator &
-  operator=(PlatformMemoryAllocator &&) noexcept = delete;
+  PlatformMemoryAllocator(const PlatformMemoryAllocator&) = delete;
+  PlatformMemoryAllocator& operator=(const PlatformMemoryAllocator&) = delete;
+  PlatformMemoryAllocator(PlatformMemoryAllocator&&) noexcept = delete;
+  PlatformMemoryAllocator& operator=(PlatformMemoryAllocator&&) noexcept =
+      delete;
 };
 
 } // namespace internal

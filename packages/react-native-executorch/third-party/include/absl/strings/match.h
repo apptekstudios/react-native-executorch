@@ -89,7 +89,8 @@ inline constexpr bool EndsWith(absl::string_view text,
 bool StrContainsIgnoreCase(absl::string_view haystack,
                            absl::string_view needle) noexcept;
 
-bool StrContainsIgnoreCase(absl::string_view haystack, char needle) noexcept;
+bool StrContainsIgnoreCase(absl::string_view haystack,
+                           char needle) noexcept;
 
 // EqualsIgnoreCase()
 //
@@ -123,6 +124,6 @@ absl::string_view FindLongestCommonSuffix(absl::string_view a,
                                           absl::string_view b);
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_MATCH_H_
+#endif  // ABSL_STRINGS_MATCH_H_

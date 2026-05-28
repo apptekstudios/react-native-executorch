@@ -22,14 +22,13 @@ namespace executorch::runtime {
  * Maximum size of a string returned by tensor_shape_to_c_string, for
  * stack allocation.
  */
-constexpr size_t kTensorShapeStringSizeLimit =
-    1 +                          /* opening parenthesis */
+constexpr size_t kTensorShapeStringSizeLimit = 1 + /* opening parenthesis */
     10 * kTensorDimensionLimit + /* maximum digits we will print; update
                                   * kMaximumPrintableTensorShapeElement
                                   * if changing */
-    2 * kTensorDimensionLimit +  /* comma and space after each item,
-                                  * overwritten with closing paren and
-                                  * NUL terminator for last element */
+    2 * kTensorDimensionLimit + /* comma and space after each item,
+                                 * overwritten with closing paren and
+                                 * NUL terminator for last element */
     1; /* padding for temporary NUL terminator for simplicity of implementation
         */
 
@@ -49,8 +48,8 @@ constexpr size_t kMaximumPrintableTensorShapeElement =
  * while also avoiding a dependency on exec_aten.h from this header
  * because that would cause a circular dependency.
  */
-std::array<char, kTensorShapeStringSizeLimit>
-tensor_shape_to_c_string(executorch::runtime::Span<const std::int32_t> shape);
+std::array<char, kTensorShapeStringSizeLimit> tensor_shape_to_c_string(
+    executorch::runtime::Span<const std::int32_t> shape);
 
 /**
  * Convert a shape to a NUL-terminated C string with limited size. If
@@ -63,7 +62,7 @@ tensor_shape_to_c_string(executorch::runtime::Span<const std::int32_t> shape);
  * while also avoiding a dependency on exec_aten.h from this header
  * because that would cause a circular dependency.
  */
-std::array<char, kTensorShapeStringSizeLimit>
-tensor_shape_to_c_string(executorch::runtime::Span<const std::int64_t> shape);
+std::array<char, kTensorShapeStringSizeLimit> tensor_shape_to_c_string(
+    executorch::runtime::Span<const std::int64_t> shape);
 
 } // namespace executorch::runtime

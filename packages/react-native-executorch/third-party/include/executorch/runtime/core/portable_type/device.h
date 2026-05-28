@@ -26,7 +26,6 @@ enum class DeviceType : int8_t {
 constexpr size_t kNumDeviceTypes = 2;
 
 /// An index representing a specific device; e.g. GPU 0 vs GPU 1.
-/// -1 means the default/unspecified device for that type.
 using DeviceIndex = int8_t;
 
 /**
@@ -41,29 +40,35 @@ struct Device final {
 
   /// Constructs a new `Device` from a `DeviceType` and an optional device
   /// index.
-  /* implicit */ Device(DeviceType type, DeviceIndex index = -1)
+  /* implicit */ Device(DeviceType type, DeviceIndex index = 0)
       : type_(type), index_(index) {}
 
   /// Returns the type of device the tensor data resides on.
-  DeviceType type() const noexcept { return type_; }
+  DeviceType type() const noexcept {
+    return type_;
+  }
 
   /// Returns true if the device is of CPU type.
-  bool is_cpu() const noexcept { return type_ == DeviceType::CPU; }
+  bool is_cpu() const noexcept {
+    return type_ == DeviceType::CPU;
+  }
 
-  /// Returns the device index, or -1 if default/unspecified.
-  DeviceIndex index() const noexcept { return index_; }
+  /// Returns the device index.
+  DeviceIndex index() const noexcept {
+    return index_;
+  }
 
-  bool operator==(const Device &other) const noexcept {
+  bool operator==(const Device& other) const noexcept {
     return type_ == other.type_ && index_ == other.index_;
   }
 
-  bool operator!=(const Device &other) const noexcept {
+  bool operator!=(const Device& other) const noexcept {
     return !(*this == other);
   }
 
-private:
+ private:
   DeviceType type_;
-  DeviceIndex index_ = -1;
+  DeviceIndex index_ = 0;
 };
 
 } // namespace etensor

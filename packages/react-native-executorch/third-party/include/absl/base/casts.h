@@ -30,8 +30,8 @@
 #include <utility>
 
 #if defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
-#include <bit> // For std::bit_cast.
-#endif         // defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
+#include <bit>  // For std::bit_cast.
+#endif  // defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
 
 #include "absl/base/internal/identity.h"
 #include "absl/base/macros.h"
@@ -147,7 +147,7 @@ constexpr To implicit_cast(typename absl::internal::type_identity_t<To> to) {
 
 using std::bit_cast;
 
-#else // defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
+#else  // defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
 
 template <
     typename Dest, typename Source,
@@ -156,25 +156,25 @@ template <
                                 std::is_trivially_copyable<Dest>::value
 #if !ABSL_HAVE_BUILTIN(__builtin_bit_cast)
                                 && std::is_default_constructible<Dest>::value
-#endif // !ABSL_HAVE_BUILTIN(__builtin_bit_cast)
+#endif  // !ABSL_HAVE_BUILTIN(__builtin_bit_cast)
                             ,
                             int>::type = 0>
 #if ABSL_HAVE_BUILTIN(__builtin_bit_cast)
-inline constexpr Dest bit_cast(const Source &source) {
+inline constexpr Dest bit_cast(const Source& source) {
   return __builtin_bit_cast(Dest, source);
 }
 #else  // ABSL_HAVE_BUILTIN(__builtin_bit_cast)
-inline Dest bit_cast(const Source &source) {
+inline Dest bit_cast(const Source& source) {
   Dest dest;
-  memcpy(static_cast<void *>(std::addressof(dest)),
-         static_cast<const void *>(std::addressof(source)), sizeof(dest));
+  memcpy(static_cast<void*>(std::addressof(dest)),
+         static_cast<const void*>(std::addressof(source)), sizeof(dest));
   return dest;
 }
-#endif // ABSL_HAVE_BUILTIN(__builtin_bit_cast)
+#endif  // ABSL_HAVE_BUILTIN(__builtin_bit_cast)
 
-#endif // defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
+#endif  // defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_CASTS_H_
+#endif  // ABSL_BASE_CASTS_H_

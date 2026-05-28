@@ -18,9 +18,12 @@
  * @param[in] _format Printf-style message format string.
  * @param[in] ... Format string arguments.
  */
-#define ET_ASSERT_MESSAGE_EMIT(_format, ...)                                   \
-  ET_LOG(Fatal, "In function %s(), assert failed" _format, ET_FUNCTION,        \
-         ##__VA_ARGS__)
+#define ET_ASSERT_MESSAGE_EMIT(_format, ...)     \
+  ET_LOG(                                        \
+      Fatal,                                     \
+      "In function %s(), assert failed" _format, \
+      ET_FUNCTION,                               \
+      ##__VA_ARGS__)
 
 /**
  * Abort the runtime if the condition is not true.
@@ -30,12 +33,12 @@
  * @param[in] _format Printf-style message format string.
  * @param[in] ... Format string arguments.
  */
-#define ET_CHECK_MSG(_cond, _format, ...)                                      \
-  do {                                                                         \
-    if ET_UNLIKELY (!(_cond)) {                                                \
-      ET_ASSERT_MESSAGE_EMIT(" (%s): " _format, #_cond, ##__VA_ARGS__);        \
-      ::executorch::runtime::runtime_abort();                                  \
-    }                                                                          \
+#define ET_CHECK_MSG(_cond, _format, ...)                               \
+  do {                                                                  \
+    if ET_UNLIKELY (!(_cond)) {                                         \
+      ET_ASSERT_MESSAGE_EMIT(" (%s): " _format, #_cond, ##__VA_ARGS__); \
+      ::executorch::runtime::runtime_abort();                           \
+    }                                                                   \
   } while (0)
 
 /**
@@ -44,12 +47,12 @@
  *
  * @param[in] _cond Condition asserted as true.
  */
-#define ET_CHECK(_cond)                                                        \
-  do {                                                                         \
-    if ET_UNLIKELY (!(_cond)) {                                                \
-      ET_ASSERT_MESSAGE_EMIT(": %s", #_cond);                                  \
-      ::executorch::runtime::runtime_abort();                                  \
-    }                                                                          \
+#define ET_CHECK(_cond)                       \
+  do {                                        \
+    if ET_UNLIKELY (!(_cond)) {               \
+      ET_ASSERT_MESSAGE_EMIT(": %s", #_cond); \
+      ::executorch::runtime::runtime_abort(); \
+    }                                         \
   } while (0)
 
 #ifdef NDEBUG
@@ -83,7 +86,7 @@
  * @param[in] _format Printf-style message format string.
  * @param[in] ... Format string arguments.
  */
-#define ET_DCHECK_MSG(_cond, _format, ...)                                     \
+#define ET_DCHECK_MSG(_cond, _format, ...) \
   ET_CHECK_MSG(_cond, _format, ##__VA_ARGS__)
 
 /**
@@ -100,10 +103,10 @@
 /**
  * Assert that this code location is unreachable during execution.
  */
-#define ET_ASSERT_UNREACHABLE()                                                \
-  do {                                                                         \
-    ET_CHECK_MSG(false, "Execution should not reach this point");              \
-    ET_UNREACHABLE();                                                          \
+#define ET_ASSERT_UNREACHABLE()                                   \
+  do {                                                            \
+    ET_CHECK_MSG(false, "Execution should not reach this point"); \
+    ET_UNREACHABLE();                                             \
   } while (0)
 
 /**
@@ -111,9 +114,11 @@
  *
  * @param[in] _message Message on how to avoid this assertion error.
  */
-#define ET_ASSERT_UNREACHABLE_MSG(_format, ...)                                \
-  do {                                                                         \
-    ET_CHECK_MSG(false, "Execution should not reach this point. " _format,     \
-                 ##__VA_ARGS__);                                               \
-    ET_UNREACHABLE();                                                          \
+#define ET_ASSERT_UNREACHABLE_MSG(_format, ...)            \
+  do {                                                     \
+    ET_CHECK_MSG(                                          \
+        false,                                             \
+        "Execution should not reach this point. " _format, \
+        ##__VA_ARGS__);                                    \
+    ET_UNREACHABLE();                                      \
   } while (0)

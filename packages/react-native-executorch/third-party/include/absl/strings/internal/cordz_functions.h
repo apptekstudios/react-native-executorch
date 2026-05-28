@@ -56,7 +56,7 @@ ABSL_CONST_INIT extern thread_local SamplingState cordz_next_sample;
 // Returns:
 //   0: Do not sample
 //  >0: Sample with the stride of the last sampling period
-int64_t cordz_should_profile_slow(SamplingState &state);
+int64_t cordz_should_profile_slow(SamplingState& state);
 
 // Determines if the next sample should be profiled.
 // Returns:
@@ -73,15 +73,15 @@ inline int64_t cordz_should_profile() {
 // Sets the interval until the next sample (for testing only)
 void cordz_set_next_sample_for_testing(int64_t next_sample);
 
-#else // ABSL_INTERNAL_CORDZ_ENABLED
+#else  // ABSL_INTERNAL_CORDZ_ENABLED
 
 inline int64_t cordz_should_profile() { return 0; }
 inline void cordz_set_next_sample_for_testing(int64_t) {}
 
-#endif // ABSL_INTERNAL_CORDZ_ENABLED
+#endif  // ABSL_INTERNAL_CORDZ_ENABLED
 
-} // namespace cord_internal
+}  // namespace cord_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CORDZ_FUNCTIONS_H_
+#endif  // ABSL_STRINGS_INTERNAL_CORDZ_FUNCTIONS_H_

@@ -35,13 +35,13 @@ namespace cord_internal {
 // violations, we can not 100% guarantee that all code respects 'new format'
 // settings and flags, so we need to be able to parse old data on the fly until
 // all old code is deprecated / no longer the default format.
-void Consume(CordRep *rep,
-             FunctionRef<void(CordRep *, size_t, size_t)> consume_fn);
-void ReverseConsume(CordRep *rep,
-                    FunctionRef<void(CordRep *, size_t, size_t)> consume_fn);
+void Consume(CordRep* rep,
+             FunctionRef<void(CordRep*, size_t, size_t)> consume_fn);
+void ReverseConsume(CordRep* rep,
+                    FunctionRef<void(CordRep*, size_t, size_t)> consume_fn);
 
-} // namespace cord_internal
+}  // namespace cord_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CORD_REP_CONSUME_H_
+#endif  // ABSL_STRINGS_INTERNAL_CORD_REP_CONSUME_H_

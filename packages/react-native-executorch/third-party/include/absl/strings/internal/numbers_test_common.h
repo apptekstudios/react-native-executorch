@@ -30,7 +30,7 @@ ABSL_NAMESPACE_BEGIN
 namespace strings_internal {
 
 template <typename IntType>
-inline bool Itoa(IntType value, int base, std::string *destination) {
+inline bool Itoa(IntType value, int base, std::string* destination) {
   destination->clear();
   if (base <= 1 || base > 36) {
     return false;
@@ -60,20 +60,20 @@ inline bool Itoa(IntType value, int base, std::string *destination) {
 }
 
 struct uint32_test_case {
-  const char *str;
+  const char* str;
   bool expect_ok;
-  int base; // base to pass to the conversion function
+  int base;  // base to pass to the conversion function
   uint32_t expected;
 };
 
-inline const std::array<uint32_test_case, 27> &strtouint32_test_cases() {
+inline const std::array<uint32_test_case, 27>& strtouint32_test_cases() {
   static const std::array<uint32_test_case, 27> test_cases{{
       {"0xffffffff", true, 16, (std::numeric_limits<uint32_t>::max)()},
       {"0x34234324", true, 16, 0x34234324},
       {"34234324", true, 16, 0x34234324},
       {"0", true, 16, 0},
       {" \t\n 0xffffffff", true, 16, (std::numeric_limits<uint32_t>::max)()},
-      {" \f\v 46", true, 10, 46}, // must accept weird whitespace
+      {" \f\v 46", true, 10, 46},  // must accept weird whitespace
       {" \t\n 72717222", true, 8, 072717222},
       {" \t\n 072717222", true, 8, 072717222},
       {" \t\n 072717228", false, 8, 07271722},
@@ -92,7 +92,7 @@ inline const std::array<uint32_test_case, 27> &strtouint32_test_cases() {
       // Invalid uints.
       {"", false, 0, 0},
       {"  ", false, 0, 0},
-      {"abc", false, 0, 0}, // would be valid hex, but prefix is missing
+      {"abc", false, 0, 0},  // would be valid hex, but prefix is missing
       {"34234324a", false, 0, 34234324},
       {"34234.3", false, 0, 34234},
       {"-1", false, 0, 0},
@@ -108,13 +108,13 @@ inline const std::array<uint32_test_case, 27> &strtouint32_test_cases() {
 }
 
 struct uint64_test_case {
-  const char *str;
+  const char* str;
   bool expect_ok;
   int base;
   uint64_t expected;
 };
 
-inline const std::array<uint64_test_case, 34> &strtouint64_test_cases() {
+inline const std::array<uint64_test_case, 34>& strtouint64_test_cases() {
   static const std::array<uint64_test_case, 34> test_cases{{
       {"0x3423432448783446", true, 16, int64_t{0x3423432448783446}},
       {"3423432448783446", true, 16, int64_t{0x3423432448783446}},
@@ -138,7 +138,7 @@ inline const std::array<uint64_test_case, 34> &strtouint64_test_cases() {
 
       {"34234324487834466 \n\t ", true, 0, int64_t{34234324487834466}},
 
-      {" \f\v 46", true, 10, 46}, // must accept weird whitespace
+      {" \f\v 46", true, 10, 46},  // must accept weird whitespace
 
       // Unusual base
       {"0", true, 3, 0},
@@ -163,10 +163,10 @@ inline const std::array<uint64_test_case, 34> &strtouint64_test_cases() {
       {"0x10000000000000000", false, 16,
        (std::numeric_limits<uint64_t>::max)()},
       {"0X10000000000000000", false, 16,
-       (std::numeric_limits<uint64_t>::max)()}, // 0X versus 0x.
+       (std::numeric_limits<uint64_t>::max)()},  // 0X versus 0x.
       {"0x10000000000000000", false, 0, (std::numeric_limits<uint64_t>::max)()},
       {"0X10000000000000000", false, 0,
-       (std::numeric_limits<uint64_t>::max)()}, // 0X versus 0x.
+       (std::numeric_limits<uint64_t>::max)()},  // 0X versus 0x.
 
       {"0x1234", true, 16, 0x1234},
 
@@ -177,8 +177,8 @@ inline const std::array<uint64_test_case, 34> &strtouint64_test_cases() {
   return test_cases;
 }
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_NUMBERS_TEST_COMMON_H_
+#endif  // ABSL_STRINGS_INTERNAL_NUMBERS_TEST_COMMON_H_

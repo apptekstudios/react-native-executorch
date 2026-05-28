@@ -24,23 +24,26 @@
 #include <ostream>
 #endif
 
-#define ET_LOG_KERNEL_KEY(k)                                                   \
-  ET_LOG(Info, "key: %s, is_fallback: %s", k.data(),                           \
-         k.is_fallback() ? "true" : "false");
-#define ET_LOG_TENSOR_META(meta_list)                                          \
-  for (const auto &meta : meta_list) {                                         \
-    ET_LOG(Info, "dtype: %d | dim order: [", int(meta.dtype_));                \
-    for (size_t i = 0; i < meta.dim_order_.size(); i++) {                      \
-      ET_LOG(Info, "%d,", static_cast<int32_t>(meta.dim_order_[i]));           \
-    }                                                                          \
-    ET_LOG(Info, "]");                                                         \
+#define ET_LOG_KERNEL_KEY(k)      \
+  ET_LOG(                         \
+      Info,                       \
+      "key: %s, is_fallback: %s", \
+      k.data(),                   \
+      k.is_fallback() ? "true" : "false");
+#define ET_LOG_TENSOR_META(meta_list)                                \
+  for (const auto& meta : meta_list) {                               \
+    ET_LOG(Info, "dtype: %d | dim order: [", int(meta.dtype_));      \
+    for (size_t i = 0; i < meta.dim_order_.size(); i++) {            \
+      ET_LOG(Info, "%d,", static_cast<int32_t>(meta.dim_order_[i])); \
+    }                                                                \
+    ET_LOG(Info, "]");                                               \
   }
 
 namespace executorch {
 namespace ET_RUNTIME_NAMESPACE {
 
 class KernelRuntimeContext; // Forward declaration
-using OpFunction = void (*)(KernelRuntimeContext &, Span<EValue *>);
+using OpFunction = void (*)(KernelRuntimeContext&, Span<EValue*>);
 
 /**
  * Dtype and dim order metadata for a Tensor argument to an operator.
@@ -51,17 +54,20 @@ struct TensorMeta {
   Span<executorch::aten::DimOrderType> dim_order_;
 
   TensorMeta() = default;
-  TensorMeta(executorch::aten::ScalarType dtype,
-             Span<executorch::aten::DimOrderType> order)
+  TensorMeta(
+      executorch::aten::ScalarType dtype,
+      Span<executorch::aten::DimOrderType> order)
       : dtype_(dtype), dim_order_(order) {}
 
-  bool operator==(const TensorMeta &other) const { return this->equals(other); }
+  bool operator==(const TensorMeta& other) const {
+    return this->equals(other);
+  }
 
-  bool operator!=(const TensorMeta &other) const {
+  bool operator!=(const TensorMeta& other) const {
     return !this->equals(other);
   }
 
-  bool equals(const TensorMeta &other) const {
+  bool equals(const TensorMeta& other) const {
     if (dtype_ != other.dtype_) {
       return false;
     }
@@ -77,7 +83,7 @@ struct TensorMeta {
   }
 
 #if defined(ET_OP_REGISTRY_DEBUG)
-  friend std::ostream &operator<<(std::ostream &os, const TensorMeta &meta) {
+  friend std::ostream& operator<<(std::ostream& os, const TensorMeta& meta) {
     os << "dtype: " << int(meta.dtype_) << " | dim order: [";
     for (int i = 0; i < meta.dim_order_.size(); i++) {
       os << static_cast<int32_t>(meta.dim_order_[i]) << ", ";
@@ -111,7 +117,7 @@ struct TensorMeta {
  * generated from kernel yaml.
  */
 struct KernelKey {
-public:
+ public:
   /**
    * Creates a fallback (non-specialized) kernel key: this kernel can be used
    * for all input tensor dtypes and dim orders if the specialized kernel is not
@@ -124,14 +130,18 @@ public:
    * set of input tensor dtypes and dim orders. See the class comment for the
    * expected format of `kernel_key_data`.
    */
-  /* implicit */ constexpr KernelKey(const char *kernel_key_data)
+  /* implicit */ constexpr KernelKey(const char* kernel_key_data)
       : kernel_key_data_(kernel_key_data) {}
 
-  bool operator==(const KernelKey &other) const { return this->equals(other); }
+  bool operator==(const KernelKey& other) const {
+    return this->equals(other);
+  }
 
-  bool operator!=(const KernelKey &other) const { return !this->equals(other); }
+  bool operator!=(const KernelKey& other) const {
+    return !this->equals(other);
+  }
 
-  bool equals(const KernelKey &other) const {
+  bool equals(const KernelKey& other) const {
     if (is_fallback() != other.is_fallback()) {
       return false;
     }
@@ -141,19 +151,23 @@ public:
     return strcmp(kernel_key_data_, other.kernel_key_data_) == 0;
   }
 
-  bool is_fallback() const { return kernel_key_data_ == nullptr; }
+  bool is_fallback() const {
+    return kernel_key_data_ == nullptr;
+  }
 
-  const char *data() const { return kernel_key_data_; }
+  const char* data() const {
+    return kernel_key_data_;
+  }
 
 #if defined(ET_OP_REGISTRY_DEBUG)
-  friend std::ostream &operator<<(std::ostream &os, const KernelKey &key) {
+  friend std::ostream& operator<<(std::ostream& os, const KernelKey& key) {
     os << key.kernel_key_data_ << std::endl;
     return os;
   }
 #endif
 
-private:
-  const char *kernel_key_data_ = nullptr;
+ private:
+  const char* kernel_key_data_ = nullptr;
 };
 
 /**
@@ -163,7 +177,7 @@ private:
  * kernel may or may not live in an `Operator`.
  */
 struct Kernel {
-  const char *name_;
+  const char* name_;
   // String representation of kernel key, with the same format as
   // KernelKey.to_string_representation()
   // Data is not owned by the Kernel struct.
@@ -174,10 +188,10 @@ struct Kernel {
    * itself, we require the lifetime of the operator name to be at least as long
    * as the operator registry.
    */
-  constexpr explicit Kernel(const char *name, OpFunction func)
+  constexpr explicit Kernel(const char* name, OpFunction func)
       : name_(name), op_(func) {}
 
-  constexpr explicit Kernel(const char *name, KernelKey key, OpFunction func)
+  constexpr explicit Kernel(const char* name, KernelKey key, OpFunction func)
       : name_(name), kernel_key_(key), op_(func) {}
 
   constexpr Kernel() : name_(nullptr), op_(nullptr) {}
@@ -196,8 +210,10 @@ constexpr size_t kKernelKeyBufSize = 659;
  * string into the buffer. Returns an error if the buffer is too small or if the
  * tensors cannot be represented as a valid key string.
  */
-Error make_kernel_key_string(Span<const TensorMeta> key, char *buf,
-                             size_t buf_size);
+Error make_kernel_key_string(
+    Span<const TensorMeta> key,
+    char* buf,
+    size_t buf_size);
 
 } // namespace internal
 
@@ -206,15 +222,25 @@ Error make_kernel_key_string(Span<const TensorMeta> key, char *buf,
  * TensorMeta is empty, it means this op does not have specialized kernels, so
  * it checks whether it has any fallback kernels.
  */
-bool registry_has_op_function(const char *name,
-                              Span<const TensorMeta> meta_list = {});
+bool registry_has_op_function(
+    const char* name,
+    Span<const TensorMeta> meta_list = {});
 
 /**
  * Returns the operator with a given name and TensorMeta list, if present.
  */
-::executorch::runtime::Result<OpFunction>
-get_op_function_from_registry(const char *name,
-                              Span<const TensorMeta> meta_list = {});
+::executorch::runtime::Result<OpFunction> get_op_function_from_registry(
+    const char* name,
+    Span<const TensorMeta> meta_list = {});
+
+/**
+ * Returns the operator with a given name and TensorMeta list from the provided
+ * kernel list instead of the global registry.
+ */
+::executorch::runtime::Result<OpFunction> get_op_function_from_registry(
+    const char* name,
+    Span<const TensorMeta> meta_list,
+    Span<const Kernel> kernel_list);
 
 /**
  * Returns all registered kernels.
@@ -237,7 +263,7 @@ ET_NODISCARD Error register_kernels(const Span<const Kernel>);
  * @retval Error::Ok always. Panics on error. This function needs to return a
  *     non-void type to run at static initialization time.
  */
-ET_NODISCARD inline Error register_kernel(const Kernel &kernel) {
+ET_NODISCARD inline Error register_kernel(const Kernel& kernel) {
   return register_kernels({&kernel, 1});
 };
 
@@ -260,15 +286,16 @@ inline ::executorch::runtime::Error register_kernels(ArrayRef<Kernel> kernels) {
   return ::executorch::ET_RUNTIME_NAMESPACE::register_kernels(
       {kernels.data(), kernels.size()});
 }
-inline OpFunction getOpsFn(const char *name,
-                           ArrayRef<TensorMeta> meta_list = {}) {
+inline OpFunction getOpsFn(
+    const char* name,
+    ArrayRef<TensorMeta> meta_list = {}) {
   auto result =
       ::executorch::ET_RUNTIME_NAMESPACE::get_op_function_from_registry(
           name, {meta_list.data(), meta_list.size()});
   ET_CHECK(result.ok()); // get_op_function_from_registry() logs details.
   return *result;
 }
-inline bool hasOpsFn(const char *name, ArrayRef<TensorMeta> meta_list = {}) {
+inline bool hasOpsFn(const char* name, ArrayRef<TensorMeta> meta_list = {}) {
   return ::executorch::ET_RUNTIME_NAMESPACE::registry_has_op_function(
       name, {meta_list.data(), meta_list.size()});
 }

@@ -30,13 +30,13 @@
 #include <tuple>
 #include <unordered_map>
 
+#include "gtest/gtest.h"
 #include "absl/base/internal/pretty_function.h"
 #include "absl/memory/memory.h"
 #include "absl/meta/type_traits.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "absl/utility/utility.h"
-#include "gtest/gtest.h"
 
 namespace testing {
 
@@ -74,12 +74,12 @@ struct StrongGuaranteeTagType {};
 // A simple exception class.  We throw this so that test code can catch
 // exceptions specifically thrown by ThrowingValue.
 class TestException {
-public:
+ public:
   explicit TestException(absl::string_view msg) : msg_(msg) {}
   virtual ~TestException() {}
-  virtual const char *what() const noexcept { return msg_.c_str(); }
+  virtual const char* what() const noexcept { return msg_.c_str(); }
 
-private:
+ private:
   std::string msg_;
 };
 
@@ -89,7 +89,7 @@ private:
 // derive from TestException so we don't accidentally end up catching an actual
 // bad_alloc exception in TestExceptionSafety.
 class TestBadAllocException : public std::bad_alloc, public TestException {
-public:
+ public:
   explicit TestBadAllocException(absl::string_view msg) : TestException(msg) {}
   using TestException::what;
 };
@@ -104,7 +104,7 @@ inline void UnsetCountdown() { SetCountdown(-1); }
 
 void MaybeThrow(absl::string_view msg, bool throw_bad_alloc = false);
 
-testing::AssertionResult FailureMessage(const TestException &e,
+testing::AssertionResult FailureMessage(const TestException& e,
                                         int countdown) noexcept;
 
 struct TrackedAddress {
@@ -116,7 +116,7 @@ struct TrackedAddress {
 // TrackedObject. This allows us to safely "leak" TrackedObjects, as
 // ConstructorTracker will destroy everything left over in its destructor.
 class ConstructorTracker {
-public:
+ public:
   explicit ConstructorTracker(int count) : countdown_(count) {
     assert(current_tracker_instance_ == nullptr);
     current_tracker_instance_ = this;
@@ -126,9 +126,9 @@ public:
     assert(current_tracker_instance_ == this);
     current_tracker_instance_ = nullptr;
 
-    for (auto &it : address_map_) {
-      void *address = it.first;
-      TrackedAddress &tracked_address = it.second;
+    for (auto& it : address_map_) {
+      void* address = it.first;
+      TrackedAddress& tracked_address = it.second;
       if (tracked_address.is_alive) {
         ADD_FAILURE() << ErrorMessage(address, tracked_address.description,
                                       countdown_, "Object was not destroyed.");
@@ -136,11 +136,10 @@ public:
     }
   }
 
-  static void ObjectConstructed(void *address, std::string description) {
-    if (!CurrentlyTracking())
-      return;
+  static void ObjectConstructed(void* address, std::string description) {
+    if (!CurrentlyTracking()) return;
 
-    TrackedAddress &tracked_address =
+    TrackedAddress& tracked_address =
         current_tracker_instance_->address_map_[address];
     if (tracked_address.is_alive) {
       ADD_FAILURE() << ErrorMessage(
@@ -152,16 +151,14 @@ public:
     tracked_address = {true, std::move(description)};
   }
 
-  static void ObjectDestructed(void *address) {
-    if (!CurrentlyTracking())
-      return;
+  static void ObjectDestructed(void* address) {
+    if (!CurrentlyTracking()) return;
 
     auto it = current_tracker_instance_->address_map_.find(address);
     // Not tracked. Ignore.
-    if (it == current_tracker_instance_->address_map_.end())
-      return;
+    if (it == current_tracker_instance_->address_map_.end()) return;
 
-    TrackedAddress &tracked_address = it->second;
+    TrackedAddress& tracked_address = it->second;
     if (!tracked_address.is_alive) {
       ADD_FAILURE() << ErrorMessage(address, tracked_address.description,
                                     current_tracker_instance_->countdown_,
@@ -170,42 +167,42 @@ public:
     tracked_address.is_alive = false;
   }
 
-private:
+ private:
   static bool CurrentlyTracking() {
     return current_tracker_instance_ != nullptr;
   }
 
-  static std::string ErrorMessage(void *address,
-                                  const std::string &address_description,
+  static std::string ErrorMessage(void* address,
+                                  const std::string& address_description,
                                   int countdown,
-                                  const std::string &error_description) {
-    return absl::Substitute("With coundtown at $0:\n"
-                            "  $1\n"
-                            "  Object originally constructed by $2\n"
-                            "  Object address: $3\n",
-                            countdown, error_description, address_description,
-                            address);
+                                  const std::string& error_description) {
+    return absl::Substitute(
+        "With coundtown at $0:\n"
+        "  $1\n"
+        "  Object originally constructed by $2\n"
+        "  Object address: $3\n",
+        countdown, error_description, address_description, address);
   }
 
-  std::unordered_map<void *, TrackedAddress> address_map_;
+  std::unordered_map<void*, TrackedAddress> address_map_;
   int countdown_;
 
-  static ConstructorTracker *current_tracker_instance_;
+  static ConstructorTracker* current_tracker_instance_;
 };
 
 class TrackedObject {
-public:
-  TrackedObject(const TrackedObject &) = delete;
-  TrackedObject(TrackedObject &&) = delete;
+ public:
+  TrackedObject(const TrackedObject&) = delete;
+  TrackedObject(TrackedObject&&) = delete;
 
-protected:
+ protected:
   explicit TrackedObject(std::string description) {
     ConstructorTracker::ObjectConstructed(this, std::move(description));
   }
 
   ~TrackedObject() noexcept { ConstructorTracker::ObjectDestructed(this); }
 };
-} // namespace exceptions_internal
+}  // namespace exceptions_internal
 
 extern exceptions_internal::NoThrowTag nothrow_ctor;
 
@@ -214,14 +211,14 @@ extern exceptions_internal::StrongGuaranteeTagType strong_guarantee;
 // A test class which is convertible to bool.  The conversion can be
 // instrumented to throw at a controlled time.
 class ThrowingBool {
-public:
-  ThrowingBool(bool b) noexcept : b_(b) {} // NOLINT(runtime/explicit)
-  operator bool() const {                  // NOLINT
+ public:
+  ThrowingBool(bool b) noexcept : b_(b) {}  // NOLINT(runtime/explicit)
+  operator bool() const {                   // NOLINT
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return b_;
   }
 
-private:
+ private:
   bool b_;
 };
 
@@ -265,13 +262,13 @@ class ThrowingValue : private exceptions_internal::TrackedObject {
   static constexpr int kDefaultValue = 0;
   static constexpr int kBadValue = 938550620;
 
-public:
+ public:
   ThrowingValue() : TrackedObject(GetInstanceString(kDefaultValue)) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ = kDefaultValue;
   }
 
-  ThrowingValue(const ThrowingValue &other) noexcept(
+  ThrowingValue(const ThrowingValue& other) noexcept(
       IsSpecified(TypeSpec::kNoThrowCopy))
       : TrackedObject(GetInstanceString(other.dummy_)) {
     if (!IsSpecified(TypeSpec::kNoThrowCopy)) {
@@ -280,7 +277,7 @@ public:
     dummy_ = other.dummy_;
   }
 
-  ThrowingValue(ThrowingValue &&other) noexcept(
+  ThrowingValue(ThrowingValue&& other) noexcept(
       IsSpecified(TypeSpec::kNoThrowMove))
       : TrackedObject(GetInstanceString(other.dummy_)) {
     if (!IsSpecified(TypeSpec::kNoThrowMove)) {
@@ -300,7 +297,7 @@ public:
   // absl expects nothrow destructors
   ~ThrowingValue() noexcept = default;
 
-  ThrowingValue &operator=(const ThrowingValue &other) noexcept(
+  ThrowingValue& operator=(const ThrowingValue& other) noexcept(
       IsSpecified(TypeSpec::kNoThrowCopy)) {
     dummy_ = kBadValue;
     if (!IsSpecified(TypeSpec::kNoThrowCopy)) {
@@ -310,7 +307,7 @@ public:
     return *this;
   }
 
-  ThrowingValue &operator=(ThrowingValue &&other) noexcept(
+  ThrowingValue& operator=(ThrowingValue&& other) noexcept(
       IsSpecified(TypeSpec::kNoThrowMove)) {
     dummy_ = kBadValue;
     if (!IsSpecified(TypeSpec::kNoThrowMove)) {
@@ -321,7 +318,7 @@ public:
   }
 
   // Arithmetic Operators
-  ThrowingValue operator+(const ThrowingValue &other) const {
+  ThrowingValue operator+(const ThrowingValue& other) const {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return ThrowingValue(dummy_ + other.dummy_, nothrow_ctor);
   }
@@ -331,7 +328,7 @@ public:
     return ThrowingValue(dummy_, nothrow_ctor);
   }
 
-  ThrowingValue operator-(const ThrowingValue &other) const {
+  ThrowingValue operator-(const ThrowingValue& other) const {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return ThrowingValue(dummy_ - other.dummy_, nothrow_ctor);
   }
@@ -341,7 +338,7 @@ public:
     return ThrowingValue(-dummy_, nothrow_ctor);
   }
 
-  ThrowingValue &operator++() {
+  ThrowingValue& operator++() {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     ++dummy_;
     return *this;
@@ -354,7 +351,7 @@ public:
     return out;
   }
 
-  ThrowingValue &operator--() {
+  ThrowingValue& operator--() {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     --dummy_;
     return *this;
@@ -367,17 +364,17 @@ public:
     return out;
   }
 
-  ThrowingValue operator*(const ThrowingValue &other) const {
+  ThrowingValue operator*(const ThrowingValue& other) const {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return ThrowingValue(dummy_ * other.dummy_, nothrow_ctor);
   }
 
-  ThrowingValue operator/(const ThrowingValue &other) const {
+  ThrowingValue operator/(const ThrowingValue& other) const {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return ThrowingValue(dummy_ / other.dummy_, nothrow_ctor);
   }
 
-  ThrowingValue operator%(const ThrowingValue &other) const {
+  ThrowingValue operator%(const ThrowingValue& other) const {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return ThrowingValue(dummy_ % other.dummy_, nothrow_ctor);
   }
@@ -395,33 +392,33 @@ public:
   // Comparison Operators
   // NOTE: We use `ThrowingBool` instead of `bool` because most STL
   // types/containers requires T to be convertible to bool.
-  friend ThrowingBool operator==(const ThrowingValue &a,
-                                 const ThrowingValue &b) {
+  friend ThrowingBool operator==(const ThrowingValue& a,
+                                 const ThrowingValue& b) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return a.dummy_ == b.dummy_;
   }
-  friend ThrowingBool operator!=(const ThrowingValue &a,
-                                 const ThrowingValue &b) {
+  friend ThrowingBool operator!=(const ThrowingValue& a,
+                                 const ThrowingValue& b) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return a.dummy_ != b.dummy_;
   }
-  friend ThrowingBool operator<(const ThrowingValue &a,
-                                const ThrowingValue &b) {
+  friend ThrowingBool operator<(const ThrowingValue& a,
+                                const ThrowingValue& b) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return a.dummy_ < b.dummy_;
   }
-  friend ThrowingBool operator<=(const ThrowingValue &a,
-                                 const ThrowingValue &b) {
+  friend ThrowingBool operator<=(const ThrowingValue& a,
+                                 const ThrowingValue& b) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return a.dummy_ <= b.dummy_;
   }
-  friend ThrowingBool operator>(const ThrowingValue &a,
-                                const ThrowingValue &b) {
+  friend ThrowingBool operator>(const ThrowingValue& a,
+                                const ThrowingValue& b) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return a.dummy_ > b.dummy_;
   }
-  friend ThrowingBool operator>=(const ThrowingValue &a,
-                                 const ThrowingValue &b) {
+  friend ThrowingBool operator>=(const ThrowingValue& a,
+                                 const ThrowingValue& b) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return a.dummy_ >= b.dummy_;
   }
@@ -432,12 +429,12 @@ public:
     return !dummy_;
   }
 
-  ThrowingBool operator&&(const ThrowingValue &other) const {
+  ThrowingBool operator&&(const ThrowingValue& other) const {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return dummy_ && other.dummy_;
   }
 
-  ThrowingBool operator||(const ThrowingValue &other) const {
+  ThrowingBool operator||(const ThrowingValue& other) const {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return dummy_ || other.dummy_;
   }
@@ -448,107 +445,107 @@ public:
     return ThrowingValue(~dummy_, nothrow_ctor);
   }
 
-  ThrowingValue operator&(const ThrowingValue &other) const {
+  ThrowingValue operator&(const ThrowingValue& other) const {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return ThrowingValue(dummy_ & other.dummy_, nothrow_ctor);
   }
 
-  ThrowingValue operator|(const ThrowingValue &other) const {
+  ThrowingValue operator|(const ThrowingValue& other) const {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return ThrowingValue(dummy_ | other.dummy_, nothrow_ctor);
   }
 
-  ThrowingValue operator^(const ThrowingValue &other) const {
+  ThrowingValue operator^(const ThrowingValue& other) const {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return ThrowingValue(dummy_ ^ other.dummy_, nothrow_ctor);
   }
 
   // Compound Assignment operators
-  ThrowingValue &operator+=(const ThrowingValue &other) {
+  ThrowingValue& operator+=(const ThrowingValue& other) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ += other.dummy_;
     return *this;
   }
 
-  ThrowingValue &operator-=(const ThrowingValue &other) {
+  ThrowingValue& operator-=(const ThrowingValue& other) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ -= other.dummy_;
     return *this;
   }
 
-  ThrowingValue &operator*=(const ThrowingValue &other) {
+  ThrowingValue& operator*=(const ThrowingValue& other) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ *= other.dummy_;
     return *this;
   }
 
-  ThrowingValue &operator/=(const ThrowingValue &other) {
+  ThrowingValue& operator/=(const ThrowingValue& other) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ /= other.dummy_;
     return *this;
   }
 
-  ThrowingValue &operator%=(const ThrowingValue &other) {
+  ThrowingValue& operator%=(const ThrowingValue& other) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ %= other.dummy_;
     return *this;
   }
 
-  ThrowingValue &operator&=(const ThrowingValue &other) {
+  ThrowingValue& operator&=(const ThrowingValue& other) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ &= other.dummy_;
     return *this;
   }
 
-  ThrowingValue &operator|=(const ThrowingValue &other) {
+  ThrowingValue& operator|=(const ThrowingValue& other) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ |= other.dummy_;
     return *this;
   }
 
-  ThrowingValue &operator^=(const ThrowingValue &other) {
+  ThrowingValue& operator^=(const ThrowingValue& other) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ ^= other.dummy_;
     return *this;
   }
 
-  ThrowingValue &operator<<=(int shift) {
+  ThrowingValue& operator<<=(int shift) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ <<= shift;
     return *this;
   }
 
-  ThrowingValue &operator>>=(int shift) {
+  ThrowingValue& operator>>=(int shift) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     dummy_ >>= shift;
     return *this;
   }
 
   // Pointer operators
-  void operator&() const = delete; // NOLINT(runtime/operator)
+  void operator&() const = delete;  // NOLINT(runtime/operator)
 
   // Stream operators
-  friend std::ostream &operator<<(std::ostream &os, const ThrowingValue &tv) {
+  friend std::ostream& operator<<(std::ostream& os, const ThrowingValue& tv) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return os << GetInstanceString(tv.dummy_);
   }
 
-  friend std::istream &operator>>(std::istream &is, const ThrowingValue &) {
+  friend std::istream& operator>>(std::istream& is, const ThrowingValue&) {
     exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION);
     return is;
   }
 
   // Memory management operators
-  static void *
-  operator new(size_t s) noexcept(IsSpecified(TypeSpec::kNoThrowNew)) {
+  static void* operator new(size_t s) noexcept(
+      IsSpecified(TypeSpec::kNoThrowNew)) {
     if (!IsSpecified(TypeSpec::kNoThrowNew)) {
       exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION, true);
     }
     return ::operator new(s);
   }
 
-  static void *
-  operator new[](size_t s) noexcept(IsSpecified(TypeSpec::kNoThrowNew)) {
+  static void* operator new[](size_t s) noexcept(
+      IsSpecified(TypeSpec::kNoThrowNew)) {
     if (!IsSpecified(TypeSpec::kNoThrowNew)) {
       exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION, true);
     }
@@ -556,9 +553,8 @@ public:
   }
 
   template <typename... Args>
-  static void *
-  operator new(size_t s,
-               Args &&...args) noexcept(IsSpecified(TypeSpec::kNoThrowNew)) {
+  static void* operator new(size_t s, Args&&... args) noexcept(
+      IsSpecified(TypeSpec::kNoThrowNew)) {
     if (!IsSpecified(TypeSpec::kNoThrowNew)) {
       exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION, true);
     }
@@ -566,9 +562,8 @@ public:
   }
 
   template <typename... Args>
-  static void *
-  operator new[](size_t s,
-                 Args &&...args) noexcept(IsSpecified(TypeSpec::kNoThrowNew)) {
+  static void* operator new[](size_t s, Args&&... args) noexcept(
+      IsSpecified(TypeSpec::kNoThrowNew)) {
     if (!IsSpecified(TypeSpec::kNoThrowNew)) {
       exceptions_internal::MaybeThrow(ABSL_PRETTY_FUNCTION, true);
     }
@@ -577,26 +572,26 @@ public:
 
   // Abseil doesn't support throwing overloaded operator delete.  These are
   // provided so a throwing operator-new can clean up after itself.
-  void operator delete(void *p) noexcept { ::operator delete(p); }
+  void operator delete(void* p) noexcept { ::operator delete(p); }
 
   template <typename... Args>
-  void operator delete(void *p, Args &&...args) noexcept {
+  void operator delete(void* p, Args&&... args) noexcept {
     ::operator delete(p, std::forward<Args>(args)...);
   }
 
-  void operator delete[](void *p) noexcept { return ::operator delete[](p); }
+  void operator delete[](void* p) noexcept { return ::operator delete[](p); }
 
   template <typename... Args>
-  void operator delete[](void *p, Args &&...args) noexcept {
+  void operator delete[](void* p, Args&&... args) noexcept {
     return ::operator delete[](p, std::forward<Args>(args)...);
   }
 
   // Non-standard access to the actual contained value.  No need for this to
   // throw.
-  int &Get() noexcept { return dummy_; }
-  const int &Get() const noexcept { return dummy_; }
+  int& Get() noexcept { return dummy_; }
+  const int& Get() const noexcept { return dummy_; }
 
-private:
+ private:
   static std::string GetInstanceString(int dummy) {
     return absl::StrCat("ThrowingValue<",
                         exceptions_internal::GetSpecString(Spec), ">(", dummy,
@@ -608,9 +603,9 @@ private:
 // While not having to do with exceptions, explicitly delete comma operator, to
 // make sure we don't use it on user-supplied types.
 template <TypeSpec Spec, typename T>
-void operator,(const ThrowingValue<Spec> &, T &&) = delete;
+void operator,(const ThrowingValue<Spec>&, T&&) = delete;
 template <TypeSpec Spec, typename T>
-void operator,(T &&, const ThrowingValue<Spec> &) = delete;
+void operator,(T&&, const ThrowingValue<Spec>&) = delete;
 
 /*
  * Configuration enum for the ThrowingAllocator type that defines behavior for
@@ -637,13 +632,13 @@ class ThrowingAllocator : private exceptions_internal::TrackedObject {
     return static_cast<bool>(Spec & spec);
   }
 
-public:
-  using pointer = T *;
-  using const_pointer = const T *;
-  using reference = T &;
-  using const_reference = const T &;
-  using void_pointer = void *;
-  using const_void_pointer = const void *;
+ public:
+  using pointer = T*;
+  using const_pointer = const T*;
+  using reference = T&;
+  using const_reference = const T&;
+  using void_pointer = void*;
+  using const_void_pointer = const void*;
   using value_type = T;
   using size_type = size_t;
   using difference_type = ptrdiff_t;
@@ -661,51 +656,52 @@ public:
   }
 
   template <typename U>
-  ThrowingAllocator(const ThrowingAllocator<U, Spec> &other) noexcept // NOLINT
+  ThrowingAllocator(const ThrowingAllocator<U, Spec>& other) noexcept  // NOLINT
       : TrackedObject(GetInstanceString(*other.State())),
         dummy_(other.State()) {}
 
   // According to C++11 standard [17.6.3.5], Table 28, the move/copy ctors of
   // allocator shall not exit via an exception, thus they are marked noexcept.
-  ThrowingAllocator(const ThrowingAllocator &other) noexcept
+  ThrowingAllocator(const ThrowingAllocator& other) noexcept
       : TrackedObject(GetInstanceString(*other.State())),
         dummy_(other.State()) {}
 
   template <typename U>
-  ThrowingAllocator(ThrowingAllocator<U, Spec> &&other) noexcept // NOLINT
+  ThrowingAllocator(ThrowingAllocator<U, Spec>&& other) noexcept  // NOLINT
       : TrackedObject(GetInstanceString(*other.State())),
         dummy_(std::move(other.State())) {}
 
-  ThrowingAllocator(ThrowingAllocator &&other) noexcept
+  ThrowingAllocator(ThrowingAllocator&& other) noexcept
       : TrackedObject(GetInstanceString(*other.State())),
         dummy_(std::move(other.State())) {}
 
   ~ThrowingAllocator() noexcept = default;
 
-  ThrowingAllocator &operator=(const ThrowingAllocator &other) noexcept {
+  ThrowingAllocator& operator=(const ThrowingAllocator& other) noexcept {
     dummy_ = other.State();
     return *this;
   }
 
   template <typename U>
-  ThrowingAllocator &
-  operator=(const ThrowingAllocator<U, Spec> &other) noexcept {
+  ThrowingAllocator& operator=(
+      const ThrowingAllocator<U, Spec>& other) noexcept {
     dummy_ = other.State();
     return *this;
   }
 
   template <typename U>
-  ThrowingAllocator &operator=(ThrowingAllocator<U, Spec> &&other) noexcept {
+  ThrowingAllocator& operator=(ThrowingAllocator<U, Spec>&& other) noexcept {
     dummy_ = std::move(other.State());
     return *this;
   }
 
-  template <typename U> struct rebind {
+  template <typename U>
+  struct rebind {
     using other = ThrowingAllocator<U, Spec>;
   };
 
-  pointer
-  allocate(size_type n) noexcept(IsSpecified(AllocSpec::kNoThrowAllocate)) {
+  pointer allocate(size_type n) noexcept(
+      IsSpecified(AllocSpec::kNoThrowAllocate)) {
     ReadStateAndMaybeThrow(ABSL_PRETTY_FUNCTION);
     return static_cast<pointer>(::operator new(n * sizeof(T)));
   }
@@ -717,18 +713,18 @@ public:
 
   void deallocate(pointer ptr, size_type) noexcept {
     ReadState();
-    ::operator delete(static_cast<void *>(ptr));
+    ::operator delete(static_cast<void*>(ptr));
   }
 
   template <typename U, typename... Args>
-  void
-  construct(U *ptr,
-            Args &&...args) noexcept(IsSpecified(AllocSpec::kNoThrowAllocate)) {
+  void construct(U* ptr, Args&&... args) noexcept(
+      IsSpecified(AllocSpec::kNoThrowAllocate)) {
     ReadStateAndMaybeThrow(ABSL_PRETTY_FUNCTION);
-    ::new (static_cast<void *>(ptr)) U(std::forward<Args>(args)...);
+    ::new (static_cast<void*>(ptr)) U(std::forward<Args>(args)...);
   }
 
-  template <typename U> void destroy(U *p) noexcept {
+  template <typename U>
+  void destroy(U* p) noexcept {
     ReadState();
     p->~U();
   }
@@ -744,32 +740,32 @@ public:
   }
 
   template <typename U>
-  bool operator==(const ThrowingAllocator<U, Spec> &other) const noexcept {
+  bool operator==(const ThrowingAllocator<U, Spec>& other) const noexcept {
     return dummy_ == other.dummy_;
   }
 
   template <typename U>
-  bool operator!=(const ThrowingAllocator<U, Spec> &other) const noexcept {
+  bool operator!=(const ThrowingAllocator<U, Spec>& other) const noexcept {
     return dummy_ != other.dummy_;
   }
 
-  template <typename, AllocSpec> friend class ThrowingAllocator;
+  template <typename, AllocSpec>
+  friend class ThrowingAllocator;
 
-private:
+ private:
   static std::string GetInstanceString(int dummy) {
     return absl::StrCat("ThrowingAllocator<",
                         exceptions_internal::GetSpecString(Spec), ">(", dummy,
                         ")");
   }
 
-  const std::shared_ptr<const int> &State() const { return dummy_; }
-  std::shared_ptr<const int> &State() { return dummy_; }
+  const std::shared_ptr<const int>& State() const { return dummy_; }
+  std::shared_ptr<const int>& State() { return dummy_; }
 
   void ReadState() {
     // we know that this will never be true, but the compiler doesn't, so this
     // should safely force a read of the value.
-    if (*dummy_ < 0)
-      std::abort();
+    if (*dummy_ < 0) std::abort();
   }
 
   void ReadStateAndMaybeThrow(absl::string_view msg) const {
@@ -789,7 +785,8 @@ int ThrowingAllocator<T, Spec>::next_id_ = 0;
 // Tests for resource leaks by attempting to construct a T using args repeatedly
 // until successful, using the countdown method.  Side effects can then be
 // tested for resource leaks.
-template <typename T, typename... Args> void TestThrowingCtor(Args &&...args) {
+template <typename T, typename... Args>
+void TestThrowingCtor(Args&&... args) {
   struct Cleanup {
     ~Cleanup() { exceptions_internal::UnsetCountdown(); }
   } c;
@@ -800,7 +797,7 @@ template <typename T, typename... Args> void TestThrowingCtor(Args &&...args) {
       T temp(std::forward<Args>(args)...);
       static_cast<void>(temp);
       break;
-    } catch (const exceptions_internal::TestException &) {
+    } catch (const exceptions_internal::TestException&) {
     }
   }
 }
@@ -809,7 +806,7 @@ template <typename T, typename... Args> void TestThrowingCtor(Args &&...args) {
 // exception is thrown, the result will be AssertionFailure(). Otherwise, it
 // will be AssertionSuccess().
 template <typename Operation>
-testing::AssertionResult TestNothrowOp(const Operation &operation) {
+testing::AssertionResult TestNothrowOp(const Operation& operation) {
   struct Cleanup {
     Cleanup() { exceptions_internal::SetCountdown(); }
     ~Cleanup() { exceptions_internal::UnsetCountdown(); }
@@ -817,7 +814,7 @@ testing::AssertionResult TestNothrowOp(const Operation &operation) {
   try {
     operation();
     return testing::AssertionSuccess();
-  } catch (const exceptions_internal::TestException &) {
+  } catch (const exceptions_internal::TestException&) {
     return testing::AssertionFailure()
            << "TestException thrown during call to operation() when nothrow "
               "guarantee was expected.";
@@ -833,12 +830,13 @@ namespace exceptions_internal {
 // Dummy struct for ExceptionSafetyTestBuilder<> partial state.
 struct UninitializedT {};
 
-template <typename T> class DefaultFactory {
-public:
-  explicit DefaultFactory(const T &t) : t_(t) {}
+template <typename T>
+class DefaultFactory {
+ public:
+  explicit DefaultFactory(const T& t) : t_(t) {}
   std::unique_ptr<T> operator()() const { return absl::make_unique<T>(t_); }
 
-private:
+ private:
   T t_;
 };
 
@@ -853,7 +851,7 @@ template <typename Factory = UninitializedT,
           typename Operation = UninitializedT, typename... Contracts>
 class ExceptionSafetyTestBuilder;
 
-} // namespace exceptions_internal
+}  // namespace exceptions_internal
 
 /*
  * Constructs an empty ExceptionSafetyTestBuilder. All
@@ -867,13 +865,15 @@ class ExceptionSafetyTestBuilder;
 exceptions_internal::ExceptionSafetyTestBuilder<> MakeExceptionSafetyTester();
 
 namespace exceptions_internal {
-template <typename T> struct IsUniquePtr : std::false_type {};
+template <typename T>
+struct IsUniquePtr : std::false_type {};
 
 template <typename T, typename D>
 struct IsUniquePtr<std::unique_ptr<T, D>> : std::true_type {};
 
-template <typename Factory> struct FactoryPtrTypeHelper {
-  using type = decltype(std::declval<const Factory &>()());
+template <typename Factory>
+struct FactoryPtrTypeHelper {
+  using type = decltype(std::declval<const Factory&>()());
 
   static_assert(IsUniquePtr<type>::value, "Factories must return a unique_ptr");
 };
@@ -884,22 +884,23 @@ using FactoryPtrType = typename FactoryPtrTypeHelper<Factory>::type;
 template <typename Factory>
 using FactoryElementType = typename FactoryPtrType<Factory>::element_type;
 
-template <typename T> class ExceptionSafetyTest {
+template <typename T>
+class ExceptionSafetyTest {
   using Factory = std::function<std::unique_ptr<T>()>;
-  using Operation = std::function<void(T *)>;
-  using Contract = std::function<AssertionResult(T *)>;
+  using Operation = std::function<void(T*)>;
+  using Contract = std::function<AssertionResult(T*)>;
 
-public:
+ public:
   template <typename... Contracts>
-  explicit ExceptionSafetyTest(const Factory &f, const Operation &op,
-                               const Contracts &...contracts)
+  explicit ExceptionSafetyTest(const Factory& f, const Operation& op,
+                               const Contracts&... contracts)
       : factory_(f), operation_(op), contracts_{WrapContract(contracts)...} {}
 
   AssertionResult Test() const {
     for (int count = 0;; ++count) {
       exceptions_internal::ConstructorTracker ct(count);
 
-      for (const auto &contract : contracts_) {
+      for (const auto& contract : contracts_) {
         auto t_ptr = factory_();
         try {
           SetCountdown(count);
@@ -909,7 +910,7 @@ public:
           // test after this one.
           UnsetCountdown();
           return AssertionSuccess();
-        } catch (const exceptions_internal::TestException &e) {
+        } catch (const exceptions_internal::TestException& e) {
           if (!contract(t_ptr.get())) {
             return AssertionFailure() << e.what() << " failed contract check";
           }
@@ -918,14 +919,14 @@ public:
     }
   }
 
-private:
+ private:
   template <typename ContractFn>
-  Contract WrapContract(const ContractFn &contract) {
-    return [contract](T *t_ptr) { return AssertionResult(contract(t_ptr)); };
+  Contract WrapContract(const ContractFn& contract) {
+    return [contract](T* t_ptr) { return AssertionResult(contract(t_ptr)); };
   }
 
   Contract WrapContract(StrongGuaranteeTagType) {
-    return [this](T *t_ptr) { return AssertionResult(*factory_() == *t_ptr); };
+    return [this](T* t_ptr) { return AssertionResult(*factory_() == *t_ptr); };
   }
 
   Factory factory_;
@@ -966,7 +967,7 @@ private:
  */
 template <typename Factory, typename Operation, typename... Contracts>
 class ExceptionSafetyTestBuilder {
-public:
+ public:
   /*
    * Returns a new ExceptionSafetyTestBuilder with an included T factory based
    * on the provided T instance. The existing factory will not be included in
@@ -981,7 +982,7 @@ public:
    */
   template <typename T>
   ExceptionSafetyTestBuilder<DefaultFactory<T>, Operation, Contracts...>
-  WithInitialValue(const T &t) const {
+  WithInitialValue(const T& t) const {
     return WithFactory(DefaultFactory<T>(t));
   }
 
@@ -994,7 +995,7 @@ public:
    */
   template <typename NewFactory>
   ExceptionSafetyTestBuilder<absl::decay_t<NewFactory>, Operation, Contracts...>
-  WithFactory(const NewFactory &new_factory) const {
+  WithFactory(const NewFactory& new_factory) const {
     return {new_factory, operation_, contracts_};
   }
 
@@ -1005,7 +1006,7 @@ public:
    */
   template <typename NewOperation>
   ExceptionSafetyTestBuilder<Factory, absl::decay_t<NewOperation>, Contracts...>
-  WithOperation(const NewOperation &new_operation) const {
+  WithOperation(const NewOperation& new_operation) const {
     return {factory_, new_operation, contracts_};
   }
 
@@ -1025,7 +1026,7 @@ public:
   template <typename... MoreContracts>
   ExceptionSafetyTestBuilder<Factory, Operation, Contracts...,
                              absl::decay_t<MoreContracts>...>
-  WithContracts(const MoreContracts &...more_contracts) const {
+  WithContracts(const MoreContracts&... more_contracts) const {
     return {
         factory_, operation_,
         std::tuple_cat(contracts_, std::tuple<absl::decay_t<MoreContracts>...>(
@@ -1051,7 +1052,7 @@ public:
   template <
       typename NewOperation,
       typename = EnableIfTestable<sizeof...(Contracts), Factory, NewOperation>>
-  testing::AssertionResult Test(const NewOperation &new_operation) const {
+  testing::AssertionResult Test(const NewOperation& new_operation) const {
     return TestImpl(new_operation, absl::index_sequence_for<Contracts...>());
   }
 
@@ -1074,7 +1075,7 @@ public:
     return Test(operation_);
   }
 
-private:
+ private:
   template <typename, typename, typename...>
   friend class ExceptionSafetyTestBuilder;
 
@@ -1082,8 +1083,8 @@ private:
 
   ExceptionSafetyTestBuilder() {}
 
-  ExceptionSafetyTestBuilder(const Factory &f, const Operation &o,
-                             const std::tuple<Contracts...> &i)
+  ExceptionSafetyTestBuilder(const Factory& f, const Operation& o,
+                             const std::tuple<Contracts...>& i)
       : factory_(f), operation_(o), contracts_(i) {}
 
   template <typename SelectedOperation, size_t... Indices>
@@ -1099,10 +1100,10 @@ private:
   std::tuple<Contracts...> contracts_;
 };
 
-} // namespace exceptions_internal
+}  // namespace exceptions_internal
 
-} // namespace testing
+}  // namespace testing
 
-#endif // ABSL_HAVE_EXCEPTIONS
+#endif  // ABSL_HAVE_EXCEPTIONS
 
-#endif // ABSL_BASE_INTERNAL_EXCEPTION_SAFETY_TESTING_H_
+#endif  // ABSL_BASE_INTERNAL_EXCEPTION_SAFETY_TESTING_H_

@@ -58,20 +58,20 @@ enum class TestCordSize {
 // To string helper
 inline absl::string_view ToString(TestCordSize size) {
   switch (size) {
-  case TestCordSize::kEmpty:
-    return "Empty";
-  case TestCordSize::kInlined:
-    return "Inlined";
-  case TestCordSize::kSmall:
-    return "Small";
-  case TestCordSize::kStringSso1:
-    return "StringSso1";
-  case TestCordSize::kStringSso2:
-    return "StringSso2";
-  case TestCordSize::kMedium:
-    return "Medium";
-  case TestCordSize::kLarge:
-    return "Large";
+    case TestCordSize::kEmpty:
+      return "Empty";
+    case TestCordSize::kInlined:
+      return "Inlined";
+    case TestCordSize::kSmall:
+      return "Small";
+    case TestCordSize::kStringSso1:
+      return "StringSso1";
+    case TestCordSize::kStringSso2:
+      return "StringSso2";
+    case TestCordSize::kMedium:
+      return "Medium";
+    case TestCordSize::kLarge:
+      return "Large";
   }
   return "???";
 }
@@ -80,7 +80,7 @@ inline absl::string_view ToString(TestCordSize size) {
 inline size_t Length(TestCordSize size) { return static_cast<size_t>(size); }
 
 // Stream output helper
-inline std::ostream &operator<<(std::ostream &stream, TestCordSize size) {
+inline std::ostream& operator<<(std::ostream& stream, TestCordSize size) {
   return stream << ToString(size);
 }
 
@@ -99,10 +99,11 @@ inline std::ostream &operator<<(std::ostream &stream, TestCordSize size) {
 // the future as new optimizations are added to the Cord class.
 // MakeFragmentedCord will, however, always be updated to return a multi-segment
 // Cord.
-template <typename Container> Cord MakeFragmentedCord(const Container &c) {
+template <typename Container>
+Cord MakeFragmentedCord(const Container& c) {
   Cord result;
-  for (const auto &s : c) {
-    auto *external = new std::string(s);
+  for (const auto& s : c) {
+    auto* external = new std::string(s);
     Cord tmp = absl::MakeCordFromExternal(
         *external, [external](absl::string_view) { delete external; });
     tmp.Prepend(result);
@@ -116,6 +117,6 @@ inline Cord MakeFragmentedCord(std::initializer_list<absl::string_view> list) {
 }
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_CORD_TEST_HELPERS_H_
+#endif  // ABSL_STRINGS_CORD_TEST_HELPERS_H_

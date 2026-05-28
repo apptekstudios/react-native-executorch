@@ -20,11 +20,16 @@ namespace executorch {
 namespace extension {
 namespace internal {
 template <typename Func>
-inline bool parallel_for_no_threadpool(const int64_t begin, const int64_t end,
-                                       const int64_t grain_size,
-                                       const Func &f) {
-  ET_CHECK_OR_RETURN_FALSE(begin >= 0 && end >= 0 && end >= begin,
-                           "begin = %" PRId64 ", end = %" PRId64, begin, end);
+inline bool parallel_for_no_threadpool(
+    const int64_t begin,
+    const int64_t end,
+    const int64_t grain_size,
+    const Func& f) {
+  ET_CHECK_OR_RETURN_FALSE(
+      begin >= 0 && end >= 0 && end >= begin,
+      "begin = %" PRId64 ", end = %" PRId64,
+      begin,
+      end);
   ET_CHECK_OR_RETURN_FALSE(grain_size > 0, "grain_size = %" PRId64, grain_size);
 #ifndef NDEBUG
   // Go backwards through the range elementwise to catch code that
@@ -61,21 +66,28 @@ constexpr int64_t GRAIN_SIZE = 32768;
  * thread to the worker threads. Users need to protect the access to captured
  * data if they mutate them in f.
  */
-bool parallel_for(const int64_t begin, const int64_t end,
-                  const int64_t grain_size,
-                  runtime::FunctionRef<void(int64_t, int64_t)> f);
+bool parallel_for(
+    const int64_t begin,
+    const int64_t end,
+    const int64_t grain_size,
+    runtime::FunctionRef<void(int64_t, int64_t)> f);
 
 int64_t get_thread_num();
 
 void set_thread_num(int64_t thread_num);
-#else  // ET_USE_THREADPOOL
+#else // ET_USE_THREADPOOL
 template <typename Func>
-bool parallel_for(const int64_t begin, const int64_t end,
-                  const int64_t grain_size, const Func &func) {
+bool parallel_for(
+    const int64_t begin,
+    const int64_t end,
+    const int64_t grain_size,
+    const Func& func) {
   return internal::parallel_for_no_threadpool(begin, end, grain_size, func);
 }
 
-inline int64_t get_thread_num() { return 0; }
+inline int64_t get_thread_num() {
+  return 0;
+}
 
 inline void set_thread_num(int64_t thread_num) {
   ET_DCHECK_MSG(false, "cannot set_thread_num without threading support!");

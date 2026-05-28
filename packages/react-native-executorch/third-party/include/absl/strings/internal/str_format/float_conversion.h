@@ -30,8 +30,8 @@ bool ConvertFloatImpl(double v, const FormatConversionSpecImpl &conv,
 bool ConvertFloatImpl(long double v, const FormatConversionSpecImpl &conv,
                       FormatSinkImpl *sink);
 
-} // namespace str_format_internal
+}  // namespace str_format_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_STR_FORMAT_FLOAT_CONVERSION_H_
+#endif  // ABSL_STRINGS_INTERNAL_STR_FORMAT_FLOAT_CONVERSION_H_

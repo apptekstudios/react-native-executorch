@@ -35,11 +35,11 @@ size_t CalculateBase64EscapedLenInternal(size_t input_len, bool do_padding);
 // determines whether to do web-safe encoding or not) and writes the result to
 // `dest`. If `do_padding` is true, `dest` is padded with '=' chars until its
 // length is a multiple of 3. Returns the length of `dest`.
-size_t Base64EscapeInternal(const unsigned char *src, size_t szsrc, char *dest,
-                            size_t szdest, const char *base64, bool do_padding);
+size_t Base64EscapeInternal(const unsigned char* src, size_t szsrc, char* dest,
+                            size_t szdest, const char* base64, bool do_padding);
 template <typename String>
-void Base64EscapeInternal(const unsigned char *src, size_t szsrc, String *dest,
-                          bool do_padding, const char *base64_chars) {
+void Base64EscapeInternal(const unsigned char* src, size_t szsrc, String* dest,
+                          bool do_padding, const char* base64_chars) {
   const size_t calc_escaped_size =
       CalculateBase64EscapedLenInternal(szsrc, do_padding);
   STLStringResizeUninitialized(dest, calc_escaped_size);
@@ -50,8 +50,8 @@ void Base64EscapeInternal(const unsigned char *src, size_t szsrc, String *dest,
   dest->erase(escaped_len);
 }
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_ESCAPING_H_
+#endif  // ABSL_STRINGS_INTERNAL_ESCAPING_H_

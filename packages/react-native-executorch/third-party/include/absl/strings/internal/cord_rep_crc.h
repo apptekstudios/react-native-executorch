@@ -34,7 +34,7 @@ namespace cord_internal {
 // From Cord's perspective, the crc value has no semantics; any validation of
 // the contained checksum is the user's responsibility.
 struct CordRepCrc : public CordRep {
-  CordRep *child;
+  CordRep* child;
   absl::crc_internal::CrcCordState crc_cord_state;
 
   // Consumes `child` and returns a CordRepCrc prefixed tree containing `child`.
@@ -42,19 +42,19 @@ struct CordRepCrc : public CordRep {
   // either replaces the existing node, or directly updates the crc state in it
   // depending on the node being shared or not, i.e.: refcount.IsOne().
   // `child` must only be null if the Cord is empty. Never returns null.
-  static CordRepCrc *New(CordRep *child, crc_internal::CrcCordState state);
+  static CordRepCrc* New(CordRep* child, crc_internal::CrcCordState state);
 
   // Destroys (deletes) the provided node. `node` must not be null.
-  static void Destroy(CordRepCrc *node);
+  static void Destroy(CordRepCrc* node);
 };
 
 // Consumes `rep` and returns a CordRep* with any outer CordRepCrc wrapper
 // removed.  This is usually a no-op (returning `rep`), but this will remove and
 // unref an outer CordRepCrc node.
-inline CordRep *RemoveCrcNode(CordRep *rep) {
+inline CordRep* RemoveCrcNode(CordRep* rep) {
   assert(rep != nullptr);
   if (ABSL_PREDICT_FALSE(rep->IsCrc())) {
-    CordRep *child = rep->crc()->child;
+    CordRep* child = rep->crc()->child;
     if (rep->refcount.IsOne()) {
       delete rep->crc();
     } else {
@@ -68,7 +68,7 @@ inline CordRep *RemoveCrcNode(CordRep *rep) {
 
 // Returns `rep` if it is not a CordRepCrc node, or its child if it is.
 // Does not consume or create a reference on `rep` or the returned value.
-inline CordRep *SkipCrcNode(CordRep *rep) {
+inline CordRep* SkipCrcNode(CordRep* rep) {
   assert(rep != nullptr);
   if (ABSL_PREDICT_FALSE(rep->IsCrc())) {
     return rep->crc()->child;
@@ -77,7 +77,7 @@ inline CordRep *SkipCrcNode(CordRep *rep) {
   }
 }
 
-inline const CordRep *SkipCrcNode(const CordRep *rep) {
+inline const CordRep* SkipCrcNode(const CordRep* rep) {
   assert(rep != nullptr);
   if (ABSL_PREDICT_FALSE(rep->IsCrc())) {
     return rep->crc()->child;
@@ -86,18 +86,18 @@ inline const CordRep *SkipCrcNode(const CordRep *rep) {
   }
 }
 
-inline CordRepCrc *CordRep::crc() {
+inline CordRepCrc* CordRep::crc() {
   assert(IsCrc());
-  return static_cast<CordRepCrc *>(this);
+  return static_cast<CordRepCrc*>(this);
 }
 
-inline const CordRepCrc *CordRep::crc() const {
+inline const CordRepCrc* CordRep::crc() const {
   assert(IsCrc());
-  return static_cast<const CordRepCrc *>(this);
+  return static_cast<const CordRepCrc*>(this);
 }
 
-} // namespace cord_internal
+}  // namespace cord_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CORD_REP_CRC_H_
+#endif  // ABSL_STRINGS_INTERNAL_CORD_REP_CRC_H_

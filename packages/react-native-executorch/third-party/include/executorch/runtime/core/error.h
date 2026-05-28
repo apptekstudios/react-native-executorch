@@ -107,51 +107,52 @@ enum class Error : error_code_t {
 };
 
 // Stringify the Error enum.
-constexpr const char *to_string(const Error error) {
+constexpr const char* to_string(const Error error) {
   switch (error) {
-  case Error::Ok:
-    return "Error::Ok";
-  case Error::Internal:
-    return "Error::Internal";
-  case Error::InvalidState:
-    return "Error::InvalidState";
-  case Error::EndOfMethod:
-    return "Error::EndOfMethod";
-  case Error::AlreadyLoaded:
-    return "Error::AlreadyLoaded";
-  case Error::NotSupported:
-    return "Error::NotSupported";
-  case Error::NotImplemented:
-    return "Error::NotImplemented";
-  case Error::InvalidArgument:
-    return "Error::InvalidArgument";
-  case Error::InvalidType:
-    return "Error::InvalidType";
-  case Error::OperatorMissing:
-    return "Error::OperatorMissing";
-  case Error::NotFound:
-    return "Error::NotFound";
-  case Error::MemoryAllocationFailed:
-    return "Error::MemoryAllocationFailed";
-  case Error::AccessFailed:
-    return "Error::AccessFailed";
-  case Error::InvalidProgram:
-    return "Error::InvalidProgram";
-  case Error::InvalidExternalData:
-    return "Error::InvalidExternalData";
-  case Error::OutOfResources:
-    return "Error::OutOfResources";
-  case Error::DelegateInvalidCompatibility:
-    return "Error::DelegateInvalidCompatibility";
-  case Error::DelegateMemoryAllocationFailed:
-    return "Error::DelegateMemoryAllocationFailed";
-  case Error::DelegateInvalidHandle:
-    return "Error::DelegateInvalidHandle";
-  case Error::RegistrationExceedingMaxKernels:
-    return "Error::RegistrationExceedingMaxKernels";
-  case Error::RegistrationAlreadyRegistered:
-    return "Error::RegistrationAlreadyRegistered";
+    case Error::Ok:
+      return "Error::Ok";
+    case Error::Internal:
+      return "Error::Internal";
+    case Error::InvalidState:
+      return "Error::InvalidState";
+    case Error::EndOfMethod:
+      return "Error::EndOfMethod";
+    case Error::AlreadyLoaded:
+      return "Error::AlreadyLoaded";
+    case Error::NotSupported:
+      return "Error::NotSupported";
+    case Error::NotImplemented:
+      return "Error::NotImplemented";
+    case Error::InvalidArgument:
+      return "Error::InvalidArgument";
+    case Error::InvalidType:
+      return "Error::InvalidType";
+    case Error::OperatorMissing:
+      return "Error::OperatorMissing";
+    case Error::NotFound:
+      return "Error::NotFound";
+    case Error::MemoryAllocationFailed:
+      return "Error::MemoryAllocationFailed";
+    case Error::AccessFailed:
+      return "Error::AccessFailed";
+    case Error::InvalidProgram:
+      return "Error::InvalidProgram";
+    case Error::InvalidExternalData:
+      return "Error::InvalidExternalData";
+    case Error::OutOfResources:
+      return "Error::OutOfResources";
+    case Error::DelegateInvalidCompatibility:
+      return "Error::DelegateInvalidCompatibility";
+    case Error::DelegateMemoryAllocationFailed:
+      return "Error::DelegateMemoryAllocationFailed";
+    case Error::DelegateInvalidHandle:
+      return "Error::DelegateInvalidHandle";
+    case Error::RegistrationExceedingMaxKernels:
+      return "Error::RegistrationExceedingMaxKernels";
+    case Error::RegistrationAlreadyRegistered:
+      return "Error::RegistrationAlreadyRegistered";
   }
+  return "Error::Unknown";
 }
 
 } // namespace runtime
@@ -177,12 +178,12 @@ using ::executorch::runtime::error_code_t;
  * @param[in] message__ Format string for the log error message.
  * @param[in] ... Optional additional arguments for the format string.
  */
-#define ET_CHECK_OR_RETURN_ERROR(cond__, error__, message__, ...)              \
-  {                                                                            \
-    if (!(cond__)) {                                                           \
-      ET_LOG(Error, message__, ##__VA_ARGS__);                                 \
-      return ::executorch::runtime::Error::error__;                            \
-    }                                                                          \
+#define ET_CHECK_OR_RETURN_ERROR(cond__, error__, message__, ...) \
+  {                                                               \
+    if (!(cond__)) {                                              \
+      ET_LOG(Error, message__, ##__VA_ARGS__);                    \
+      return ::executorch::runtime::Error::error__;               \
+    }                                                             \
   }
 
 /**
@@ -193,12 +194,12 @@ using ::executorch::runtime::error_code_t;
  * @param[in] cond the condition to check
  * @param[in] message an additional message to log with `cond`
  */
-#define ET_CHECK_OR_RETURN_FALSE(cond__, message__, ...)                       \
-  {                                                                            \
-    if (!(cond__)) {                                                           \
-      ET_LOG(Error, "Check failed (%s): " message__, #cond__, ##__VA_ARGS__);  \
-      return false;                                                            \
-    }                                                                          \
+#define ET_CHECK_OR_RETURN_FALSE(cond__, message__, ...)                      \
+  {                                                                           \
+    if (!(cond__)) {                                                          \
+      ET_LOG(Error, "Check failed (%s): " message__, #cond__, ##__VA_ARGS__); \
+      return false;                                                           \
+    }                                                                         \
   }
 
 /**
@@ -210,7 +211,7 @@ using ::executorch::runtime::error_code_t;
  * @param[in] ... Optional format string for the log error message and its
  * arguments.
  */
-#define ET_CHECK_OK_OR_RETURN_ERROR(...)                                       \
+#define ET_CHECK_OK_OR_RETURN_ERROR(...) \
   ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR(__VA_ARGS__)
 
 /**
@@ -221,41 +222,42 @@ using ::executorch::runtime::error_code_t;
  * MSVC/Clang/GCC.
  */
 #define ET_INTERNAL_EXPAND(x) x
-#define ET_INTERNAL_GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, NAME,   \
-                              ...)                                             \
+#define ET_INTERNAL_GET_MACRO(                          \
+    _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, NAME, ...) \
   NAME
 
 // Internal only: Use ET_CHECK_OK_OR_RETURN_ERROR() instead.
 // Picks _2 for 2..10 args, _1 for exactly 1 arg.
-#define ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR(...)                              \
-  ET_INTERNAL_EXPAND(ET_INTERNAL_GET_MACRO(                                    \
-      __VA_ARGS__, ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2, /* 10 */            \
-      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2,              /* 9  */            \
-      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2,              /* 8  */            \
-      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2,              /* 7  */            \
-      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2,              /* 6  */            \
-      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2,              /* 5  */            \
-      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2,              /* 4  */            \
-      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2,              /* 3  */            \
-      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2,              /* 2  */            \
-      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_1               /* 1  */            \
+#define ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR(...)      \
+  ET_INTERNAL_EXPAND(ET_INTERNAL_GET_MACRO(            \
+      __VA_ARGS__,                                     \
+      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2, /* 10 */ \
+      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2, /* 9  */ \
+      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2, /* 8  */ \
+      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2, /* 7  */ \
+      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2, /* 6  */ \
+      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2, /* 5  */ \
+      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2, /* 4  */ \
+      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2, /* 3  */ \
+      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2, /* 2  */ \
+      ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_1 /* 1  */  \
       )(__VA_ARGS__))
 
 // Internal only: Use ET_CHECK_OK_OR_RETURN_ERROR() instead.
-#define ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_1(error__)                        \
-  do {                                                                         \
-    const auto et_error__ = (error__);                                         \
-    if (et_error__ != ::executorch::runtime::Error::Ok) {                      \
-      return et_error__;                                                       \
-    }                                                                          \
+#define ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_1(error__)   \
+  do {                                                    \
+    const auto et_error__ = (error__);                    \
+    if (et_error__ != ::executorch::runtime::Error::Ok) { \
+      return et_error__;                                  \
+    }                                                     \
   } while (0)
 
 // Internal only: Use ET_CHECK_OK_OR_RETURN_ERROR() instead.
-#define ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2(error__, message__, ...)        \
-  do {                                                                         \
-    const auto et_error__ = (error__);                                         \
-    if (et_error__ != ::executorch::runtime::Error::Ok) {                      \
-      ET_LOG(Error, message__, ##__VA_ARGS__);                                 \
-      return et_error__;                                                       \
-    }                                                                          \
+#define ET_INTERNAL_CHECK_OK_OR_RETURN_ERROR_2(error__, message__, ...) \
+  do {                                                                  \
+    const auto et_error__ = (error__);                                  \
+    if (et_error__ != ::executorch::runtime::Error::Ok) {               \
+      ET_LOG(Error, message__, ##__VA_ARGS__);                          \
+      return et_error__;                                                \
+    }                                                                   \
   } while (0)

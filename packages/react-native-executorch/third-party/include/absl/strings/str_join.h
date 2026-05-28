@@ -132,8 +132,8 @@ PairFormatter(absl::string_view sep) {
 // pointer-to-T. This pattern often shows up when joining repeated fields in
 // protocol buffers.
 template <typename Formatter>
-strings_internal::DereferenceFormatterImpl<Formatter>
-DereferenceFormatter(Formatter &&f) {
+strings_internal::DereferenceFormatterImpl<Formatter> DereferenceFormatter(
+    Formatter&& f) {
   return strings_internal::DereferenceFormatterImpl<Formatter>(
       std::forward<Formatter>(f));
 }
@@ -237,13 +237,13 @@ DereferenceFormatter() {
 
 template <typename Iterator, typename Formatter>
 std::string StrJoin(Iterator start, Iterator end, absl::string_view sep,
-                    Formatter &&fmt) {
+                    Formatter&& fmt) {
   return strings_internal::JoinAlgorithm(start, end, sep, fmt);
 }
 
 template <typename Range, typename Formatter>
-std::string StrJoin(const Range &range, absl::string_view separator,
-                    Formatter &&fmt) {
+std::string StrJoin(const Range& range, absl::string_view separator,
+                    Formatter&& fmt) {
   return strings_internal::JoinRange(range, separator, fmt);
 }
 
@@ -251,19 +251,19 @@ template <typename T, typename Formatter,
           typename = typename std::enable_if<
               !std::is_convertible<T, absl::string_view>::value>::type>
 std::string StrJoin(std::initializer_list<T> il, absl::string_view separator,
-                    Formatter &&fmt) {
+                    Formatter&& fmt) {
   return strings_internal::JoinRange(il, separator, fmt);
 }
 
 template <typename Formatter>
 inline std::string StrJoin(std::initializer_list<absl::string_view> il,
-                           absl::string_view separator, Formatter &&fmt) {
+                           absl::string_view separator, Formatter&& fmt) {
   return strings_internal::JoinRange(il, separator, fmt);
 }
 
 template <typename... T, typename Formatter>
-std::string StrJoin(const std::tuple<T...> &value, absl::string_view separator,
-                    Formatter &&fmt) {
+std::string StrJoin(const std::tuple<T...>& value, absl::string_view separator,
+                    Formatter&& fmt) {
   return strings_internal::JoinAlgorithm(value, separator, fmt);
 }
 
@@ -273,7 +273,7 @@ std::string StrJoin(Iterator start, Iterator end, absl::string_view separator) {
 }
 
 template <typename Range>
-std::string StrJoin(const Range &range, absl::string_view separator) {
+std::string StrJoin(const Range& range, absl::string_view separator) {
   return strings_internal::JoinRange(range, separator);
 }
 
@@ -289,13 +289,13 @@ inline std::string StrJoin(std::initializer_list<absl::string_view> il,
 }
 
 template <typename... T>
-std::string StrJoin(const std::tuple<T...> &value,
+std::string StrJoin(const std::tuple<T...>& value,
                     absl::string_view separator) {
   return strings_internal::JoinTuple(value, separator,
                                      std::index_sequence_for<T...>{});
 }
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_STR_JOIN_H_
+#endif  // ABSL_STRINGS_STR_JOIN_H_

@@ -77,7 +77,7 @@ namespace cord_internal {
 //   sv = reader.Seek(1);    // sv = "bc", remaining = 12
 //
 class CordRepBtreeReader {
-public:
+ public:
   using ReadResult = CordRepBtreeNavigator::ReadResult;
   using Position = CordRepBtreeNavigator::Position;
 
@@ -85,11 +85,11 @@ public:
   explicit operator bool() const { return navigator_.btree() != nullptr; }
 
   // Returns the tree referenced by this instance or nullptr if empty.
-  CordRepBtree *btree() const { return navigator_.btree(); }
+  CordRepBtree* btree() const { return navigator_.btree(); }
 
   // Returns the current data edge inside the referenced btree.
   // Requires that the current instance is not empty.
-  CordRep *node() const { return navigator_.Current(); }
+  CordRep* node() const { return navigator_.Current(); }
 
   // Returns the length of the referenced tree.
   // Requires that the current instance is not empty.
@@ -109,7 +109,7 @@ public:
 
   // Initializes this instance with `tree`. `tree` must not be null.
   // Returns a reference to the first data edge of the provided tree.
-  absl::string_view Init(CordRepBtree *tree);
+  absl::string_view Init(CordRepBtree* tree);
 
   // Navigates to and returns the next data edge of the referenced tree.
   // Returns an empty string_view if an attempt is made to read beyond the end
@@ -143,7 +143,7 @@ public:
   // read. If `n` exceeded the amount of remaining data this function will
   // return an empty string view and `tree` will be set to nullptr.
   // In both cases, `consumed` will be set to `length`.
-  absl::string_view Read(size_t n, size_t chunk_size, CordRep *&tree);
+  absl::string_view Read(size_t n, size_t chunk_size, CordRep*& tree);
 
   // Navigates to the chunk at offset `offset`.
   // Returns a reference into the navigated to chunk, adjusted for the relative
@@ -154,7 +154,7 @@ public:
   // length of the referenced tree.
   absl::string_view Seek(size_t offset);
 
-private:
+ private:
   size_t remaining_ = 0;
   CordRepBtreeNavigator navigator_;
 };
@@ -164,17 +164,16 @@ inline size_t CordRepBtreeReader::length() const {
   return btree()->length;
 }
 
-inline absl::string_view CordRepBtreeReader::Init(CordRepBtree *tree) {
+inline absl::string_view CordRepBtreeReader::Init(CordRepBtree* tree) {
   assert(tree != nullptr);
-  const CordRep *edge = navigator_.InitFirst(tree);
+  const CordRep* edge = navigator_.InitFirst(tree);
   remaining_ = tree->length - edge->length;
   return EdgeData(edge);
 }
 
 inline absl::string_view CordRepBtreeReader::Next() {
-  if (remaining_ == 0)
-    return {};
-  const CordRep *edge = navigator_.Next();
+  if (remaining_ == 0) return {};
+  const CordRep* edge = navigator_.Next();
   assert(edge != nullptr);
   remaining_ -= edge->length;
   return EdgeData(edge);
@@ -206,8 +205,8 @@ inline absl::string_view CordRepBtreeReader::Seek(size_t offset) {
   return chunk;
 }
 
-} // namespace cord_internal
+}  // namespace cord_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CORD_REP_BTREE_READER_H_
+#endif  // ABSL_STRINGS_INTERNAL_CORD_REP_BTREE_READER_H_

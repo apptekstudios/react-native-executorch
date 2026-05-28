@@ -46,15 +46,15 @@ namespace tcmalloc_internal {
 
 class AllocationGuardSpinLockHolder;
 
-} // namespace tcmalloc_internal
-} // namespace tcmalloc
+}  // namespace tcmalloc_internal
+}  // namespace tcmalloc
 
 namespace absl {
 ABSL_NAMESPACE_BEGIN
 namespace base_internal {
 
 class ABSL_LOCKABLE ABSL_ATTRIBUTE_WARN_UNUSED SpinLock {
-public:
+ public:
   SpinLock() : lockword_(kSpinLockCooperative) {
     ABSL_TSAN_MUTEX_CREATE(this, __tsan_mutex_not_static);
   }
@@ -133,7 +133,7 @@ public:
     }
   }
 
-protected:
+ protected:
   // These should not be exported except for testing.
 
   // Store number of cycles between wait_start_time and wait_end_time in a
@@ -148,7 +148,7 @@ protected:
   friend struct SpinLockTest;
   friend class tcmalloc::tcmalloc_internal::AllocationGuardSpinLockHolder;
 
-private:
+ private:
   // lockword_ is used to store the following:
   //
   // bit[0] encodes whether a lock is being held.
@@ -176,8 +176,8 @@ private:
       ~(kSpinLockHeld | kSpinLockCooperative | kSpinLockDisabledScheduling);
 
   // Returns true if the provided scheduling mode is cooperative.
-  static constexpr bool
-  IsCooperative(base_internal::SchedulingMode scheduling_mode) {
+  static constexpr bool IsCooperative(
+      base_internal::SchedulingMode scheduling_mode) {
     return scheduling_mode == base_internal::SCHEDULE_COOPERATIVE_AND_KERNEL;
   }
 
@@ -197,8 +197,8 @@ private:
 
   std::atomic<uint32_t> lockword_;
 
-  SpinLock(const SpinLock &) = delete;
-  SpinLock &operator=(const SpinLock &) = delete;
+  SpinLock(const SpinLock&) = delete;
+  SpinLock& operator=(const SpinLock&) = delete;
 };
 
 // Corresponding locker object that arranges to acquire a spinlock for
@@ -213,18 +213,18 @@ class ABSL_MUST_USE_RESULT ABSL_ATTRIBUTE_TRIVIAL_ABI SpinLockHolder;
 #endif
 
 class ABSL_SCOPED_LOCKABLE SpinLockHolder {
-public:
-  inline explicit SpinLockHolder(SpinLock *l) ABSL_EXCLUSIVE_LOCK_FUNCTION(l)
+ public:
+  inline explicit SpinLockHolder(SpinLock* l) ABSL_EXCLUSIVE_LOCK_FUNCTION(l)
       : lock_(l) {
     l->Lock();
   }
   inline ~SpinLockHolder() ABSL_UNLOCK_FUNCTION() { lock_->Unlock(); }
 
-  SpinLockHolder(const SpinLockHolder &) = delete;
-  SpinLockHolder &operator=(const SpinLockHolder &) = delete;
+  SpinLockHolder(const SpinLockHolder&) = delete;
+  SpinLockHolder& operator=(const SpinLockHolder&) = delete;
 
-private:
-  SpinLock *lock_;
+ private:
+  SpinLock* lock_;
 };
 
 // Register a hook for profiling support.
@@ -234,7 +234,7 @@ private:
 // and the number of wait cycles.  This is thread-safe, but only a single
 // profiler can be registered.  It is an error to call this function multiple
 // times with different arguments.
-void RegisterSpinLockProfiler(void (*fn)(const void *lock,
+void RegisterSpinLockProfiler(void (*fn)(const void* lock,
                                          int64_t wait_cycles));
 
 //------------------------------------------------------------------------------
@@ -268,8 +268,8 @@ inline uint32_t SpinLock::TryLockInternal(uint32_t lock_value,
   return lock_value;
 }
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_SPINLOCK_H_
+#endif  // ABSL_BASE_INTERNAL_SPINLOCK_H_

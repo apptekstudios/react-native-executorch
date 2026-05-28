@@ -48,42 +48,48 @@ namespace executorch::runtime {
 
 namespace internal {
 
-template <typename T> struct remove_cvref {
+template <typename T>
+struct remove_cvref {
   using type =
       typename std::remove_cv<typename std::remove_reference<T>::type>::type;
 };
 
-template <typename T> using remove_cvref_t = typename remove_cvref<T>::type;
+template <typename T>
+using remove_cvref_t = typename remove_cvref<T>::type;
 
 } // namespace internal
 
-template <typename Fn> class FunctionRef;
+template <typename Fn>
+class FunctionRef;
 
-template <typename Ret, typename... Params> class FunctionRef<Ret(Params...)> {
+template <typename Ret, typename... Params>
+class FunctionRef<Ret(Params...)> {
   Ret (*callback)(intptr_t callable, Params... params) = nullptr;
   intptr_t callable;
 
   template <typename Callable>
   static Ret callback_fn(intptr_t callable, Params... params) {
-    return (*reinterpret_cast<Callable *>(callable))(
+    return (*reinterpret_cast<Callable*>(callable))(
         std::forward<Params>(params)...);
   }
 
-public:
+ public:
   FunctionRef() = default;
   FunctionRef(std::nullptr_t) {}
 
   template <typename Callable>
   FunctionRef(
-      Callable &&callable,
+      Callable&& callable,
       // This is not the copy-constructor.
-      std::enable_if_t<!std::is_same<internal::remove_cvref_t<Callable>,
-                                     FunctionRef>::value> * = nullptr,
+      std::enable_if_t<!std::is_same<
+          internal::remove_cvref_t<Callable>,
+          FunctionRef>::value>* = nullptr,
       // Functor must be callable and return a suitable type.
-      std::enable_if_t<std::is_void<Ret>::value ||
-                       std::is_convertible<decltype(std::declval<Callable>()(
-                                               std::declval<Params>()...)),
-                                           Ret>::value> * = nullptr)
+      std::enable_if_t<
+          std::is_void<Ret>::value ||
+          std::is_convertible<
+              decltype(std::declval<Callable>()(std::declval<Params>()...)),
+              Ret>::value>* = nullptr)
       : callback(callback_fn<std::remove_reference_t<Callable>>),
         callable(reinterpret_cast<intptr_t>(&callable)) {}
 
@@ -91,9 +97,11 @@ public:
     return callback(callable, std::forward<Params>(params)...);
   }
 
-  explicit operator bool() const { return callback; }
+  explicit operator bool() const {
+    return callback;
+  }
 
-  bool operator==(const FunctionRef<Ret(Params...)> &Other) const {
+  bool operator==(const FunctionRef<Ret(Params...)>& Other) const {
     return callable == Other.callable;
   }
 };

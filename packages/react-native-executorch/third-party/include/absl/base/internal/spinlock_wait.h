@@ -18,8 +18,8 @@
 // Operations to make atomic transitions on a word, and to allow
 // waiting for those transitions to become possible.
 
-#include <atomic>
 #include <stdint.h>
+#include <atomic>
 
 #include "absl/base/internal/scheduling_mode.h"
 
@@ -62,9 +62,9 @@ void SpinLockDelay(std::atomic<uint32_t> *w, uint32_t value, int loop,
 // Returns a suggested delay in nanoseconds for iteration number "loop".
 int SpinLockSuggestedDelayNS(int loop);
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
 // In some build configurations we pass --detect-odr-violations to the
 // gold linker.  This causes it to flag weak symbol overrides as ODR
@@ -92,4 +92,4 @@ inline void absl::base_internal::SpinLockDelay(
   (w, value, loop, scheduling_mode);
 }
 
-#endif // ABSL_BASE_INTERNAL_SPINLOCK_WAIT_H_
+#endif  // ABSL_BASE_INTERNAL_SPINLOCK_WAIT_H_

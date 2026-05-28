@@ -47,7 +47,7 @@
 
 #ifdef ABSL_USES_STD_VARIANT
 
-#include <variant> // IWYU pragma: export
+#include <variant>  // IWYU pragma: export
 
 namespace absl {
 ABSL_NAMESPACE_BEGIN
@@ -64,9 +64,9 @@ using std::variant_size;
 using std::variant_size_v;
 using std::visit;
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#else // ABSL_USES_STD_VARIANT
+#else  // ABSL_USES_STD_VARIANT
 
 #include <functional>
 #include <new>
@@ -119,7 +119,8 @@ ABSL_NAMESPACE_BEGIN
 // is not allowed to allocate additional storage, such as dynamic memory, to
 // allocate the contained value. The contained value shall be allocated in a
 // region of the variant storage suitably aligned for all alternative types.
-template <typename... Ts> class variant;
+template <typename... Ts>
+class variant;
 
 // swap()
 //
@@ -137,7 +138,7 @@ template <
         absl::conjunction<std::is_move_constructible<Ts>...,
                           type_traits_internal::IsSwappable<Ts>...>::value,
         int> = 0>
-void swap(variant<Ts...> &v, variant<Ts...> &w) noexcept(noexcept(v.swap(w))) {
+void swap(variant<Ts...>& v, variant<Ts...>& w) noexcept(noexcept(v.swap(w))) {
   v.swap(w);
 }
 
@@ -167,17 +168,20 @@ void swap(variant<Ts...> &v, variant<Ts...> &w) noexcept(noexcept(v.swap(w))) {
 // Note that the set of cv-qualified specializations of `variant_size` are
 // provided to ensure that those specializations compile (especially when passed
 // within template logic).
-template <class T> struct variant_size;
+template <class T>
+struct variant_size;
 
 template <class... Ts>
 struct variant_size<variant<Ts...>>
     : std::integral_constant<std::size_t, sizeof...(Ts)> {};
 
 // Specialization of `variant_size` for const qualified variants.
-template <class T> struct variant_size<const T> : variant_size<T>::type {};
+template <class T>
+struct variant_size<const T> : variant_size<T>::type {};
 
 // Specialization of `variant_size` for volatile qualified variants.
-template <class T> struct variant_size<volatile T> : variant_size<T>::type {};
+template <class T>
+struct variant_size<volatile T> : variant_size<T>::type {};
 
 // Specialization of `variant_size` for const volatile qualified variants.
 template <class T>
@@ -207,7 +211,8 @@ struct variant_size<const volatile T> : variant_size<T>::type {};
 // Note that the set of cv-qualified specializations of `variant_alternative`
 // are provided to ensure that those specializations compile (especially when
 // passed within template logic).
-template <std::size_t I, class T> struct variant_alternative;
+template <std::size_t I, class T>
+struct variant_alternative;
 
 template <std::size_t I, class... Types>
 struct variant_alternative<I, variant<Types...>> {
@@ -216,12 +221,14 @@ struct variant_alternative<I, variant<Types...>> {
 };
 
 // Specialization of `variant_alternative` for const qualified variants.
-template <std::size_t I, class T> struct variant_alternative<I, const T> {
+template <std::size_t I, class T>
+struct variant_alternative<I, const T> {
   using type = const typename variant_alternative<I, T>::type;
 };
 
 // Specialization of `variant_alternative` for volatile qualified variants.
-template <std::size_t I, class T> struct variant_alternative<I, volatile T> {
+template <std::size_t I, class T>
+struct variant_alternative<I, volatile T> {
   using type = volatile typename variant_alternative<I, T>::type;
 };
 
@@ -254,11 +261,11 @@ using variant_alternative_t = typename variant_alternative<I, T>::type;
 //       std::cout << "The variant holds an integer";
 //   }
 template <class T, class... Types>
-constexpr bool holds_alternative(const variant<Types...> &v) noexcept {
-  static_assert(variant_internal::UnambiguousIndexOfImpl<variant<Types...>, T,
-                                                         0>::value !=
-                    sizeof...(Types),
-                "The type T must occur exactly once in Types...");
+constexpr bool holds_alternative(const variant<Types...>& v) noexcept {
+  static_assert(
+      variant_internal::UnambiguousIndexOfImpl<variant<Types...>, T,
+                                               0>::value != sizeof...(Types),
+      "The type T must occur exactly once in Types...");
   return v.index() ==
          variant_internal::UnambiguousIndexOf<variant<Types...>, T>::value;
 }
@@ -290,56 +297,57 @@ constexpr bool holds_alternative(const variant<Types...> &v) noexcept {
 
 // Overload for getting a variant's lvalue by type.
 template <class T, class... Types>
-constexpr T &get(variant<Types...> &v) { // NOLINT
+constexpr T& get(variant<Types...>& v) {  // NOLINT
   return variant_internal::VariantCoreAccess::CheckedAccess<
       variant_internal::IndexOf<T, Types...>::value>(v);
 }
 
 // Overload for getting a variant's rvalue by type.
-template <class T, class... Types> constexpr T &&get(variant<Types...> &&v) {
+template <class T, class... Types>
+constexpr T&& get(variant<Types...>&& v) {
   return variant_internal::VariantCoreAccess::CheckedAccess<
       variant_internal::IndexOf<T, Types...>::value>(std::move(v));
 }
 
 // Overload for getting a variant's const lvalue by type.
 template <class T, class... Types>
-constexpr const T &get(const variant<Types...> &v) {
+constexpr const T& get(const variant<Types...>& v) {
   return variant_internal::VariantCoreAccess::CheckedAccess<
       variant_internal::IndexOf<T, Types...>::value>(v);
 }
 
 // Overload for getting a variant's const rvalue by type.
 template <class T, class... Types>
-constexpr const T &&get(const variant<Types...> &&v) {
+constexpr const T&& get(const variant<Types...>&& v) {
   return variant_internal::VariantCoreAccess::CheckedAccess<
       variant_internal::IndexOf<T, Types...>::value>(std::move(v));
 }
 
 // Overload for getting a variant's lvalue by index.
 template <std::size_t I, class... Types>
-constexpr variant_alternative_t<I, variant<Types...>> &
-get(variant<Types...> &v) { // NOLINT
+constexpr variant_alternative_t<I, variant<Types...>>& get(
+    variant<Types...>& v) {  // NOLINT
   return variant_internal::VariantCoreAccess::CheckedAccess<I>(v);
 }
 
 // Overload for getting a variant's rvalue by index.
 template <std::size_t I, class... Types>
-constexpr variant_alternative_t<I, variant<Types...>> &&
-get(variant<Types...> &&v) {
+constexpr variant_alternative_t<I, variant<Types...>>&& get(
+    variant<Types...>&& v) {
   return variant_internal::VariantCoreAccess::CheckedAccess<I>(std::move(v));
 }
 
 // Overload for getting a variant's const lvalue by index.
 template <std::size_t I, class... Types>
-constexpr const variant_alternative_t<I, variant<Types...>> &
-get(const variant<Types...> &v) {
+constexpr const variant_alternative_t<I, variant<Types...>>& get(
+    const variant<Types...>& v) {
   return variant_internal::VariantCoreAccess::CheckedAccess<I>(v);
 }
 
 // Overload for getting a variant's const rvalue by index.
 template <std::size_t I, class... Types>
-constexpr const variant_alternative_t<I, variant<Types...>> &&
-get(const variant<Types...> &&v) {
+constexpr const variant_alternative_t<I, variant<Types...>>&& get(
+    const variant<Types...>&& v) {
   return variant_internal::VariantCoreAccess::CheckedAccess<I>(std::move(v));
 }
 
@@ -357,7 +365,7 @@ get(const variant<Types...> &&v) {
 // index.
 template <std::size_t I, class... Types>
 constexpr absl::add_pointer_t<variant_alternative_t<I, variant<Types...>>>
-get_if(variant<Types...> *v) noexcept {
+get_if(variant<Types...>* v) noexcept {
   return (v != nullptr && v->index() == I)
              ? std::addressof(
                    variant_internal::VariantCoreAccess::Access<I>(*v))
@@ -368,7 +376,7 @@ get_if(variant<Types...> *v) noexcept {
 // variant by index.
 template <std::size_t I, class... Types>
 constexpr absl::add_pointer_t<const variant_alternative_t<I, variant<Types...>>>
-get_if(const variant<Types...> *v) noexcept {
+get_if(const variant<Types...>* v) noexcept {
   return (v != nullptr && v->index() == I)
              ? std::addressof(
                    variant_internal::VariantCoreAccess::Access<I>(*v))
@@ -378,15 +386,15 @@ get_if(const variant<Types...> *v) noexcept {
 // Overload for getting a pointer to the value stored in the given variant by
 // type.
 template <class T, class... Types>
-constexpr absl::add_pointer_t<T> get_if(variant<Types...> *v) noexcept {
+constexpr absl::add_pointer_t<T> get_if(variant<Types...>* v) noexcept {
   return absl::get_if<variant_internal::IndexOf<T, Types...>::value>(v);
 }
 
 // Overload for getting a pointer to the const value stored in the given variant
 // by type.
 template <class T, class... Types>
-constexpr absl::add_pointer_t<const T>
-get_if(const variant<Types...> *v) noexcept {
+constexpr absl::add_pointer_t<const T> get_if(
+    const variant<Types...>* v) noexcept {
   return absl::get_if<variant_internal::IndexOf<T, Types...>::value>(v);
 }
 
@@ -415,10 +423,10 @@ get_if(const variant<Types...> *v) noexcept {
 //   GetVariant visitor;
 //   absl::visit(visitor, foo);  // Prints `The variant's value is: foo'
 template <typename Visitor, typename... Variants>
-variant_internal::VisitResult<Visitor, Variants...> visit(Visitor &&vis,
-                                                          Variants &&...vars) {
+variant_internal::VisitResult<Visitor, Variants...> visit(Visitor&& vis,
+                                                          Variants&&... vars) {
   return variant_internal::
-      VisitIndices<variant_size<absl::decay_t<Variants>>::value...>::Run(
+      VisitIndices<variant_size<absl::decay_t<Variants> >::value...>::Run(
           variant_internal::PerformVisitation<Visitor, Variants...>{
               std::forward_as_tuple(std::forward<Variants>(vars)...),
               std::forward<Visitor>(vis)},
@@ -440,19 +448,20 @@ constexpr bool operator>=(monostate, monostate) noexcept { return true; }
 constexpr bool operator==(monostate, monostate) noexcept { return true; }
 constexpr bool operator!=(monostate, monostate) noexcept { return false; }
 
+
 //------------------------------------------------------------------------------
 // `absl::variant` Template Definition
 //------------------------------------------------------------------------------
 template <typename T0, typename... Tn>
 class variant<T0, Tn...> : private variant_internal::VariantBase<T0, Tn...> {
-  static_assert(
-      absl::conjunction<std::is_object<T0>, std::is_object<Tn>...>::value,
-      "Attempted to instantiate a variant containing a non-object "
-      "type.");
+  static_assert(absl::conjunction<std::is_object<T0>,
+                                  std::is_object<Tn>...>::value,
+                "Attempted to instantiate a variant containing a non-object "
+                "type.");
   // Intentionally not qualifying `negation` with `absl::` to work around a bug
   // in MSVC 2015 with inline namespace and variadic template.
-  static_assert(absl::conjunction<negation<std::is_array<T0>>,
-                                  negation<std::is_array<Tn>>...>::value,
+  static_assert(absl::conjunction<negation<std::is_array<T0> >,
+                                  negation<std::is_array<Tn> >...>::value,
                 "Attempted to instantiate a variant containing an array type.");
   static_assert(absl::conjunction<std::is_nothrow_destructible<T0>,
                                   std::is_nothrow_destructible<Tn>...>::value,
@@ -461,10 +470,10 @@ class variant<T0, Tn...> : private variant_internal::VariantBase<T0, Tn...> {
 
   friend struct variant_internal::VariantCoreAccess;
 
-private:
+ private:
   using Base = variant_internal::VariantBase<T0, Tn...>;
 
-public:
+ public:
   // Constructors
 
   // Constructs a variant holding a default-initialized value of the first
@@ -472,10 +481,10 @@ public:
   constexpr variant() /*noexcept(see 111above)*/ = default;
 
   // Copy constructor, standard semantics
-  variant(const variant &other) = default;
+  variant(const variant& other) = default;
 
   // Move constructor, standard semantics
-  variant(variant &&other) /*noexcept(see above)*/ = default;
+  variant(variant&& other) /*noexcept(see above)*/ = default;
 
   // Constructs a variant of an alternative type specified by overload
   // resolution of the provided forwarding arguments through
@@ -491,11 +500,11 @@ public:
       class T,
       std::size_t I = std::enable_if<
           variant_internal::IsNeitherSelfNorInPlace<variant,
-                                                    absl::decay_t<T>>::value,
-          variant_internal::IndexOfConstructedType<variant, T>>::type::value,
+                                                    absl::decay_t<T> >::value,
+          variant_internal::IndexOfConstructedType<variant, T> >::type::value,
       class Tj = absl::variant_alternative_t<I, variant>,
-      absl::enable_if_t<std::is_constructible<Tj, T>::value> * = nullptr>
-  constexpr variant(T &&t) noexcept(std::is_nothrow_constructible<Tj, T>::value)
+      absl::enable_if_t<std::is_constructible<Tj, T>::value>* = nullptr>
+  constexpr variant(T&& t) noexcept(std::is_nothrow_constructible<Tj, T>::value)
       : Base(variant_internal::EmplaceTag<I>(), std::forward<T>(t)) {}
 
   // Constructs a variant of an alternative type from the arguments through
@@ -506,8 +515,8 @@ public:
   template <class T, class... Args,
             typename std::enable_if<std::is_constructible<
                 variant_internal::UnambiguousTypeOfT<variant, T>,
-                Args...>::value>::type * = nullptr>
-  constexpr explicit variant(in_place_type_t<T>, Args &&...args)
+                Args...>::value>::type* = nullptr>
+  constexpr explicit variant(in_place_type_t<T>, Args&&... args)
       : Base(variant_internal::EmplaceTag<
                  variant_internal::UnambiguousIndexOf<variant, T>::value>(),
              std::forward<Args>(args)...) {}
@@ -520,9 +529,9 @@ public:
   template <class T, class U, class... Args,
             typename std::enable_if<std::is_constructible<
                 variant_internal::UnambiguousTypeOfT<variant, T>,
-                std::initializer_list<U> &, Args...>::value>::type * = nullptr>
+                std::initializer_list<U>&, Args...>::value>::type* = nullptr>
   constexpr explicit variant(in_place_type_t<T>, std::initializer_list<U> il,
-                             Args &&...args)
+                             Args&&... args)
       : Base(variant_internal::EmplaceTag<
                  variant_internal::UnambiguousIndexOf<variant, T>::value>(),
              il, std::forward<Args>(args)...) {}
@@ -532,8 +541,8 @@ public:
   template <std::size_t I, class... Args,
             typename std::enable_if<std::is_constructible<
                 variant_internal::VariantAlternativeSfinaeT<I, variant>,
-                Args...>::value>::type * = nullptr>
-  constexpr explicit variant(in_place_index_t<I>, Args &&...args)
+                Args...>::value>::type* = nullptr>
+  constexpr explicit variant(in_place_index_t<I>, Args&&... args)
       : Base(variant_internal::EmplaceTag<I>(), std::forward<Args>(args)...) {}
 
   // Constructs a variant of an alternative type from a provided index,
@@ -542,9 +551,9 @@ public:
   template <std::size_t I, class U, class... Args,
             typename std::enable_if<std::is_constructible<
                 variant_internal::VariantAlternativeSfinaeT<I, variant>,
-                std::initializer_list<U> &, Args...>::value>::type * = nullptr>
+                std::initializer_list<U>&, Args...>::value>::type* = nullptr>
   constexpr explicit variant(in_place_index_t<I>, std::initializer_list<U> il,
-                             Args &&...args)
+                             Args&&... args)
       : Base(variant_internal::EmplaceTag<I>(), il,
              std::forward<Args>(args)...) {}
 
@@ -557,10 +566,10 @@ public:
   // Assignment Operators
 
   // Copy assignment operator
-  variant &operator=(const variant &other) = default;
+  variant& operator=(const variant& other) = default;
 
   // Move assignment operator
-  variant &operator=(variant &&other) /*noexcept(see above)*/ = default;
+  variant& operator=(variant&& other) /*noexcept(see above)*/ = default;
 
   // Converting assignment operator
   //
@@ -573,12 +582,12 @@ public:
           !std::is_same<absl::decay_t<T>, variant>::value,
           variant_internal::IndexOfConstructedType<variant, T>>::type::value,
       class Tj = absl::variant_alternative_t<I, variant>,
-      typename std::enable_if<std::is_assignable<Tj &, T>::value &&
-                              std::is_constructible<Tj, T>::value>::type * =
+      typename std::enable_if<std::is_assignable<Tj&, T>::value &&
+                              std::is_constructible<Tj, T>::value>::type* =
           nullptr>
-  variant &
-  operator=(T &&t) noexcept(std::is_nothrow_assignable<Tj &, T>::value &&
-                            std::is_nothrow_constructible<Tj, T>::value) {
+  variant& operator=(T&& t) noexcept(
+      std::is_nothrow_assignable<Tj&, T>::value&&
+          std::is_nothrow_constructible<Tj, T>::value) {
     variant_internal::VisitIndices<sizeof...(Tn) + 1>::Run(
         variant_internal::VariantCoreAccess::MakeConversionAssignVisitor(
             this, std::forward<T>(t)),
@@ -586,6 +595,7 @@ public:
 
     return *this;
   }
+
 
   // emplace() Functions
 
@@ -604,8 +614,8 @@ public:
       typename std::enable_if<std::is_constructible<
           absl::variant_alternative_t<
               variant_internal::UnambiguousIndexOf<variant, T>::value, variant>,
-          Args...>::value>::type * = nullptr>
-  T &emplace(Args &&...args) {
+          Args...>::value>::type* = nullptr>
+  T& emplace(Args&&... args) {
     return variant_internal::VariantCoreAccess::Replace<
         variant_internal::UnambiguousIndexOf<variant, T>::value>(
         this, std::forward<Args>(args)...);
@@ -625,8 +635,8 @@ public:
       typename std::enable_if<std::is_constructible<
           absl::variant_alternative_t<
               variant_internal::UnambiguousIndexOf<variant, T>::value, variant>,
-          std::initializer_list<U> &, Args...>::value>::type * = nullptr>
-  T &emplace(std::initializer_list<U> il, Args &&...args) {
+          std::initializer_list<U>&, Args...>::value>::type* = nullptr>
+  T& emplace(std::initializer_list<U> il, Args&&... args) {
     return variant_internal::VariantCoreAccess::Replace<
         variant_internal::UnambiguousIndexOf<variant, T>::value>(
         this, il, std::forward<Args>(args)...);
@@ -643,10 +653,10 @@ public:
   //   v.emplace<2>(98);
   //   v.emplace<int>(99);  // Won't compile. 'int' isn't a unique type.
   template <std::size_t I, class... Args,
-            typename std::enable_if<std::is_constructible<
-                absl::variant_alternative_t<I, variant>, Args...>::value>::type
-                * = nullptr>
-  absl::variant_alternative_t<I, variant> &emplace(Args &&...args) {
+            typename std::enable_if<
+                std::is_constructible<absl::variant_alternative_t<I, variant>,
+                                      Args...>::value>::type* = nullptr>
+  absl::variant_alternative_t<I, variant>& emplace(Args&&... args) {
     return variant_internal::VariantCoreAccess::Replace<I>(
         this, std::forward<Args>(args)...);
   }
@@ -662,9 +672,9 @@ public:
   template <std::size_t I, class U, class... Args,
             typename std::enable_if<std::is_constructible<
                 absl::variant_alternative_t<I, variant>,
-                std::initializer_list<U> &, Args...>::value>::type * = nullptr>
-  absl::variant_alternative_t<I, variant> &emplace(std::initializer_list<U> il,
-                                                   Args &&...args) {
+                std::initializer_list<U>&, Args...>::value>::type* = nullptr>
+  absl::variant_alternative_t<I, variant>& emplace(std::initializer_list<U> il,
+                                                   Args&&... args) {
     return variant_internal::VariantCoreAccess::Replace<I>(
         this, il, std::forward<Args>(args)...);
   }
@@ -686,7 +696,7 @@ public:
   //
   // Swaps the values of two variant objects.
   //
-  void swap(variant &rhs) noexcept(
+  void swap(variant& rhs) noexcept(
       absl::conjunction<
           std::is_nothrow_move_constructible<T0>,
           std::is_nothrow_move_constructible<Tn>...,
@@ -700,7 +710,8 @@ public:
 // We need a valid declaration of variant<> for SFINAE and overload resolution
 // to work properly above, but we don't need a full declaration since this type
 // will never be constructed. This declaration, though incomplete, suffices.
-template <> class variant<>;
+template <>
+class variant<>;
 
 //------------------------------------------------------------------------------
 // Relational Operators
@@ -728,8 +739,8 @@ template <> class variant<>;
 
 // Equal-to operator
 template <typename... Types>
-constexpr variant_internal::RequireAllHaveEqualT<Types...>
-operator==(const variant<Types...> &a, const variant<Types...> &b) {
+constexpr variant_internal::RequireAllHaveEqualT<Types...> operator==(
+    const variant<Types...>& a, const variant<Types...>& b) {
   return (a.index() == b.index()) &&
          variant_internal::VisitIndices<sizeof...(Types)>::Run(
              variant_internal::EqualsOp<Types...>{&a, &b}, a.index());
@@ -737,8 +748,8 @@ operator==(const variant<Types...> &a, const variant<Types...> &b) {
 
 // Not equal operator
 template <typename... Types>
-constexpr variant_internal::RequireAllHaveNotEqualT<Types...>
-operator!=(const variant<Types...> &a, const variant<Types...> &b) {
+constexpr variant_internal::RequireAllHaveNotEqualT<Types...> operator!=(
+    const variant<Types...>& a, const variant<Types...>& b) {
   return (a.index() != b.index()) ||
          variant_internal::VisitIndices<sizeof...(Types)>::Run(
              variant_internal::NotEqualsOp<Types...>{&a, &b}, a.index());
@@ -746,8 +757,8 @@ operator!=(const variant<Types...> &a, const variant<Types...> &b) {
 
 // Less-than operator
 template <typename... Types>
-constexpr variant_internal::RequireAllHaveLessThanT<Types...>
-operator<(const variant<Types...> &a, const variant<Types...> &b) {
+constexpr variant_internal::RequireAllHaveLessThanT<Types...> operator<(
+    const variant<Types...>& a, const variant<Types...>& b) {
   return (a.index() != b.index())
              ? (a.index() + 1) < (b.index() + 1)
              : variant_internal::VisitIndices<sizeof...(Types)>::Run(
@@ -756,8 +767,8 @@ operator<(const variant<Types...> &a, const variant<Types...> &b) {
 
 // Greater-than operator
 template <typename... Types>
-constexpr variant_internal::RequireAllHaveGreaterThanT<Types...>
-operator>(const variant<Types...> &a, const variant<Types...> &b) {
+constexpr variant_internal::RequireAllHaveGreaterThanT<Types...> operator>(
+    const variant<Types...>& a, const variant<Types...>& b) {
   return (a.index() != b.index())
              ? (a.index() + 1) > (b.index() + 1)
              : variant_internal::VisitIndices<sizeof...(Types)>::Run(
@@ -767,8 +778,8 @@ operator>(const variant<Types...> &a, const variant<Types...> &b) {
 
 // Less-than or equal-to operator
 template <typename... Types>
-constexpr variant_internal::RequireAllHaveLessThanOrEqualT<Types...>
-operator<=(const variant<Types...> &a, const variant<Types...> &b) {
+constexpr variant_internal::RequireAllHaveLessThanOrEqualT<Types...> operator<=(
+    const variant<Types...>& a, const variant<Types...>& b) {
   return (a.index() != b.index())
              ? (a.index() + 1) < (b.index() + 1)
              : variant_internal::VisitIndices<sizeof...(Types)>::Run(
@@ -779,7 +790,7 @@ operator<=(const variant<Types...> &a, const variant<Types...> &b) {
 // Greater-than or equal-to operator
 template <typename... Types>
 constexpr variant_internal::RequireAllHaveGreaterThanOrEqualT<Types...>
-operator>=(const variant<Types...> &a, const variant<Types...> &b) {
+operator>=(const variant<Types...>& a, const variant<Types...>& b) {
   return (a.index() != b.index())
              ? (a.index() + 1) > (b.index() + 1)
              : variant_internal::VisitIndices<sizeof...(Types)>::Run(
@@ -788,24 +799,24 @@ operator>=(const variant<Types...> &a, const variant<Types...> &b) {
 }
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
 namespace std {
 
 // hash()
-template <> // NOLINT
+template <>  // NOLINT
 struct hash<absl::monostate> {
   std::size_t operator()(absl::monostate) const { return 0; }
 };
 
-template <class... T> // NOLINT
+template <class... T>  // NOLINT
 struct hash<absl::variant<T...>>
     : absl::variant_internal::VariantHashBase<absl::variant<T...>, void,
                                               absl::remove_const_t<T>...> {};
 
-} // namespace std
+}  // namespace std
 
-#endif // ABSL_USES_STD_VARIANT
+#endif  // ABSL_USES_STD_VARIANT
 
 namespace absl {
 ABSL_NAMESPACE_BEGIN
@@ -813,13 +824,15 @@ namespace variant_internal {
 
 // Helper visitor for converting a variant<Ts...>` into another type (mostly
 // variant) that can be constructed from any type.
-template <typename To> struct ConversionVisitor {
-  template <typename T> To operator()(T &&v) const {
+template <typename To>
+struct ConversionVisitor {
+  template <typename T>
+  To operator()(T&& v) const {
     return To(std::forward<T>(v));
   }
 };
 
-} // namespace variant_internal
+}  // namespace variant_internal
 
 // ConvertVariantTo()
 //
@@ -837,12 +850,12 @@ template <typename To> struct ConversionVisitor {
 //              InternalReq(req));
 //   }
 template <typename To, typename Variant>
-To ConvertVariantTo(Variant &&variant) {
+To ConvertVariantTo(Variant&& variant) {
   return absl::visit(variant_internal::ConversionVisitor<To>{},
                      std::forward<Variant>(variant));
 }
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_TYPES_VARIANT_H_
+#endif  // ABSL_TYPES_VARIANT_H_

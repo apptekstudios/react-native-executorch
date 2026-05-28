@@ -103,7 +103,7 @@ class CordBufferTestPeer;
 // A `moved from` CordBuffer instance will have a valid, but empty state.
 // CordBuffer is thread compatible.
 class CordBuffer {
-public:
+ public:
   // kDefaultLimit
   //
   // Default capacity limits of allocated CordBuffers.
@@ -127,10 +127,10 @@ public:
   ~CordBuffer();
 
   // CordBuffer is move-only
-  CordBuffer(CordBuffer &&rhs) noexcept;
-  CordBuffer &operator=(CordBuffer &&) noexcept;
-  CordBuffer(const CordBuffer &) = delete;
-  CordBuffer &operator=(const CordBuffer &) = delete;
+  CordBuffer(CordBuffer&& rhs) noexcept;
+  CordBuffer& operator=(CordBuffer&&) noexcept;
+  CordBuffer(const CordBuffer&) = delete;
+  CordBuffer& operator=(const CordBuffer&) = delete;
 
   // CordBuffer::MaximumPayload()
   //
@@ -246,8 +246,8 @@ public:
   // Applications are allowed to write up to `capacity` bytes of instance data.
   // CordBuffer data is uninitialized by default. Reading data from an instance
   // that has not yet been initialized will lead to undefined behavior.
-  char *data();
-  const char *data() const;
+  char* data();
+  const char* data() const;
 
   // CordBuffer::length()
   //
@@ -287,7 +287,7 @@ public:
   // in combination with the 'available()` or `available_up_to()` methods.
   void SetLength(size_t length);
 
-private:
+ private:
   // Make sure we don't accidentally over promise.
   static_assert(kCustomLimit <= cord_internal::kMaxLargeFlatSize, "");
 
@@ -317,14 +317,14 @@ private:
     Rep() : short_rep{} {}
 
     // Creates an instance managing an allocated non zero CordRep.
-    explicit Rep(cord_internal::CordRepFlat *rep) : long_rep{rep} {
+    explicit Rep(cord_internal::CordRepFlat* rep) : long_rep{rep} {
       assert(rep != nullptr);
     }
 
     // Returns true if this instance manages the SSO internal buffer.
     bool is_short() const {
       constexpr size_t offset = offsetof(Short, raw_size);
-      return (reinterpret_cast<const char *>(this)[offset] & 1) != 0;
+      return (reinterpret_cast<const char*>(this)[offset] & 1) != 0;
     }
 
     // Returns the available area of the internal SSO data
@@ -361,17 +361,17 @@ private:
     }
 
     // Returns reference to the internal SSO data buffer.
-    char *data() {
+    char* data() {
       assert(is_short());
       return short_rep.data;
     }
-    const char *data() const {
+    const char* data() const {
       assert(is_short());
       return short_rep.data;
     }
 
     // Returns a pointer the external CordRep managed by this instance.
-    cord_internal::CordRepFlat *rep() const {
+    cord_internal::CordRepFlat* rep() const {
       assert(!is_short());
       return long_rep.rep;
     }
@@ -382,9 +382,9 @@ private:
     // indicator overlapping with the least significant byte of the CordRep*.
 #if defined(ABSL_IS_BIG_ENDIAN)
     struct Long {
-      explicit Long(cord_internal::CordRepFlat *rep_arg) : rep(rep_arg) {}
-      void *padding;
-      cord_internal::CordRepFlat *rep;
+      explicit Long(cord_internal::CordRepFlat* rep_arg) : rep(rep_arg) {}
+      void* padding;
+      cord_internal::CordRepFlat* rep;
     };
     struct Short {
       char data[sizeof(Long) - 1];
@@ -392,9 +392,9 @@ private:
     };
 #else
     struct Long {
-      explicit Long(cord_internal::CordRepFlat *rep_arg) : rep(rep_arg) {}
-      cord_internal::CordRepFlat *rep;
-      void *padding;
+      explicit Long(cord_internal::CordRepFlat* rep_arg) : rep(rep_arg) {}
+      cord_internal::CordRepFlat* rep;
+      void* padding;
     };
     struct Short {
       char raw_size = 1;
@@ -432,8 +432,8 @@ private:
   // `short_value` to the inlined data value. In either case, the current
   // instance length is reset to zero.
   // This method is intended to be used by Cord internal functions only.
-  cord_internal::CordRep *ConsumeValue(absl::string_view &short_value) {
-    cord_internal::CordRep *rep = nullptr;
+  cord_internal::CordRep* ConsumeValue(absl::string_view& short_value) {
+    cord_internal::CordRep* rep = nullptr;
     if (rep_.is_short()) {
       short_value = absl::string_view(rep_.data(), rep_.short_length());
     } else {
@@ -444,7 +444,7 @@ private:
   }
 
   // Internal constructor.
-  explicit CordBuffer(cord_internal::CordRepFlat *rep) : rep_(rep) {
+  explicit CordBuffer(cord_internal::CordRepFlat* rep) : rep_(rep) {
     assert(rep != nullptr);
   }
 
@@ -464,7 +464,7 @@ inline constexpr size_t CordBuffer::MaximumPayload(size_t block_size) {
 
 inline CordBuffer CordBuffer::CreateWithDefaultLimit(size_t capacity) {
   if (capacity > Rep::kInlineCapacity) {
-    auto *rep = cord_internal::CordRepFlat::New(capacity);
+    auto* rep = cord_internal::CordRepFlat::New(capacity);
     rep->length = 0;
     return CordBuffer(rep);
   }
@@ -472,9 +472,8 @@ inline CordBuffer CordBuffer::CreateWithDefaultLimit(size_t capacity) {
 }
 
 template <typename... AllocationHints>
-inline CordBuffer
-CordBuffer::CreateWithCustomLimitImpl(size_t block_size, size_t capacity,
-                                      AllocationHints... hints) {
+inline CordBuffer CordBuffer::CreateWithCustomLimitImpl(
+    size_t block_size, size_t capacity, AllocationHints... hints) {
   assert(IsPow2(block_size));
   capacity = (std::min)(capacity, kCustomLimit);
   block_size = (std::min)(block_size, kCustomLimit);
@@ -498,7 +497,7 @@ CordBuffer::CreateWithCustomLimitImpl(size_t block_size, size_t capacity,
     }
   }
   const size_t length = capacity - kOverhead;
-  auto *rep = CordRepFlat::New(CordRepFlat::Large(), length, hints...);
+  auto* rep = CordRepFlat::New(CordRepFlat::Large(), length, hints...);
   rep->length = 0;
   return CordBuffer(rep);
 }
@@ -514,13 +513,12 @@ inline CordBuffer::~CordBuffer() {
   }
 }
 
-inline CordBuffer::CordBuffer(CordBuffer &&rhs) noexcept : rep_(rhs.rep_) {
+inline CordBuffer::CordBuffer(CordBuffer&& rhs) noexcept : rep_(rhs.rep_) {
   rhs.rep_.set_short_length(0);
 }
 
-inline CordBuffer &CordBuffer::operator=(CordBuffer &&rhs) noexcept {
-  if (!rep_.is_short())
-    cord_internal::CordRepFlat::Delete(rep_.rep());
+inline CordBuffer& CordBuffer::operator=(CordBuffer&& rhs) noexcept {
+  if (!rep_.is_short()) cord_internal::CordRepFlat::Delete(rep_.rep());
   rep_ = rhs.rep_;
   rhs.rep_.set_short_length(0);
   return *this;
@@ -534,11 +532,11 @@ inline absl::Span<char> CordBuffer::available_up_to(size_t size) {
   return available().subspan(0, size);
 }
 
-inline char *CordBuffer::data() {
+inline char* CordBuffer::data() {
   return rep_.is_short() ? rep_.data() : rep_.rep()->Data();
 }
 
-inline const char *CordBuffer::data() const {
+inline const char* CordBuffer::data() const {
   return rep_.is_short() ? rep_.data() : rep_.rep()->Data();
 }
 
@@ -569,6 +567,6 @@ inline void CordBuffer::IncreaseLengthBy(size_t n) {
 }
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_CORD_BUFFER_H_
+#endif  // ABSL_STRINGS_CORD_BUFFER_H_

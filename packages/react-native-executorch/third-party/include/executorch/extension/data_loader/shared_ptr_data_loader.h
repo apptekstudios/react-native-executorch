@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <c10/util/safe_numerics.h>
 #include <executorch/runtime/core/data_loader.h>
 #include <executorch/runtime/core/error.h>
 #include <executorch/runtime/core/result.h>
@@ -24,27 +25,33 @@ namespace extension {
  * This can be used to wrap data that was allocated elsewhere.
  */
 class SharedPtrDataLoader final : public executorch::runtime::DataLoader {
-public:
+ public:
   SharedPtrDataLoader(std::shared_ptr<void> data, size_t size)
       : data_(data), size_(size) {}
 
   ET_NODISCARD
-  executorch::runtime::Result<executorch::runtime::FreeableBuffer>
-  load(size_t offset, size_t size,
-       ET_UNUSED const DataLoader::SegmentInfo &segment_info) const override {
-    ET_CHECK_OR_RETURN_ERROR(offset + size <= size_, InvalidArgument,
-                             "offset %zu + size %zu > size_ %zu", offset, size,
-                             size_);
+  executorch::runtime::Result<executorch::runtime::FreeableBuffer> load(
+      size_t offset,
+      size_t size,
+      ET_UNUSED const DataLoader::SegmentInfo& segment_info) const override {
+    size_t total_size;
+    bool overflow = c10::add_overflows(offset, size, &total_size);
+    ET_CHECK_OR_RETURN_ERROR(
+        !overflow && total_size <= size_,
+        InvalidArgument,
+        "offset %zu + size %zu > size_ %zu, or overflow detected",
+        offset,
+        size,
+        size_);
     return executorch::runtime::FreeableBuffer(
-        static_cast<uint8_t *>(data_.get()) + offset, size,
-        /*free_fn=*/nullptr);
+        static_cast<uint8_t*>(data_.get()) + offset, size, /*free_fn=*/nullptr);
   }
 
   ET_NODISCARD executorch::runtime::Result<size_t> size() const override {
     return size_;
   }
 
-private:
+ private:
   const std::shared_ptr<void> data_;
   const size_t size_;
 };

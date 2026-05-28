@@ -8,41 +8,45 @@
 
 #pragma once
 
+#include <executorch/runtime/core/error.h> // @manual
+#include <executorch/runtime/core/result.h> // @manual
 #include <executorch/runtime/core/tensor_shape_dynamism.h> // @manual
+#include <executorch/runtime/platform/assert.h> // @manual
 #include <executorch/runtime/platform/compiler.h>
 #ifdef USE_ATEN_LIB
 #include <ATen/Tensor.h> // @manual
 #include <c10/core/Device.h>
-#include <c10/core/DeviceType.h>    // @manual
-#include <c10/core/Layout.h>        // @manual
-#include <c10/core/MemoryFormat.h>  // @manual
-#include <c10/core/Scalar.h>        // @manual
-#include <c10/util/ArrayRef.h>      // @manual
+#include <c10/core/DeviceType.h> // @manual
+#include <c10/core/Layout.h> // @manual
+#include <c10/core/MemoryFormat.h> // @manual
+#include <c10/core/Scalar.h> // @manual
+#include <c10/util/ArrayRef.h> // @manual
 #include <c10/util/BFloat16-math.h> // @manual
-#include <c10/util/BFloat16.h>      // @manual
-#include <c10/util/Half.h>          // @manual
-#include <c10/util/Optional.h>      // @manual
-#include <c10/util/complex.h>       // @manual
-#include <c10/util/qint32.h>        // @manual
-#include <c10/util/qint8.h>         // @manual
-#include <c10/util/quint2x4.h>      // @manual
-#include <c10/util/quint4x2.h>      // @manual
-#include <c10/util/quint8.h>        // @manual
-#include <c10/util/string_view.h>   // @manual
+#include <c10/util/BFloat16.h> // @manual
+#include <c10/util/Half.h> // @manual
+#include <c10/util/Optional.h> // @manual
+#include <c10/util/complex.h> // @manual
+#include <c10/util/qint32.h> // @manual
+#include <c10/util/qint8.h> // @manual
+#include <c10/util/quint2x4.h> // @manual
+#include <c10/util/quint4x2.h> // @manual
+#include <c10/util/quint8.h> // @manual
+#include <c10/util/safe_numerics.h> // @manual
+#include <c10/util/string_view.h> // @manual
 #include <torch/torch.h>
-#else                                                            // use executor
-#include <executorch/runtime/core/array_ref.h>                   // @manual
-#include <executorch/runtime/core/portable_type/bfloat16.h>      // @manual
+#else // use executor
+#include <executorch/runtime/core/array_ref.h> // @manual
+#include <executorch/runtime/core/portable_type/bfloat16.h> // @manual
 #include <executorch/runtime/core/portable_type/bfloat16_math.h> // @manual
-#include <executorch/runtime/core/portable_type/complex.h>       // @manual
-#include <executorch/runtime/core/portable_type/device.h>        // @manual
-#include <executorch/runtime/core/portable_type/half.h>          // @manual
-#include <executorch/runtime/core/portable_type/optional.h>      // @manual
-#include <executorch/runtime/core/portable_type/qint_types.h>    // @manual
-#include <executorch/runtime/core/portable_type/scalar.h>        // @manual
-#include <executorch/runtime/core/portable_type/scalar_type.h>   // @manual
-#include <executorch/runtime/core/portable_type/string_view.h>   // @manual
-#include <executorch/runtime/core/portable_type/tensor.h>        // @manual
+#include <executorch/runtime/core/portable_type/complex.h> // @manual
+#include <executorch/runtime/core/portable_type/device.h> // @manual
+#include <executorch/runtime/core/portable_type/half.h> // @manual
+#include <executorch/runtime/core/portable_type/optional.h> // @manual
+#include <executorch/runtime/core/portable_type/qint_types.h> // @manual
+#include <executorch/runtime/core/portable_type/scalar.h> // @manual
+#include <executorch/runtime/core/portable_type/scalar_type.h> // @manual
+#include <executorch/runtime/core/portable_type/string_view.h> // @manual
+#include <executorch/runtime/core/portable_type/tensor.h> // @manual
 #include <executorch/runtime/core/portable_type/tensor_options.h> // @manual
 
 #endif
@@ -77,7 +81,8 @@ using std::string_view;
 using Tensor = at::Tensor;
 using TensorList = at::TensorList;
 using TensorImpl = at::TensorImpl;
-template <typename T> using ArrayRef = c10::ArrayRef<T>;
+template <typename T>
+using ArrayRef = c10::ArrayRef<T>;
 using ScalarType = at::ScalarType;
 using Scalar = c10::Scalar;
 using MemoryFormat = c10::MemoryFormat;
@@ -90,7 +95,8 @@ using Layout = c10::Layout;
 
 // Custom types that map to ScalarType
 using Half = c10::Half;
-template <typename T> using complex = c10::complex<T>;
+template <typename T>
+using complex = c10::complex<T>;
 using qint8 = c10::qint8;
 using quint8 = c10::quint8;
 using qint32 = c10::qint32;
@@ -99,12 +105,39 @@ using quint4x2 = c10::quint4x2;
 using quint2x4 = c10::quint2x4;
 using IntArrayRef = at::IntArrayRef;
 
-template <typename T> using OptionalArrayRef = c10::OptionalArrayRef<T>;
+template <typename T>
+using OptionalArrayRef = c10::OptionalArrayRef<T>;
 using OptionalIntArrayRef = OptionalArrayRef<int64_t>;
 
-inline ssize_t compute_numel(const SizesType *sizes, ssize_t dim) {
+inline ssize_t compute_numel(const SizesType* sizes, ssize_t dim) {
   return static_cast<ssize_t>(
       c10::multiply_integers(c10::ArrayRef<SizesType>(sizes, dim)));
+}
+
+inline ::executorch::runtime::Result<ssize_t> safe_numel(
+    const SizesType* sizes,
+    ssize_t dim) {
+  ET_CHECK_OR_RETURN_ERROR(
+      dim == 0 || sizes != nullptr,
+      InvalidArgument,
+      "Sizes must be provided for non-scalar tensors");
+  ssize_t numel = 1;
+  for (ssize_t i = 0; i < dim; i++) {
+    ET_CHECK_OR_RETURN_ERROR(
+        sizes[i] >= 0,
+        InvalidArgument,
+        "Size must be non-negative, got %zd at dimension %zd",
+        static_cast<ssize_t>(sizes[i]),
+        i);
+    ssize_t next_numel;
+    ET_CHECK_OR_RETURN_ERROR(
+        !c10::mul_overflows(numel, static_cast<ssize_t>(sizes[i]), &next_numel),
+        InvalidArgument,
+        "Overflow computing numel at dimension %zd",
+        i);
+    numel = next_numel;
+  }
+  return numel;
 }
 
 #undef ET_PRI_TENSOR_SIZE
@@ -123,7 +156,8 @@ inline ssize_t compute_numel(const SizesType *sizes, ssize_t dim) {
 
 using Tensor = torch::executor::Tensor;
 using TensorImpl = torch::executor::TensorImpl;
-template <typename T> using ArrayRef = torch::executor::ArrayRef<T>;
+template <typename T>
+using ArrayRef = torch::executor::ArrayRef<T>;
 using ScalarType = torch::executor::ScalarType;
 using TensorList = ArrayRef<Tensor>;
 using Scalar = torch::executor::Scalar;
@@ -137,7 +171,8 @@ using Layout = torch::executor::Layout;
 
 // Custom types that map to ScalarType
 using Half = torch::executor::Half;
-template <typename T> using complex = torch::executor::complex<T>;
+template <typename T>
+using complex = torch::executor::complex<T>;
 using qint8 = torch::executor::qint8;
 using quint8 = torch::executor::quint8;
 using qint32 = torch::executor::qint32;
@@ -153,6 +188,7 @@ using OptionalArrayRef =
 using OptionalIntArrayRef = OptionalArrayRef<int64_t>;
 
 using torch::executor::compute_numel;
+using torch::executor::safe_numel;
 
 #endif // Use ExecuTorch types
 

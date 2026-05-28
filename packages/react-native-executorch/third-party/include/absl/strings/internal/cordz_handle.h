@@ -33,7 +33,7 @@ namespace cord_internal {
 // be deleted prematurely. This allows the profiler to inspect all CordzInfo
 // objects that are alive without needing to hold a global lock.
 class ABSL_DLL CordzHandle {
-public:
+ public:
   CordzHandle() : CordzHandle(false) {}
 
   bool is_snapshot() const { return is_snapshot_; }
@@ -52,16 +52,16 @@ public:
   // Deletes the provided instance, or puts it on the delete queue to be deleted
   // once there are no more sample tokens (snapshot) instances potentially
   // referencing the instance. `handle` should not be null.
-  static void Delete(CordzHandle *handle);
+  static void Delete(CordzHandle* handle);
 
   // Returns the current entries in the delete queue in LIFO order.
-  static std::vector<const CordzHandle *> DiagnosticsGetDeleteQueue();
+  static std::vector<const CordzHandle*> DiagnosticsGetDeleteQueue();
 
   // Returns true if the provided handle is nullptr or guarded by this handle.
   // Since the CordzSnapshot token is itself a CordzHandle, this method will
   // allow tests to check if that token is keeping an arbitrary CordzHandle
   // alive.
-  bool DiagnosticsHandleIsSafeToInspect(const CordzHandle *handle) const;
+  bool DiagnosticsHandleIsSafeToInspect(const CordzHandle* handle) const;
 
   // Returns the current entries in the delete queue, in LIFO order, that are
   // protected by this. CordzHandle objects are only placed on the delete queue
@@ -70,29 +70,29 @@ public:
   // included in the return vector. For each of the handles in the return
   // vector, the earliest that their memory can be freed is when this
   // CordzSnapshot object is deleted.
-  std::vector<const CordzHandle *> DiagnosticsGetSafeToInspectDeletedHandles();
+  std::vector<const CordzHandle*> DiagnosticsGetSafeToInspectDeletedHandles();
 
-protected:
+ protected:
   explicit CordzHandle(bool is_snapshot);
   virtual ~CordzHandle();
 
-private:
+ private:
   const bool is_snapshot_;
 
   // dq_prev_ and dq_next_ require the global queue mutex to be held.
   // Unfortunately we can't use thread annotations such that the thread safety
   // analysis understands that queue_ and global_queue_ are one and the same.
-  CordzHandle *dq_prev_ = nullptr;
-  CordzHandle *dq_next_ = nullptr;
+  CordzHandle* dq_prev_  = nullptr;
+  CordzHandle* dq_next_ = nullptr;
 };
 
 class CordzSnapshot : public CordzHandle {
-public:
+ public:
   CordzSnapshot() : CordzHandle(true) {}
 };
 
-} // namespace cord_internal
+}  // namespace cord_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CORDZ_HANDLE_H_
+#endif  // ABSL_STRINGS_INTERNAL_CORDZ_HANDLE_H_

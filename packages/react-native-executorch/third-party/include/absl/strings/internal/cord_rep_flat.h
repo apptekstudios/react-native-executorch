@@ -75,7 +75,9 @@ static_assert(AllocatedSizeToTagUnchecked(kMaxLargeFlatSize) == MAX_FLAT_TAG,
 
 // RoundUp logically performs `((n + m - 1) / m) * m` to round up to the nearest
 // multiple of `m`, optimized for the invariant that `m` is a power of 2.
-constexpr size_t RoundUp(size_t n, size_t m) { return (n + m - 1) & (0 - m); }
+constexpr size_t RoundUp(size_t n, size_t m) {
+  return (n + m - 1) & (0 - m);
+}
 
 // Returns the size to the nearest equal or larger value that can be
 // expressed exactly as a tag value.
@@ -108,7 +110,7 @@ struct CordRepFlat : public CordRep {
 
   // Creates a new flat node.
   template <size_t max_flat_size, typename... Args>
-  static CordRepFlat *NewImpl(size_t len, Args... args ABSL_ATTRIBUTE_UNUSED) {
+  static CordRepFlat* NewImpl(size_t len, Args... args ABSL_ATTRIBUTE_UNUSED) {
     if (len <= kMinFlatLength) {
       len = kMinFlatLength;
     } else if (len > max_flat_size - kFlatOverhead) {
@@ -117,30 +119,30 @@ struct CordRepFlat : public CordRep {
 
     // Round size up so it matches a size we can exactly express in a tag.
     const size_t size = RoundUpForTag(len + kFlatOverhead);
-    void *const raw_rep = ::operator new(size);
-// GCC 13 has a false-positive -Wstringop-overflow warning here.
-#if ABSL_INTERNAL_HAVE_MIN_GNUC_VERSION(13, 0)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
-    CordRepFlat *rep = new (raw_rep) CordRepFlat();
+    void* const raw_rep = ::operator new(size);
+    // GCC 13 has a false-positive -Wstringop-overflow warning here.
+    #if ABSL_INTERNAL_HAVE_MIN_GNUC_VERSION(13, 0)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wstringop-overflow"
+    #endif
+    CordRepFlat* rep = new (raw_rep) CordRepFlat();
     rep->tag = AllocatedSizeToTag(size);
-#if ABSL_INTERNAL_HAVE_MIN_GNUC_VERSION(13, 0)
-#pragma GCC diagnostic pop
-#endif
+    #if ABSL_INTERNAL_HAVE_MIN_GNUC_VERSION(13, 0)
+    #pragma GCC diagnostic pop
+    #endif
     return rep;
   }
 
-  static CordRepFlat *New(size_t len) { return NewImpl<kMaxFlatSize>(len); }
+  static CordRepFlat* New(size_t len) { return NewImpl<kMaxFlatSize>(len); }
 
-  static CordRepFlat *New(Large, size_t len) {
+  static CordRepFlat* New(Large, size_t len) {
     return NewImpl<kMaxLargeFlatSize>(len);
   }
 
   // Deletes a CordRepFlat instance created previously through a call to New().
   // Flat CordReps are allocated and constructed with raw ::operator new and
   // placement new, and must be destructed and deallocated accordingly.
-  static void Delete(CordRep *rep) {
+  static void Delete(CordRep*rep) {
     assert(rep->tag >= FLAT && rep->tag <= MAX_FLAT_TAG);
 
 #if defined(__cpp_sized_deallocation)
@@ -156,17 +158,17 @@ struct CordRepFlat : public CordRep {
   // Create a CordRepFlat containing `data`, with an optional additional
   // extra capacity of up to `extra` bytes. Requires that `data.size()`
   // is less than kMaxFlatLength.
-  static CordRepFlat *Create(absl::string_view data, size_t extra = 0) {
+  static CordRepFlat* Create(absl::string_view data, size_t extra = 0) {
     assert(data.size() <= kMaxFlatLength);
-    CordRepFlat *flat = New(data.size() + (std::min)(extra, kMaxFlatLength));
+    CordRepFlat* flat = New(data.size() + (std::min)(extra, kMaxFlatLength));
     memcpy(flat->Data(), data.data(), data.size());
     flat->length = data.size();
     return flat;
   }
 
   // Returns a pointer to the data inside this flat rep.
-  char *Data() { return reinterpret_cast<char *>(storage); }
-  const char *Data() const { return reinterpret_cast<const char *>(storage); }
+  char* Data() { return reinterpret_cast<char*>(storage); }
+  const char* Data() const { return reinterpret_cast<const char*>(storage); }
 
   // Returns the maximum capacity (payload size) of this instance.
   size_t Capacity() const { return TagToLength(tag); }
@@ -176,18 +178,18 @@ struct CordRepFlat : public CordRep {
 };
 
 // Now that CordRepFlat is defined, we can define CordRep's helper casts:
-inline CordRepFlat *CordRep::flat() {
+inline CordRepFlat* CordRep::flat() {
   assert(tag >= FLAT && tag <= MAX_FLAT_TAG);
-  return reinterpret_cast<CordRepFlat *>(this);
+  return reinterpret_cast<CordRepFlat*>(this);
 }
 
-inline const CordRepFlat *CordRep::flat() const {
+inline const CordRepFlat* CordRep::flat() const {
   assert(tag >= FLAT && tag <= MAX_FLAT_TAG);
-  return reinterpret_cast<const CordRepFlat *>(this);
+  return reinterpret_cast<const CordRepFlat*>(this);
 }
 
-} // namespace cord_internal
+}  // namespace cord_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CORD_REP_FLAT_H_
+#endif  // ABSL_STRINGS_INTERNAL_CORD_REP_FLAT_H_

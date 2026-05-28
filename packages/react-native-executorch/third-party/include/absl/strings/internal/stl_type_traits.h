@@ -50,15 +50,19 @@ struct IsSpecializationImpl<T<Args...>, T> : std::true_type {};
 template <typename C, template <typename...> class T>
 using IsSpecialization = IsSpecializationImpl<absl::decay_t<C>, T>;
 
-template <typename C> struct IsArrayImpl : std::false_type {};
+template <typename C>
+struct IsArrayImpl : std::false_type {};
 template <template <typename, size_t> class A, typename T, size_t N>
 struct IsArrayImpl<A<T, N>> : std::is_same<A<T, N>, std::array<T, N>> {};
-template <typename C> using IsArray = IsArrayImpl<absl::decay_t<C>>;
+template <typename C>
+using IsArray = IsArrayImpl<absl::decay_t<C>>;
 
-template <typename C> struct IsBitsetImpl : std::false_type {};
+template <typename C>
+struct IsBitsetImpl : std::false_type {};
 template <template <size_t> class B, size_t N>
 struct IsBitsetImpl<B<N>> : std::is_same<B<N>, std::bitset<N>> {};
-template <typename C> using IsBitset = IsBitsetImpl<absl::decay_t<C>>;
+template <typename C>
+using IsBitset = IsBitsetImpl<absl::decay_t<C>>;
 
 template <typename C>
 struct IsSTLContainer
@@ -121,13 +125,16 @@ struct IsBaseOfSpecializationImpl<
 template <typename C, template <typename...> class T>
 using IsBaseOfSpecialization = IsBaseOfSpecializationImpl<absl::decay_t<C>, T>;
 
-template <typename C> struct IsBaseOfArrayImpl : std::false_type {};
+template <typename C>
+struct IsBaseOfArrayImpl : std::false_type {};
 template <template <typename, size_t> class A, typename T, size_t N>
 struct IsBaseOfArrayImpl<A<T, N>> : std::is_base_of<A<T, N>, std::array<T, N>> {
 };
-template <typename C> using IsBaseOfArray = IsBaseOfArrayImpl<absl::decay_t<C>>;
+template <typename C>
+using IsBaseOfArray = IsBaseOfArrayImpl<absl::decay_t<C>>;
 
-template <typename C> struct IsBaseOfBitsetImpl : std::false_type {};
+template <typename C>
+struct IsBaseOfBitsetImpl : std::false_type {};
 template <template <size_t> class B, size_t N>
 struct IsBaseOfBitsetImpl<B<N>> : std::is_base_of<B<N>, std::bitset<N>> {};
 template <typename C>
@@ -196,14 +203,16 @@ template <typename C, template <typename...> class T>
 using IsConvertibleToSpecialization =
     IsConvertibleToSpecializationImpl<absl::decay_t<C>, T>;
 
-template <typename C> struct IsConvertibleToArrayImpl : std::false_type {};
+template <typename C>
+struct IsConvertibleToArrayImpl : std::false_type {};
 template <template <typename, size_t> class A, typename T, size_t N>
 struct IsConvertibleToArrayImpl<A<T, N>>
     : std::is_convertible<A<T, N>, std::array<T, N>> {};
 template <typename C>
 using IsConvertibleToArray = IsConvertibleToArrayImpl<absl::decay_t<C>>;
 
-template <typename C> struct IsConvertibleToBitsetImpl : std::false_type {};
+template <typename C>
+struct IsConvertibleToBitsetImpl : std::false_type {};
 template <template <size_t> class B, size_t N>
 struct IsConvertibleToBitsetImpl<B<N>>
     : std::is_convertible<B<N>, std::bitset<N>> {};
@@ -233,7 +242,7 @@ struct IsStrictlyBaseOfAndConvertibleToSTLContainer
                         IsBaseOfSTLContainer<C>,
                         IsConvertibleToSTLContainer<C>> {};
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
-#endif // ABSL_STRINGS_INTERNAL_STL_TYPE_TRAITS_H_
+}  // namespace absl
+#endif  // ABSL_STRINGS_INTERNAL_STL_TYPE_TRAITS_H_

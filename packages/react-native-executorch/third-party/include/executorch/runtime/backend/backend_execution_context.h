@@ -18,11 +18,13 @@ namespace ET_RUNTIME_NAMESPACE {
  * BackendExecutionContext will be used to inject run time context.
  */
 class BackendExecutionContext final {
-public:
-  BackendExecutionContext(EventTracer *event_tracer = nullptr,
-                          MemoryAllocator *temp_allocator = nullptr,
-                          const char *method_name = nullptr)
-      : event_tracer_(event_tracer), temp_allocator_(temp_allocator),
+ public:
+  BackendExecutionContext(
+      EventTracer* event_tracer = nullptr,
+      MemoryAllocator* temp_allocator = nullptr,
+      const char* method_name = nullptr)
+      : event_tracer_(event_tracer),
+        temp_allocator_(temp_allocator),
         method_name_(method_name) {}
 
   /**
@@ -30,14 +32,17 @@ public:
    * logging inside the delegate backend. Users will need access to this pointer
    * to use any of the event tracer APIs.
    */
-  EventTracer *event_tracer() { return event_tracer_; }
+  EventTracer* event_tracer() {
+    return event_tracer_;
+  }
 
   /**
    * Returns a pointer to the address allocated by temp allocator. This
    * allocator will be reset after every delegate call during execution.
    */
-  void *allocate(size_t size,
-                 size_t alignment = MemoryAllocator::kDefaultAlignment) {
+  void* allocate(
+      size_t size,
+      size_t alignment = MemoryAllocator::kDefaultAlignment) {
     // TODO(chenlai): depends on the need, we may expose more functionality for
     // memory allocation.
     return temp_allocator_->allocate(size, alignment);
@@ -46,17 +51,21 @@ public:
   /**
    * Returns the temp allocator. This allocator will be reset every instruction.
    */
-  MemoryAllocator *get_temp_allocator() { return temp_allocator_; }
+  MemoryAllocator* get_temp_allocator() {
+    return temp_allocator_;
+  }
 
   /**
    * Get the name of the executing method from the ExecuTorch runtime.
    */
-  const char *get_method_name() const { return method_name_; }
+  const char* get_method_name() const {
+    return method_name_;
+  }
 
-private:
-  EventTracer *event_tracer_ = nullptr;
-  MemoryAllocator *temp_allocator_ = nullptr;
-  const char *method_name_ = nullptr;
+ private:
+  EventTracer* event_tracer_ = nullptr;
+  MemoryAllocator* temp_allocator_ = nullptr;
+  const char* method_name_ = nullptr;
 };
 
 } // namespace ET_RUNTIME_NAMESPACE

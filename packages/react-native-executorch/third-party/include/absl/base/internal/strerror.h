@@ -32,8 +32,8 @@ namespace base_internal {
 // around them.  `errno` will not be modified by a call to `absl::StrError`.
 std::string StrError(int errnum);
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_STRERROR_H_
+#endif  // ABSL_BASE_INTERNAL_STRERROR_H_

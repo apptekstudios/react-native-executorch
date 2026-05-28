@@ -25,7 +25,7 @@ namespace extension {
  * avoid the overhead of opening it again for every load() call.
  */
 class FileDataLoader final : public executorch::runtime::DataLoader {
-public:
+ public:
   /**
    * Creates a new FileDataLoader that wraps the named file.
    *
@@ -39,51 +39,62 @@ public:
    *     could not be found.
    * @retval Error::MemoryAllocationFailed Internal memory allocation failure.
    */
-  static executorch::runtime::Result<FileDataLoader>
-  from(const char *file_name, size_t alignment = alignof(std::max_align_t));
+  static executorch::runtime::Result<FileDataLoader> from(
+      const char* file_name,
+      size_t alignment = alignof(std::max_align_t));
 
   /// DEPRECATED: Use the lowercase `from()` instead.
-  ET_DEPRECATED static executorch::runtime::Result<FileDataLoader>
-  From(const char *file_name, size_t alignment = alignof(std::max_align_t)) {
+  ET_DEPRECATED static executorch::runtime::Result<FileDataLoader> From(
+      const char* file_name,
+      size_t alignment = alignof(std::max_align_t)) {
     return from(file_name, alignment);
   }
 
   // Movable to be compatible with Result.
-  FileDataLoader(FileDataLoader &&rhs) noexcept
-      : file_name_(rhs.file_name_), file_size_(rhs.file_size_),
-        alignment_(rhs.alignment_), fd_(rhs.fd_) {
-    const_cast<const char *&>(rhs.file_name_) = nullptr;
-    const_cast<size_t &>(rhs.file_size_) = 0;
-    const_cast<std::align_val_t &>(rhs.alignment_) = {};
-    const_cast<int &>(rhs.fd_) = -1;
+  FileDataLoader(FileDataLoader&& rhs) noexcept
+      : file_name_(rhs.file_name_),
+        file_size_(rhs.file_size_),
+        alignment_(rhs.alignment_),
+        fd_(rhs.fd_) {
+    const_cast<const char*&>(rhs.file_name_) = nullptr;
+    const_cast<size_t&>(rhs.file_size_) = 0;
+    const_cast<std::align_val_t&>(rhs.alignment_) = {};
+    const_cast<int&>(rhs.fd_) = -1;
   }
 
   ~FileDataLoader() override;
 
   ET_NODISCARD
-  executorch::runtime::Result<executorch::runtime::FreeableBuffer>
-  load(size_t offset, size_t size,
-       const DataLoader::SegmentInfo &segment_info) const override;
+  executorch::runtime::Result<executorch::runtime::FreeableBuffer> load(
+      size_t offset,
+      size_t size,
+      const DataLoader::SegmentInfo& segment_info) const override;
 
   ET_NODISCARD executorch::runtime::Result<size_t> size() const override;
 
-  ET_NODISCARD executorch::runtime::Error
-  load_into(size_t offset, size_t size,
-            ET_UNUSED const SegmentInfo &segment_info,
-            void *buffer) const override;
+  ET_NODISCARD executorch::runtime::Error load_into(
+      size_t offset,
+      size_t size,
+      ET_UNUSED const SegmentInfo& segment_info,
+      void* buffer) const override;
 
-private:
-  FileDataLoader(int fd, size_t file_size, size_t alignment,
-                 const char *file_name)
-      : file_name_(file_name), file_size_(file_size), alignment_{alignment},
+ private:
+  FileDataLoader(
+      int fd,
+      size_t file_size,
+      size_t alignment,
+      const char* file_name)
+      : file_name_(file_name),
+        file_size_(file_size),
+        alignment_{alignment},
         fd_(fd) {}
 
   // Not safely copyable.
-  FileDataLoader(const FileDataLoader &) = delete;
-  FileDataLoader &operator=(const FileDataLoader &) = delete;
-  FileDataLoader &operator=(FileDataLoader &&) = delete;
+  FileDataLoader(const FileDataLoader&) = delete;
+  FileDataLoader& operator=(const FileDataLoader&) = delete;
+  FileDataLoader& operator=(FileDataLoader&&) = delete;
 
-  const char *const file_name_; // Owned by the instance.
+  const char* const file_name_; // Owned by the instance.
   const size_t file_size_;
   const std::align_val_t alignment_;
   const int fd_; // Owned by the instance.

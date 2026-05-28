@@ -27,7 +27,7 @@ namespace extension {
  * avoid the overhead of opening it again for every load() call.
  */
 class FileDescriptorDataLoader final : public executorch::runtime::DataLoader {
-public:
+ public:
   /**
    * Creates a new FileDescriptorDataLoader that wraps the named file
    * descriptor, and the ownership of the file descriptor is passed.
@@ -44,46 +44,55 @@ public:
    * @retval Error::MemoryAllocationFailed Internal memory allocation failure.
    */
   static executorch::runtime::Result<FileDescriptorDataLoader>
-  fromFileDescriptorUri(const char *file_descriptor_uri,
-                        size_t alignment = alignof(std::max_align_t));
+  fromFileDescriptorUri(
+      const char* file_descriptor_uri,
+      size_t alignment = alignof(std::max_align_t));
 
   // Movable to be compatible with Result.
-  FileDescriptorDataLoader(FileDescriptorDataLoader &&rhs) noexcept
+  FileDescriptorDataLoader(FileDescriptorDataLoader&& rhs) noexcept
       : file_descriptor_uri_(rhs.file_descriptor_uri_),
-        file_size_(rhs.file_size_), alignment_(rhs.alignment_), fd_(rhs.fd_) {
-    const_cast<const char *&>(rhs.file_descriptor_uri_) = nullptr;
-    const_cast<size_t &>(rhs.file_size_) = 0;
-    const_cast<std::align_val_t &>(rhs.alignment_) = {};
-    const_cast<int &>(rhs.fd_) = -1;
+        file_size_(rhs.file_size_),
+        alignment_(rhs.alignment_),
+        fd_(rhs.fd_) {
+    const_cast<const char*&>(rhs.file_descriptor_uri_) = nullptr;
+    const_cast<size_t&>(rhs.file_size_) = 0;
+    const_cast<std::align_val_t&>(rhs.alignment_) = {};
+    const_cast<int&>(rhs.fd_) = -1;
   }
 
   ~FileDescriptorDataLoader() override;
 
   ET_NODISCARD
-  executorch::runtime::Result<executorch::runtime::FreeableBuffer>
-  load(size_t offset, size_t size,
-       const DataLoader::SegmentInfo &segment_info) const override;
+  executorch::runtime::Result<executorch::runtime::FreeableBuffer> load(
+      size_t offset,
+      size_t size,
+      const DataLoader::SegmentInfo& segment_info) const override;
 
   ET_NODISCARD executorch::runtime::Result<size_t> size() const override;
 
-  ET_NODISCARD executorch::runtime::Error
-  load_into(size_t offset, size_t size,
-            ET_UNUSED const SegmentInfo &segment_info,
-            void *buffer) const override;
+  ET_NODISCARD executorch::runtime::Error load_into(
+      size_t offset,
+      size_t size,
+      ET_UNUSED const SegmentInfo& segment_info,
+      void* buffer) const override;
 
-private:
-  FileDescriptorDataLoader(int fd, size_t file_size, size_t alignment,
-                           const char *file_descriptor_uri)
-      : file_descriptor_uri_(file_descriptor_uri), file_size_(file_size),
-        alignment_{alignment}, fd_(fd) {}
+ private:
+  FileDescriptorDataLoader(
+      int fd,
+      size_t file_size,
+      size_t alignment,
+      const char* file_descriptor_uri)
+      : file_descriptor_uri_(file_descriptor_uri),
+        file_size_(file_size),
+        alignment_{alignment},
+        fd_(fd) {}
 
   // Not safely copyable.
-  FileDescriptorDataLoader(const FileDescriptorDataLoader &) = delete;
-  FileDescriptorDataLoader &
-  operator=(const FileDescriptorDataLoader &) = delete;
-  FileDescriptorDataLoader &operator=(FileDescriptorDataLoader &&) = delete;
+  FileDescriptorDataLoader(const FileDescriptorDataLoader&) = delete;
+  FileDescriptorDataLoader& operator=(const FileDescriptorDataLoader&) = delete;
+  FileDescriptorDataLoader& operator=(FileDescriptorDataLoader&&) = delete;
 
-  const char *const file_descriptor_uri_; // Owned by the instance.
+  const char* const file_descriptor_uri_; // Owned by the instance.
   const size_t file_size_;
   const std::align_val_t alignment_;
   const int fd_; // Owned by the instance.

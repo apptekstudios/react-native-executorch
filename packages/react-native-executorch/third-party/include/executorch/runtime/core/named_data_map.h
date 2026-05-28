@@ -22,7 +22,7 @@ namespace ET_RUNTIME_NAMESPACE {
  * See executorch/extension/flat_tensor/ for an example.
  */
 class NamedDataMap {
-public:
+ public:
   virtual ~NamedDataMap() = default;
   /**
    * Get tensor_layout by key.
@@ -30,16 +30,16 @@ public:
    * @param key The name of the tensor.
    * @return Result containing TensorLayout.
    */
-  ET_NODISCARD virtual Result<const TensorLayout>
-  get_tensor_layout(executorch::aten::string_view key) const = 0;
+  ET_NODISCARD virtual Result<const TensorLayout> get_tensor_layout(
+      executorch::aten::string_view key) const = 0;
   /**
    * Get data by key.
    *
    * @param key Name of the data.
    * @return Result containing a FreeableBuffer.
    */
-  ET_NODISCARD virtual Result<FreeableBuffer>
-  get_data(executorch::aten::string_view key) const = 0;
+  ET_NODISCARD virtual Result<FreeableBuffer> get_data(
+      executorch::aten::string_view key) const = 0;
 
   /**
    * Loads data corresponding to the key into the provided buffer.
@@ -51,9 +51,10 @@ public:
    * `size` bytes of memory.
    * @returns an Error indicating if the load was successful.
    */
-  ET_NODISCARD virtual Error load_data_into(executorch::aten::string_view key,
-                                            void *buffer,
-                                            size_t size) const = 0;
+  ET_NODISCARD virtual Error load_data_into(
+      executorch::aten::string_view key,
+      void* buffer,
+      size_t size) const = 0;
 
   /**
    * Get the number of keys in the NamedDataMap.
@@ -69,7 +70,7 @@ public:
    * @return Result containing the key at the given index. Note: the returned
    * pointer is only valid for the lifetime of the DataMap.
    */
-  ET_NODISCARD virtual Result<const char *> get_key(uint32_t index) const = 0;
+  ET_NODISCARD virtual Result<const char*> get_key(uint32_t index) const = 0;
 };
 
 } // namespace ET_RUNTIME_NAMESPACE

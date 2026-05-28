@@ -47,10 +47,10 @@ namespace runtime {
  * based names are used by this delegate to identify ops executed in the
  * backend then kUnsetDebugHandle should be passed in here.
  */
-inline EventTracerEntry
-event_tracer_start_profiling_delegate(EventTracer *event_tracer,
-                                      const char *name,
-                                      DebugHandle delegate_debug_id) {
+inline EventTracerEntry event_tracer_start_profiling_delegate(
+    EventTracer* event_tracer,
+    const char* name,
+    DebugHandle delegate_debug_id) {
 #ifdef ET_EVENT_TRACER_ENABLED
   if (event_tracer) {
     return event_tracer->start_profiling_delegate(name, delegate_debug_id);
@@ -80,12 +80,14 @@ event_tracer_start_profiling_delegate(EventTracer *event_tracer,
  * @param[in] metadata_len Length of the metadata buffer.
  */
 inline void event_tracer_end_profiling_delegate(
-    EventTracer *event_tracer, EventTracerEntry event_tracer_entry,
-    const void *metadata = nullptr, size_t metadata_len = 0) {
+    EventTracer* event_tracer,
+    EventTracerEntry event_tracer_entry,
+    const void* metadata = nullptr,
+    size_t metadata_len = 0) {
 #ifdef ET_EVENT_TRACER_ENABLED
   if (event_tracer) {
-    event_tracer->end_profiling_delegate(event_tracer_entry, metadata,
-                                         metadata_len);
+    event_tracer->end_profiling_delegate(
+        event_tracer_entry, metadata, metadata_len);
   }
 #else //! ET_EVENT_TRACER_ENABLED
   (void)event_tracer_entry;
@@ -122,13 +124,17 @@ inline void event_tracer_end_profiling_delegate(
  * @param[in] metadata_len Length of the metadata buffer.
  */
 inline void event_tracer_log_profiling_delegate(
-    EventTracer *event_tracer, const char *name, DebugHandle delegate_debug_id,
-    et_timestamp_t start_time, et_timestamp_t end_time,
-    const void *metadata = nullptr, size_t metadata_len = 0) {
+    EventTracer* event_tracer,
+    const char* name,
+    DebugHandle delegate_debug_id,
+    et_timestamp_t start_time,
+    et_timestamp_t end_time,
+    const void* metadata = nullptr,
+    size_t metadata_len = 0) {
 #ifdef ET_EVENT_TRACER_ENABLED
   if (event_tracer) {
-    event_tracer->log_profiling_delegate(name, delegate_debug_id, start_time,
-                                         end_time, metadata, metadata_len);
+    event_tracer->log_profiling_delegate(
+        name, delegate_debug_id, start_time, end_time, metadata, metadata_len);
   }
 #else //! ET_EVENT_TRACER_ENABLED
   (void)name;
@@ -160,10 +166,11 @@ inline void event_tracer_log_profiling_delegate(
  * @param[in] output The output to be logged.
  */
 template <typename T>
-inline void event_tracer_log_output_delegate(EventTracer *event_tracer,
-                                             const char *name,
-                                             DebugHandle delegate_debug_id,
-                                             const T &output) {
+inline void event_tracer_log_output_delegate(
+    EventTracer* event_tracer,
+    const char* name,
+    DebugHandle delegate_debug_id,
+    const T& output) {
 #ifdef ET_EVENT_TRACER_ENABLED
   if (event_tracer) {
     static_assert(
@@ -172,8 +179,8 @@ inline void event_tracer_log_output_delegate(EventTracer *event_tracer,
             std::is_same<T, executorch::aten::Tensor>::value ||
             std::is_same<T, ArrayRef<executorch::aten::Tensor>>::value,
         "Unsupported type for intermediate output");
-    event_tracer->log_intermediate_output_delegate(name, delegate_debug_id,
-                                                   output);
+    event_tracer->log_intermediate_output_delegate(
+        name, delegate_debug_id, output);
   }
 #else //! ET_EVENT_TRACER_ENABLED
   (void)name;

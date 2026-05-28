@@ -27,8 +27,8 @@ namespace strings_internal {
 uint8_t CappedDamerauLevenshteinDistance(absl::string_view s1,
                                          absl::string_view s2, uint8_t cutoff);
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_DAMERAU_LEVENSHTEIN_DISTANCE_H_
+#endif  // ABSL_STRINGS_INTERNAL_DAMERAU_LEVENSHTEIN_DISTANCE_H_

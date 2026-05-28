@@ -18,7 +18,7 @@ namespace ET_RUNTIME_NAMESPACE {
  * delegate.
  */
 class BackendOptionContext final {
-public:
+ public:
   explicit BackendOptionContext() {}
 };
 

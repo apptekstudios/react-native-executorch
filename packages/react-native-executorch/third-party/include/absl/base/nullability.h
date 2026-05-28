@@ -206,7 +206,8 @@ ABSL_NAMESPACE_BEGIN
 // void PaySalary(absl::Nonnull<Employee *> employee) {
 //   pay(*employee);  // OK to dereference
 // }
-template <typename T> using Nonnull = nullability_internal::NonnullImpl<T>;
+template <typename T>
+using Nonnull = nullability_internal::NonnullImpl<T>;
 
 // absl::Nullable
 //
@@ -222,7 +223,8 @@ template <typename T> using Nonnull = nullability_internal::NonnullImpl<T>;
 //     Pay(*employee);  // OK to dereference
 //   }
 // }
-template <typename T> using Nullable = nullability_internal::NullableImpl<T>;
+template <typename T>
+using Nullable = nullability_internal::NullableImpl<T>;
 
 // absl::NullabilityUnknown (default without `ABSL_POINTERS_DEFAULT_NONNULL`)
 //
@@ -258,7 +260,7 @@ template <typename T>
 using NullabilityUnknown = nullability_internal::NullabilityUnknownImpl<T>;
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
 // ABSL_NULLABILITY_COMPATIBLE
 //
@@ -279,4 +281,4 @@ ABSL_NAMESPACE_END
 #define ABSL_NULLABILITY_COMPATIBLE
 #endif
 
-#endif // ABSL_BASE_NULLABILITY_H_
+#endif  // ABSL_BASE_NULLABILITY_H_

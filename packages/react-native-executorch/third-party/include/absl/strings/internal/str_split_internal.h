@@ -45,7 +45,7 @@
 
 #ifdef _GLIBCXX_DEBUG
 #include "absl/strings/internal/stl_type_traits.h"
-#endif // _GLIBCXX_DEBUG
+#endif  // _GLIBCXX_DEBUG
 
 namespace absl {
 ABSL_NAMESPACE_BEGIN
@@ -56,22 +56,22 @@ namespace strings_internal {
 // can be used as a function parameter in places where passing a temporary
 // string might cause memory lifetime issues.
 class ConvertibleToStringView {
-public:
-  ConvertibleToStringView(const char *s) // NOLINT(runtime/explicit)
+ public:
+  ConvertibleToStringView(const char* s)  // NOLINT(runtime/explicit)
       : value_(s) {}
-  ConvertibleToStringView(char *s) : value_(s) {} // NOLINT(runtime/explicit)
-  ConvertibleToStringView(absl::string_view s)    // NOLINT(runtime/explicit)
+  ConvertibleToStringView(char* s) : value_(s) {}  // NOLINT(runtime/explicit)
+  ConvertibleToStringView(absl::string_view s)     // NOLINT(runtime/explicit)
       : value_(s) {}
-  ConvertibleToStringView(const std::string &s) // NOLINT(runtime/explicit)
+  ConvertibleToStringView(const std::string& s)  // NOLINT(runtime/explicit)
       : value_(s) {}
 
   // Disable conversion from rvalue strings.
-  ConvertibleToStringView(std::string &&s) = delete;
-  ConvertibleToStringView(const std::string &&s) = delete;
+  ConvertibleToStringView(std::string&& s) = delete;
+  ConvertibleToStringView(const std::string&& s) = delete;
 
   absl::string_view value() const { return value_; }
 
-private:
+ private:
   absl::string_view value_;
 };
 
@@ -81,18 +81,22 @@ private:
 // Splitter instance.
 //
 // This class is NOT part of the public splitting API.
-template <typename Splitter> class SplitIterator {
-public:
+template <typename Splitter>
+class SplitIterator {
+ public:
   using iterator_category = std::input_iterator_tag;
   using value_type = absl::string_view;
   using difference_type = ptrdiff_t;
-  using pointer = const value_type *;
-  using reference = const value_type &;
+  using pointer = const value_type*;
+  using reference = const value_type&;
 
   enum State { kInitState, kLastState, kEndState };
-  SplitIterator(State state, const Splitter *splitter)
-      : pos_(0), state_(state), splitter_(splitter),
-        delimiter_(splitter->delimiter()), predicate_(splitter->predicate()) {
+  SplitIterator(State state, const Splitter* splitter)
+      : pos_(0),
+        state_(state),
+        splitter_(splitter),
+        delimiter_(splitter->delimiter()),
+        predicate_(splitter->predicate()) {
     // Hack to maintain backward compatibility. This one block makes it so an
     // empty absl::string_view whose .data() happens to be nullptr behaves
     // *differently* from an otherwise empty absl::string_view whose .data() is
@@ -120,7 +124,7 @@ public:
   reference operator*() const { return curr_; }
   pointer operator->() const { return &curr_; }
 
-  SplitIterator &operator++() {
+  SplitIterator& operator++() {
     do {
       if (state_ == kLastState) {
         state_ = kEndState;
@@ -128,8 +132,7 @@ public:
       }
       const absl::string_view text = splitter_->text();
       const absl::string_view d = delimiter_.Find(text, pos_);
-      if (d.data() == text.data() + text.size())
-        state_ = kLastState;
+      if (d.data() == text.data() + text.size()) state_ = kLastState;
       curr_ = text.substr(pos_,
                           static_cast<size_t>(d.data() - (text.data() + pos_)));
       pos_ += curr_.size() + d.size();
@@ -143,19 +146,19 @@ public:
     return old;
   }
 
-  friend bool operator==(const SplitIterator &a, const SplitIterator &b) {
+  friend bool operator==(const SplitIterator& a, const SplitIterator& b) {
     return a.state_ == b.state_ && a.pos_ == b.pos_;
   }
 
-  friend bool operator!=(const SplitIterator &a, const SplitIterator &b) {
+  friend bool operator!=(const SplitIterator& a, const SplitIterator& b) {
     return !(a == b);
   }
 
-private:
+ private:
   size_t pos_;
   State state_;
   absl::string_view curr_;
-  const Splitter *splitter_;
+  const Splitter* splitter_;
   typename Splitter::DelimiterType delimiter_;
   typename Splitter::PredicateType predicate_;
 };
@@ -168,7 +171,8 @@ struct HasMappedType<T, absl::void_t<typename T::mapped_type>>
     : std::true_type {};
 
 // HasValueType<T>::value is true iff there exists a type T::value_type.
-template <typename T, typename = void> struct HasValueType : std::false_type {};
+template <typename T, typename = void>
+struct HasValueType : std::false_type {};
 template <typename T>
 struct HasValueType<T, absl::void_t<typename T::value_type>> : std::true_type {
 };
@@ -181,19 +185,20 @@ struct HasConstIterator<T, absl::void_t<typename T::const_iterator>>
     : std::true_type {};
 
 // HasEmplace<T>::value is true iff there exists a method T::emplace().
-template <typename T, typename = void> struct HasEmplace : std::false_type {};
+template <typename T, typename = void>
+struct HasEmplace : std::false_type {};
 template <typename T>
 struct HasEmplace<T, absl::void_t<decltype(std::declval<T>().emplace())>>
     : std::true_type {};
 
 // IsInitializerList<T>::value is true iff T is an std::initializer_list. More
 // details below in Splitter<> where this is used.
-std::false_type IsInitializerListDispatch(...); // default: No
+std::false_type IsInitializerListDispatch(...);  // default: No
 template <typename T>
-std::true_type IsInitializerListDispatch(std::initializer_list<T> *);
+std::true_type IsInitializerListDispatch(std::initializer_list<T>*);
 template <typename T>
 struct IsInitializerList
-    : decltype(IsInitializerListDispatch(static_cast<T *>(nullptr))){};
+    : decltype(IsInitializerListDispatch(static_cast<T*>(nullptr))) {};
 
 // A SplitterIsConvertibleTo<C>::type alias exists iff the specified condition
 // is true for type 'C'.
@@ -224,7 +229,7 @@ struct SplitterIsConvertibleTo
           C,
 #ifdef _GLIBCXX_DEBUG
           !IsStrictlyBaseOfAndConvertibleToSTLContainer<C>::value &&
-#endif // _GLIBCXX_DEBUG
+#endif  // _GLIBCXX_DEBUG
               !IsInitializerList<
                   typename std::remove_reference<C>::type>::value &&
               HasValueType<C>::value && HasConstIterator<C>::value,
@@ -276,19 +281,20 @@ using ShouldUseLifetimeBoundForArray = std::integral_constant<
 // resides inside the Splitter itself.
 template <typename Delimiter, typename Predicate, typename StringType>
 class Splitter {
-public:
+ public:
   using DelimiterType = Delimiter;
   using PredicateType = Predicate;
   using const_iterator = strings_internal::SplitIterator<Splitter>;
   using value_type = typename std::iterator_traits<const_iterator>::value_type;
 
   Splitter(StringType input_text, Delimiter d, Predicate p)
-      : text_(std::move(input_text)), delimiter_(std::move(d)),
+      : text_(std::move(input_text)),
+        delimiter_(std::move(d)),
         predicate_(std::move(p)) {}
 
   absl::string_view text() const { return text_; }
-  const Delimiter &delimiter() const { return delimiter_; }
-  const Predicate &predicate() const { return predicate_; }
+  const Delimiter& delimiter() const { return delimiter_; }
+  const Predicate& predicate() const { return predicate_; }
 
   // Range functions that iterate the split substrings as absl::string_view
   // objects. These methods enable a Splitter to be used in a range-based for
@@ -363,7 +369,7 @@ public:
     return ConvertToArray<ElementType, Size>();
   }
 
-private:
+ private:
   template <typename ElementType, std::size_t Size>
   std::array<ElementType, Size> ConvertToArray() const {
     std::array<ElementType, Size> a;
@@ -396,10 +402,10 @@ private:
   // the requested type.
   template <typename Container, typename ValueType, bool is_map = false>
   struct ConvertToContainer {
-    Container operator()(const Splitter &splitter) const {
+    Container operator()(const Splitter& splitter) const {
       Container c;
       auto it = std::inserter(c, c.end());
-      for (const auto &sp : splitter) {
+      for (const auto& sp : splitter) {
         *it++ = ValueType(sp);
       }
       return c;
@@ -414,12 +420,12 @@ private:
   template <typename A>
   struct ConvertToContainer<std::vector<absl::string_view, A>,
                             absl::string_view, false> {
-    std::vector<absl::string_view, A>
-    operator()(const Splitter &splitter) const {
+    std::vector<absl::string_view, A> operator()(
+        const Splitter& splitter) const {
       struct raw_view {
-        const char *data;
+        const char* data;
         size_t size;
-        operator absl::string_view() const { // NOLINT(runtime/explicit)
+        operator absl::string_view() const {  // NOLINT(runtime/explicit)
           return {data, size};
         }
       };
@@ -449,7 +455,7 @@ private:
   // std::string moves.
   template <typename A>
   struct ConvertToContainer<std::vector<std::string, A>, std::string, false> {
-    std::vector<std::string, A> operator()(const Splitter &splitter) const {
+    std::vector<std::string, A> operator()(const Splitter& splitter) const {
       const std::vector<absl::string_view> v = splitter;
       return std::vector<std::string, A>(v.begin(), v.end());
     }
@@ -465,7 +471,7 @@ private:
   struct ConvertToContainer<Container, std::pair<const First, Second>, true> {
     using iterator = typename Container::iterator;
 
-    Container operator()(const Splitter &splitter) const {
+    Container operator()(const Splitter& splitter) const {
       Container m;
       iterator it;
       bool insert = true;
@@ -483,16 +489,16 @@ private:
     // Inserts the key and an empty value into the map, returning an iterator to
     // the inserted item. We use emplace() if available, otherwise insert().
     template <typename M>
-    static absl::enable_if_t<HasEmplace<M>::value, iterator>
-    InsertOrEmplace(M *m, absl::string_view key) {
+    static absl::enable_if_t<HasEmplace<M>::value, iterator> InsertOrEmplace(
+        M* m, absl::string_view key) {
       // Use piecewise_construct to support old versions of gcc in which pair
       // constructor can't otherwise construct string from string_view.
       return ToIter(m->emplace(std::piecewise_construct, std::make_tuple(key),
                                std::tuple<>()));
     }
     template <typename M>
-    static absl::enable_if_t<!HasEmplace<M>::value, iterator>
-    InsertOrEmplace(M *m, absl::string_view key) {
+    static absl::enable_if_t<!HasEmplace<M>::value, iterator> InsertOrEmplace(
+        M* m, absl::string_view key) {
       return ToIter(m->insert(std::make_pair(First(key), Second(""))));
     }
 
@@ -507,8 +513,8 @@ private:
   Predicate predicate_;
 };
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_STR_SPLIT_INTERNAL_H_
+#endif  // ABSL_STRINGS_INTERNAL_STR_SPLIT_INTERNAL_H_

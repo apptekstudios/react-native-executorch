@@ -39,9 +39,9 @@ namespace str_format_internal {
 
 std::string LengthModToString(LengthMod v);
 
-const char *ConsumeUnboundConversionNoInline(const char *p, const char *end,
-                                             UnboundConversion *conv,
-                                             int *next_arg);
+const char* ConsumeUnboundConversionNoInline(const char* p, const char* end,
+                                             UnboundConversion* conv,
+                                             int* next_arg);
 
 // Parse the format string provided in 'src' and pass the identified items into
 // 'consumer'.
@@ -56,11 +56,11 @@ const char *ConsumeUnboundConversionNoInline(const char *p, const char *end,
 template <typename Consumer>
 bool ParseFormatString(string_view src, Consumer consumer) {
   int next_arg = 0;
-  const char *p = src.data();
-  const char *const end = p + src.size();
+  const char* p = src.data();
+  const char* const end = p + src.size();
   while (p != end) {
-    const char *percent =
-        static_cast<const char *>(memchr(p, '%', static_cast<size_t>(end - p)));
+    const char* percent =
+        static_cast<const char*>(memchr(p, '%', static_cast<size_t>(end - p)));
     if (!percent) {
       // We found the last substring.
       return consumer.Append(string_view(p, static_cast<size_t>(end - p)));
@@ -70,8 +70,7 @@ bool ParseFormatString(string_view src, Consumer consumer) {
             string_view(p, static_cast<size_t>(percent - p))))) {
       return false;
     }
-    if (ABSL_PREDICT_FALSE(percent + 1 >= end))
-      return false;
+    if (ABSL_PREDICT_FALSE(percent + 1 >= end)) return false;
 
     auto tag = GetTagForChar(percent[1]);
     if (tag.is_conv()) {
@@ -97,16 +96,14 @@ bool ParseFormatString(string_view src, Consumer consumer) {
     } else if (percent[1] != '%') {
       UnboundConversion conv;
       p = ConsumeUnboundConversionNoInline(percent + 1, end, &conv, &next_arg);
-      if (ABSL_PREDICT_FALSE(p == nullptr))
-        return false;
+      if (ABSL_PREDICT_FALSE(p == nullptr)) return false;
       if (ABSL_PREDICT_FALSE(!consumer.ConvertOne(
               conv, string_view(percent + 1,
                                 static_cast<size_t>(p - (percent + 1)))))) {
         return false;
       }
     } else {
-      if (ABSL_PREDICT_FALSE(!consumer.Append("%")))
-        return false;
+      if (ABSL_PREDICT_FALSE(!consumer.Append("%"))) return false;
       p = percent + 2;
       continue;
     }
@@ -121,18 +118,17 @@ constexpr bool EnsureConstexpr(string_view s) {
 }
 
 class ParsedFormatBase {
-public:
+ public:
   explicit ParsedFormatBase(
       string_view format, bool allow_ignored,
       std::initializer_list<FormatConversionCharSet> convs);
 
-  ParsedFormatBase(const ParsedFormatBase &other) { *this = other; }
+  ParsedFormatBase(const ParsedFormatBase& other) { *this = other; }
 
-  ParsedFormatBase(ParsedFormatBase &&other) { *this = std::move(other); }
+  ParsedFormatBase(ParsedFormatBase&& other) { *this = std::move(other); }
 
-  ParsedFormatBase &operator=(const ParsedFormatBase &other) {
-    if (this == &other)
-      return *this;
+  ParsedFormatBase& operator=(const ParsedFormatBase& other) {
+    if (this == &other) return *this;
     has_error_ = other.has_error_;
     items_ = other.items_;
     size_t text_size = items_.empty() ? 0 : items_.back().text_end;
@@ -141,9 +137,8 @@ public:
     return *this;
   }
 
-  ParsedFormatBase &operator=(ParsedFormatBase &&other) {
-    if (this == &other)
-      return *this;
+  ParsedFormatBase& operator=(ParsedFormatBase&& other) {
+    if (this == &other) return *this;
     has_error_ = other.has_error_;
     data_ = std::move(other.data_);
     items_ = std::move(other.items_);
@@ -152,19 +147,18 @@ public:
     return *this;
   }
 
-  template <typename Consumer> bool ProcessFormat(Consumer consumer) const {
-    const char *const base = data_.get();
+  template <typename Consumer>
+  bool ProcessFormat(Consumer consumer) const {
+    const char* const base = data_.get();
     string_view text(base, 0);
-    for (const auto &item : items_) {
-      const char *const end = text.data() + text.size();
+    for (const auto& item : items_) {
+      const char* const end = text.data() + text.size();
       text =
           string_view(end, static_cast<size_t>((base + item.text_end) - end));
       if (item.is_conversion) {
-        if (!consumer.ConvertOne(item.conv, text))
-          return false;
+        if (!consumer.ConvertOne(item.conv, text)) return false;
       } else {
-        if (!consumer.Append(text))
-          return false;
+        if (!consumer.Append(text)) return false;
       }
     }
     return !has_error_;
@@ -172,7 +166,7 @@ public:
 
   bool has_error() const { return has_error_; }
 
-private:
+ private:
   // Returns whether the conversions match and if !allow_ignored it verifies
   // that all conversions are used by the format.
   bool MatchesConversions(
@@ -192,6 +186,7 @@ private:
   std::unique_ptr<char[]> data_;
   std::vector<ConversionItem> items_;
 };
+
 
 // A value type representing a preparsed format.  These can be created, copied
 // around, and reused to speed up formatting loops.
@@ -223,7 +218,7 @@ private:
 // the conversions requested by the user.
 template <FormatConversionCharSet... C>
 class ExtendedParsedFormat : public str_format_internal::ParsedFormatBase {
-public:
+ public:
   explicit ExtendedParsedFormat(string_view format)
 #ifdef ABSL_INTERNAL_ENABLE_FORMAT_CHECKER
       __attribute__((
@@ -231,7 +226,7 @@ public:
                     "Format string is not constexpr."),
           enable_if(str_format_internal::ValidFormatImpl<C...>(format),
                     "Format specified does not match the template arguments.")))
-#endif // ABSL_INTERNAL_ENABLE_FORMAT_CHECKER
+#endif  // ABSL_INTERNAL_ENABLE_FORMAT_CHECKER
       : ExtendedParsedFormat(format, false) {
   }
 
@@ -250,26 +245,25 @@ public:
   static std::unique_ptr<ExtendedParsedFormat> New(string_view format) {
     return New(format, false);
   }
-  static std::unique_ptr<ExtendedParsedFormat>
-  NewAllowIgnored(string_view format) {
+  static std::unique_ptr<ExtendedParsedFormat> NewAllowIgnored(
+      string_view format) {
     return New(format, true);
   }
 
-private:
+ private:
   static std::unique_ptr<ExtendedParsedFormat> New(string_view format,
                                                    bool allow_ignored) {
     std::unique_ptr<ExtendedParsedFormat> conv(
         new ExtendedParsedFormat(format, allow_ignored));
-    if (conv->has_error())
-      return nullptr;
+    if (conv->has_error()) return nullptr;
     return conv;
   }
 
   ExtendedParsedFormat(string_view s, bool allow_ignored)
       : ParsedFormatBase(s, allow_ignored, {C...}) {}
 };
-} // namespace str_format_internal
+}  // namespace str_format_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_STR_FORMAT_PARSER_H_
+#endif  // ABSL_STRINGS_INTERNAL_STR_FORMAT_PARSER_H_

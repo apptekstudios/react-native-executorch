@@ -46,7 +46,7 @@
 // for more information.
 #ifdef ABSL_LOW_LEVEL_ALLOC_ASYNC_SIGNAL_SAFE_MISSING
 #error ABSL_LOW_LEVEL_ALLOC_ASYNC_SIGNAL_SAFE_MISSING cannot be directly set
-#elif defined(_WIN32) || defined(__asmjs__) || defined(__wasm__) ||            \
+#elif defined(_WIN32) || defined(__asmjs__) || defined(__wasm__) || \
     defined(__hexagon__)
 #define ABSL_LOW_LEVEL_ALLOC_ASYNC_SIGNAL_SAFE_MISSING 1
 #endif
@@ -60,8 +60,8 @@ ABSL_NAMESPACE_BEGIN
 namespace base_internal {
 
 class LowLevelAlloc {
-public:
-  struct Arena; // an arena from which memory may be allocated
+ public:
+  struct Arena;       // an arena from which memory may be allocated
 
   // Returns a pointer to a block of at least "request" bytes
   // that have been newly allocated from the specific arena.
@@ -116,12 +116,12 @@ public:
   // The default arena that always exists.
   static Arena *DefaultArena();
 
-private:
-  LowLevelAlloc(); // no instances
+ private:
+  LowLevelAlloc();      // no instances
 };
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_LOW_LEVEL_ALLOC_H_
+#endif  // ABSL_BASE_INTERNAL_LOW_LEVEL_ALLOC_H_

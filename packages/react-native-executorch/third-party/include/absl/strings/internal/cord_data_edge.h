@@ -29,22 +29,20 @@ namespace cord_internal {
 
 // Returns true if the provided rep is a FLAT, EXTERNAL or a SUBSTRING node
 // holding a FLAT or EXTERNAL child rep. Requires `rep != nullptr`.
-inline bool IsDataEdge(const CordRep *edge) {
+inline bool IsDataEdge(const CordRep* edge) {
   assert(edge != nullptr);
 
   // The fast path is that `edge` is an EXTERNAL or FLAT node, making the below
   // if a single, well predicted branch. We then repeat the FLAT or EXTERNAL
   // check in the slow path of the SUBSTRING check to optimize for the hot path.
-  if (edge->tag == EXTERNAL || edge->tag >= FLAT)
-    return true;
-  if (edge->tag == SUBSTRING)
-    edge = edge->substring()->child;
+  if (edge->tag == EXTERNAL || edge->tag >= FLAT) return true;
+  if (edge->tag == SUBSTRING) edge = edge->substring()->child;
   return edge->tag == EXTERNAL || edge->tag >= FLAT;
 }
 
 // Returns the `absl::string_view` data reference for the provided data edge.
 // Requires 'IsDataEdge(edge) == true`.
-inline absl::string_view EdgeData(const CordRep *edge) {
+inline absl::string_view EdgeData(const CordRep* edge) {
   assert(IsDataEdge(edge));
 
   size_t offset = 0;
@@ -58,8 +56,8 @@ inline absl::string_view EdgeData(const CordRep *edge) {
              : absl::string_view{edge->external()->base + offset, length};
 }
 
-} // namespace cord_internal
+}  // namespace cord_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CORD_DATA_EDGE_H_
+#endif  // ABSL_STRINGS_INTERNAL_CORD_DATA_EDGE_H_

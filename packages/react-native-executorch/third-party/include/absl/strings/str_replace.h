@@ -96,7 +96,7 @@ ABSL_MUST_USE_RESULT std::string StrReplaceAll(
 //   EXPECT_EQ("if (ptr &lt; &amp;foo)", s);
 template <typename StrToStrMapping>
 std::string StrReplaceAll(absl::string_view s,
-                          const StrToStrMapping &replacements);
+                          const StrToStrMapping& replacements);
 
 // Overload of `StrReplaceAll()` to replace character sequences within a given
 // output string *in place* with replacements provided within an initializer
@@ -114,7 +114,7 @@ std::string StrReplaceAll(absl::string_view s,
 int StrReplaceAll(
     std::initializer_list<std::pair<absl::string_view, absl::string_view>>
         replacements,
-    absl::Nonnull<std::string *> target);
+    absl::Nonnull<std::string*> target);
 
 // Overload of `StrReplaceAll()` to replace patterns within a given output
 // string *in place* with replacements provided within a container of key/value
@@ -129,8 +129,8 @@ int StrReplaceAll(
 //  EXPECT_EQ(count, 2);
 //  EXPECT_EQ("if (ptr &lt; &amp;foo)", s);
 template <typename StrToStrMapping>
-int StrReplaceAll(const StrToStrMapping &replacements,
-                  absl::Nonnull<std::string *> target);
+int StrReplaceAll(const StrToStrMapping& replacements,
+                  absl::Nonnull<std::string*> target);
 
 // Implementation details only, past this point.
 namespace strings_internal {
@@ -146,9 +146,8 @@ struct ViableSubstitution {
 
   // One substitution occurs "before" another (takes priority) if either
   // it has the lowest offset, or it has the same offset but a larger size.
-  bool OccursBefore(const ViableSubstitution &y) const {
-    if (offset != y.offset)
-      return offset < y.offset;
+  bool OccursBefore(const ViableSubstitution& y) const {
+    if (offset != y.offset) return offset < y.offset;
     return old.size() > y.old.size();
   }
 };
@@ -158,24 +157,22 @@ struct ViableSubstitution {
 // out that most callers have small enough a list of substitutions that the
 // overhead of such a queue isn't worth it.
 template <typename StrToStrMapping>
-std::vector<ViableSubstitution>
-FindSubstitutions(absl::string_view s, const StrToStrMapping &replacements) {
+std::vector<ViableSubstitution> FindSubstitutions(
+    absl::string_view s, const StrToStrMapping& replacements) {
   std::vector<ViableSubstitution> subs;
   subs.reserve(replacements.size());
 
-  for (const auto &rep : replacements) {
+  for (const auto& rep : replacements) {
     using std::get;
     absl::string_view old(get<0>(rep));
 
     size_t pos = s.find(old);
-    if (pos == s.npos)
-      continue;
+    if (pos == s.npos) continue;
 
     // Ignore attempts to replace "". This condition is almost never true,
     // but above condition is frequently true. That's why we test for this
     // now and not before.
-    if (old.empty())
-      continue;
+    if (old.empty()) continue;
 
     subs.emplace_back(old, get<1>(rep), pos);
 
@@ -189,16 +186,15 @@ FindSubstitutions(absl::string_view s, const StrToStrMapping &replacements) {
   return subs;
 }
 
-int ApplySubstitutions(
-    absl::string_view s,
-    absl::Nonnull<std::vector<ViableSubstitution> *> subs_ptr,
-    absl::Nonnull<std::string *> result_ptr);
+int ApplySubstitutions(absl::string_view s,
+                       absl::Nonnull<std::vector<ViableSubstitution>*> subs_ptr,
+                       absl::Nonnull<std::string*> result_ptr);
 
-} // namespace strings_internal
+}  // namespace strings_internal
 
 template <typename StrToStrMapping>
 std::string StrReplaceAll(absl::string_view s,
-                          const StrToStrMapping &replacements) {
+                          const StrToStrMapping& replacements) {
   auto subs = strings_internal::FindSubstitutions(s, replacements);
   std::string result;
   result.reserve(s.size());
@@ -207,11 +203,10 @@ std::string StrReplaceAll(absl::string_view s,
 }
 
 template <typename StrToStrMapping>
-int StrReplaceAll(const StrToStrMapping &replacements,
-                  absl::Nonnull<std::string *> target) {
+int StrReplaceAll(const StrToStrMapping& replacements,
+                  absl::Nonnull<std::string*> target) {
   auto subs = strings_internal::FindSubstitutions(*target, replacements);
-  if (subs.empty())
-    return 0;
+  if (subs.empty()) return 0;
 
   std::string result;
   result.reserve(target->size());
@@ -222,6 +217,6 @@ int StrReplaceAll(const StrToStrMapping &replacements,
 }
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_STR_REPLACE_H_
+#endif  // ABSL_STRINGS_STR_REPLACE_H_

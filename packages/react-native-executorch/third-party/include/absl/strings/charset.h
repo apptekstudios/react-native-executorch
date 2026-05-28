@@ -55,7 +55,7 @@ namespace absl {
 ABSL_NAMESPACE_BEGIN
 
 class CharSet {
-public:
+ public:
   constexpr CharSet() : m_() {}
 
   // Initializes with a given string_view.
@@ -73,8 +73,7 @@ public:
 
   constexpr bool empty() const {
     for (uint64_t c : m_) {
-      if (c != 0)
-        return false;
+      if (c != 0) return false;
     }
     return true;
   }
@@ -91,17 +90,17 @@ public:
                    RangeForWord(lo, hi, 2), RangeForWord(lo, hi, 3));
   }
 
-  friend constexpr CharSet operator&(const CharSet &a, const CharSet &b) {
+  friend constexpr CharSet operator&(const CharSet& a, const CharSet& b) {
     return CharSet(a.m_[0] & b.m_[0], a.m_[1] & b.m_[1], a.m_[2] & b.m_[2],
                    a.m_[3] & b.m_[3]);
   }
 
-  friend constexpr CharSet operator|(const CharSet &a, const CharSet &b) {
+  friend constexpr CharSet operator|(const CharSet& a, const CharSet& b) {
     return CharSet(a.m_[0] | b.m_[0], a.m_[1] | b.m_[1], a.m_[2] | b.m_[2],
                    a.m_[3] | b.m_[3]);
   }
 
-  friend constexpr CharSet operator~(const CharSet &a) {
+  friend constexpr CharSet operator~(const CharSet& a) {
     return CharSet(~a.m_[0], ~a.m_[1], ~a.m_[2], ~a.m_[3]);
   }
 
@@ -126,7 +125,7 @@ public:
     return AsciiPrintable() & ~AsciiWhitespace() & ~AsciiAlphanumerics();
   }
 
-private:
+ private:
   constexpr CharSet(uint64_t b0, uint64_t b1, uint64_t b2, uint64_t b3)
       : m_{b0, b1, b2, b3} {}
 
@@ -159,6 +158,6 @@ private:
 };
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_CHARSET_H_
+#endif  // ABSL_STRINGS_CHARSET_H_

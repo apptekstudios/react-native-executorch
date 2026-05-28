@@ -75,11 +75,11 @@
 #if defined(_MSVC_LANG)
 #if _MSVC_LANG < 201402L
 #error "C++ versions less than C++14 are not supported."
-#endif // _MSVC_LANG < 201402L
+#endif  // _MSVC_LANG < 201402L
 #elif defined(__cplusplus)
 #if __cplusplus < 201402L
 #error "C++ versions less than C++14 are not supported."
-#endif // __cplusplus < 201402L
+#endif  // __cplusplus < 201402L
 #endif
 
 // -----------------------------------------------------------------------------
@@ -112,4 +112,4 @@
 #error "Abseil assumes that int is at least 4 bytes. "
 #endif
 
-#endif // ABSL_BASE_POLICY_CHECKS_H_
+#endif  // ABSL_BASE_POLICY_CHECKS_H_

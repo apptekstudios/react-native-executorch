@@ -20,7 +20,7 @@
 #pragma once
 
 #ifndef _WIN32_WINNT // Allow use of features specific to Windows XP or later.
-#define _WIN32_WINNT                                                           \
+#define _WIN32_WINNT \
   0x0501 // Change this to the appropriate value to target other versions of
          // Windows.
 #endif
@@ -30,8 +30,8 @@
 #include <_mingw.h>
 #endif
 
-#include <cstdint>
 #include <sys/types.h>
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,20 +50,25 @@ extern "C" {
 #define MAP_ANONYMOUS 0x20
 #define MAP_ANON MAP_ANONYMOUS
 
-#define MAP_FAILED ((void *)-1)
+#define MAP_FAILED ((void*)-1)
 
 /* Flags for msync. */
 #define MS_ASYNC 1
 #define MS_SYNC 2
 #define MS_INVALIDATE 4
 
-void *mmap(void *addr, size_t len, int prot, int flags, int fildes,
-           uint64_t off);
-int munmap(void *addr, size_t len);
-int mprotect(void *addr, size_t len, int prot);
-int msync(void *addr, size_t len, int flags);
-int mlock(const void *addr, size_t len);
-int munlock(const void *addr, size_t len);
+void* mmap(
+    void* addr,
+    size_t len,
+    int prot,
+    int flags,
+    int fildes,
+    uint64_t off);
+int munmap(void* addr, size_t len);
+int mprotect(void* addr, size_t len, int prot);
+int msync(void* addr, size_t len, int flags);
+int mlock(const void* addr, size_t len);
+int munlock(const void* addr, size_t len);
 
 #ifdef __cplusplus
 };

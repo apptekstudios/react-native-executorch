@@ -27,8 +27,8 @@ extern int default_func_calls;
 void DefaultFunc();
 void RegisterFunc(VoidF func);
 
-} // namespace atomic_hook_internal
+}  // namespace atomic_hook_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_ATOMIC_HOOK_TEST_HELPER_H_
+#endif  // ABSL_BASE_INTERNAL_ATOMIC_HOOK_TEST_HELPER_H_

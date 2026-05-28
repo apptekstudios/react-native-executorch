@@ -7,11 +7,11 @@
  */
 
 #pragma once
+#include <executorch/runtime/core/error.h>
+#include <executorch/runtime/core/span.h>
 #include <array>
 #include <cstddef>
 #include <cstring>
-#include <executorch/runtime/core/error.h>
-#include <executorch/runtime/core/span.h>
 #include <variant>
 
 namespace executorch {
@@ -44,12 +44,13 @@ struct BackendOption {
  *
  * @tparam MaxCapacity The maximum number of options that can be stored
  */
-template <size_t MaxCapacity> class BackendOptions {
-public:
+template <size_t MaxCapacity>
+class BackendOptions {
+ public:
   /**
    * Copy constructor
    */
-  BackendOptions(const BackendOptions &other) : size_(other.size_) {
+  BackendOptions(const BackendOptions& other) : size_(other.size_) {
     for (size_t i = 0; i < size_; ++i) {
       options_[i] = other.options_[i];
     }
@@ -58,7 +59,7 @@ public:
   /**
    * Copy assignment operator
    */
-  BackendOptions &operator=(const BackendOptions &other) {
+  BackendOptions& operator=(const BackendOptions& other) {
     if (this != &other) {
       size_ = other.size_;
       for (size_t i = 0; i < size_; ++i) {
@@ -125,7 +126,7 @@ public:
    * @return Error::Ok on success, Error::InvalidArgument if storage is full
    */
   template <size_t N>
-  Error set_option(const char (&key)[N], const char *value) noexcept {
+  Error set_option(const char (&key)[N], const char* value) noexcept {
     static_assert(N <= kMaxOptionKeyLength, "Option key is too long");
     // Create a fixed-size array and copy the string
     std::array<char, kMaxOptionValueLength> arr{};
@@ -144,20 +145,20 @@ public:
    * exist, Error::InvalidArgument if type doesn't match
    */
   template <typename T, size_t KeyLen>
-  Error get_option(const char (&key)[KeyLen], T &out) const {
+  Error get_option(const char (&key)[KeyLen], T& out) const {
     static_assert(KeyLen <= kMaxOptionKeyLength, "Option key is too long");
     for (size_t i = 0; i < size_; ++i) {
       if (std::strcmp(options_[i].key, key) == 0) {
         // Special handling for string (convert array to const char*)
-        if constexpr (std::is_same_v<T, const char *>) {
-          if (auto *arr = std::get_if<std::array<char, kMaxOptionValueLength>>(
+        if constexpr (std::is_same_v<T, const char*>) {
+          if (auto* arr = std::get_if<std::array<char, kMaxOptionValueLength>>(
                   &options_[i].value)) {
             out = arr->data(); // Return pointer to stored array
             return Error::Ok;
           }
         }
         // Default handling for bool/int
-        else if (auto *val = std::get_if<T>(&options_[i].value)) {
+        else if (auto* val = std::get_if<T>(&options_[i].value)) {
           out = *val;
           return Error::Ok;
         }
@@ -167,9 +168,9 @@ public:
     return Error::NotFound;
   }
 
-private:
+ private:
   BackendOption options_[MaxCapacity]{}; // Storage for backend options
-  size_t size_;                          // Current number of options
+  size_t size_; // Current number of options
 
   /**
    * Internal implementation for setting option values.
@@ -180,7 +181,8 @@ private:
    * @param value The value to set
    * @return Error::Ok on success, Error::InvalidArgument if storage is full
    */
-  template <typename T> Error set_option_impl(const char *key, T value) {
+  template <typename T>
+  Error set_option_impl(const char* key, T value) {
     // Update existing if found
     for (size_t i = 0; i < size_; ++i) {
       if (strcmp(options_[i].key, key) == 0) {
@@ -194,7 +196,7 @@ private:
       const size_t copy_len = std::min(key_len, kMaxOptionKeyLength - 1);
       std::memcpy(new_option.key, key, copy_len);
       new_option.key[copy_len] = '\0';
-      new_option.value = value;       // Restored value assignment
+      new_option.value = value; // Restored value assignment
       options_[size_++] = new_option; // Store option and increment size
       return Error::Ok;
     }

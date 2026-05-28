@@ -19,9 +19,11 @@ struct NoThreadPoolGuard {
   NoThreadPoolGuard() : prev_mode_(NoThreadPoolGuard::is_enabled()) {
     NoThreadPoolGuard::set_enabled(true);
   }
-  ~NoThreadPoolGuard() { NoThreadPoolGuard::set_enabled(prev_mode_); }
+  ~NoThreadPoolGuard() {
+    NoThreadPoolGuard::set_enabled(prev_mode_);
+  }
 
-private:
+ private:
   const bool prev_mode_;
 };
 

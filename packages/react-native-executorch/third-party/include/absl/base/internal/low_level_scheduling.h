@@ -35,12 +35,12 @@ class Mutex;
 
 namespace synchronization_internal {
 int MutexDelay(int32_t c, int mode);
-} // namespace synchronization_internal
+}  // namespace synchronization_internal
 
 namespace base_internal {
 
-class SchedulingHelper; // To allow use of SchedulingGuard.
-class SpinLock;         // To allow use of SchedulingGuard.
+class SchedulingHelper;  // To allow use of SchedulingGuard.
+class SpinLock;          // To allow use of SchedulingGuard.
 
 // SchedulingGuard
 // Provides guard semantics that may be used to disable cooperative rescheduling
@@ -58,13 +58,13 @@ class SpinLock;         // To allow use of SchedulingGuard.
 //
 // All methods are async-signal safe.
 class SchedulingGuard {
-public:
+ public:
   // Returns true iff the calling thread may be cooperatively rescheduled.
   static bool ReschedulingIsAllowed();
-  SchedulingGuard(const SchedulingGuard &) = delete;
-  SchedulingGuard &operator=(const SchedulingGuard &) = delete;
+  SchedulingGuard(const SchedulingGuard&) = delete;
+  SchedulingGuard& operator=(const SchedulingGuard&) = delete;
 
-private:
+ private:
   // Disable cooperative rescheduling of the calling thread.  It may still
   // initiate scheduling operations (e.g. wake-ups), however, it may not itself
   // reschedule.  Nestable.  The returned result is opaque, clients should not
@@ -89,11 +89,11 @@ private:
   // A scoped helper to enable rescheduling temporarily.
   // REQUIRES: destructor must run in same thread as constructor.
   class ScopedEnable {
-  public:
+   public:
     ScopedEnable();
     ~ScopedEnable();
 
-  private:
+   private:
     int scheduling_disabled_depth_;
   };
 
@@ -109,9 +109,13 @@ private:
 // End of public interfaces.
 //------------------------------------------------------------------------------
 
-inline bool SchedulingGuard::ReschedulingIsAllowed() { return false; }
+inline bool SchedulingGuard::ReschedulingIsAllowed() {
+  return false;
+}
 
-inline bool SchedulingGuard::DisableRescheduling() { return false; }
+inline bool SchedulingGuard::DisableRescheduling() {
+  return false;
+}
 
 inline void SchedulingGuard::EnableRescheduling(bool /* disable_result */) {
   return;
@@ -123,8 +127,8 @@ inline SchedulingGuard::ScopedEnable::~ScopedEnable() {
   ABSL_RAW_CHECK(scheduling_disabled_depth_ == 0, "disable unused warning");
 }
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_LOW_LEVEL_SCHEDULING_H_
+#endif  // ABSL_BASE_INTERNAL_LOW_LEVEL_SCHEDULING_H_

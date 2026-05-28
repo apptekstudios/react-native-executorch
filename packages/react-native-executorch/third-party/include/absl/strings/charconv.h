@@ -15,7 +15,7 @@
 #ifndef ABSL_STRINGS_CHARCONV_H_
 #define ABSL_STRINGS_CHARCONV_H_
 
-#include <system_error> // NOLINT(build/c++11)
+#include <system_error>  // NOLINT(build/c++11)
 
 #include "absl/base/config.h"
 #include "absl/base/nullability.h"
@@ -45,7 +45,7 @@ enum class chars_format {
 // characters that were successfully parsed.  If none was found, `ptr` is set
 // to the `first` argument to from_chars.
 struct from_chars_result {
-  absl::Nonnull<const char *> ptr;
+  absl::Nonnull<const char*> ptr;
   std::errc ec;
 };
 
@@ -77,14 +77,14 @@ struct from_chars_result {
 // format that strtod() accepts, except that a "0x" prefix is NOT matched.
 // (In particular, in `hex` mode, the input "0xff" results in the largest
 // matching pattern "0".)
-absl::from_chars_result from_chars(absl::Nonnull<const char *> first,
-                                   absl::Nonnull<const char *> last,
-                                   double &value, // NOLINT
+absl::from_chars_result from_chars(absl::Nonnull<const char*> first,
+                                   absl::Nonnull<const char*> last,
+                                   double& value,  // NOLINT
                                    chars_format fmt = chars_format::general);
 
-absl::from_chars_result from_chars(absl::Nonnull<const char *> first,
-                                   absl::Nonnull<const char *> last,
-                                   float &value, // NOLINT
+absl::from_chars_result from_chars(absl::Nonnull<const char*> first,
+                                   absl::Nonnull<const char*> last,
+                                   float& value,  // NOLINT
                                    chars_format fmt = chars_format::general);
 
 // std::chars_format is specified as a bitmask type, which means the following
@@ -104,20 +104,20 @@ inline constexpr chars_format operator^(chars_format lhs, chars_format rhs) {
 inline constexpr chars_format operator~(chars_format arg) {
   return static_cast<chars_format>(~static_cast<int>(arg));
 }
-inline chars_format &operator&=(chars_format &lhs, chars_format rhs) {
+inline chars_format& operator&=(chars_format& lhs, chars_format rhs) {
   lhs = lhs & rhs;
   return lhs;
 }
-inline chars_format &operator|=(chars_format &lhs, chars_format rhs) {
+inline chars_format& operator|=(chars_format& lhs, chars_format rhs) {
   lhs = lhs | rhs;
   return lhs;
 }
-inline chars_format &operator^=(chars_format &lhs, chars_format rhs) {
+inline chars_format& operator^=(chars_format& lhs, chars_format rhs) {
   lhs = lhs ^ rhs;
   return lhs;
 }
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_CHARCONV_H_
+#endif  // ABSL_STRINGS_CHARCONV_H_

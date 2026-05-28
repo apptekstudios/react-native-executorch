@@ -29,7 +29,8 @@ namespace absl {
 ABSL_NAMESPACE_BEGIN
 
 // Forward declaration
-template <typename T> class optional;
+template <typename T>
+class optional;
 
 namespace optional_internal {
 
@@ -51,7 +52,7 @@ class optional_data_dtor_base {
     empty_struct data[sizeof(T) / sizeof(empty_struct)];
   };
 
-protected:
+ protected:
   // Whether there is data or not.
   bool engaged_;
   // Data storage
@@ -79,21 +80,22 @@ protected:
   constexpr optional_data_dtor_base() noexcept : engaged_(false), dummy_{{}} {}
 
   template <typename... Args>
-  constexpr explicit optional_data_dtor_base(in_place_t, Args &&...args)
+  constexpr explicit optional_data_dtor_base(in_place_t, Args&&... args)
       : engaged_(true), data_(std::forward<Args>(args)...) {}
 
   ~optional_data_dtor_base() { destruct(); }
 };
 
 // Specialization for trivially destructible type.
-template <typename T> class optional_data_dtor_base<T, true> {
+template <typename T>
+class optional_data_dtor_base<T, true> {
   struct dummy_type {
     static_assert(sizeof(T) % sizeof(empty_struct) == 0, "");
     // Use array to avoid GCC 6 placement-new warning.
     empty_struct data[sizeof(T) / sizeof(empty_struct)];
   };
 
-protected:
+ protected:
   // Whether there is data or not.
   bool engaged_;
   // Data storage
@@ -107,23 +109,25 @@ protected:
   constexpr optional_data_dtor_base() noexcept : engaged_(false), dummy_{{}} {}
 
   template <typename... Args>
-  constexpr explicit optional_data_dtor_base(in_place_t, Args &&...args)
+  constexpr explicit optional_data_dtor_base(in_place_t, Args&&... args)
       : engaged_(true), data_(std::forward<Args>(args)...) {}
 };
 
 template <typename T>
 class optional_data_base : public optional_data_dtor_base<T> {
-protected:
+ protected:
   using base = optional_data_dtor_base<T>;
   using base::base;
 
-  template <typename... Args> void construct(Args &&...args) {
+  template <typename... Args>
+  void construct(Args&&... args) {
     // Use dummy_'s address to work around casting cv-qualified T* to void*.
-    ::new (static_cast<void *>(&this->dummy_)) T(std::forward<Args>(args)...);
+    ::new (static_cast<void*>(&this->dummy_)) T(std::forward<Args>(args)...);
     this->engaged_ = true;
   }
 
-  template <typename U> void assign(U &&u) {
+  template <typename U>
+  void assign(U&& u) {
     if (this->engaged_) {
       this->data_ = std::forward<U>(u);
     } else {
@@ -139,33 +143,32 @@ protected:
 // Also, we should be checking is_trivially_copyable here, which is not
 // supported now, so we use is_trivially_* traits instead.
 template <typename T,
-          bool unused = absl::is_trivially_copy_constructible<T>::value &&
-                        absl::is_trivially_copy_assignable<
-                            typename std::remove_cv<T>::type>::value &&
-                        std::is_trivially_destructible<T>::value>
+          bool unused = absl::is_trivially_copy_constructible<T>::value&&
+              absl::is_trivially_copy_assignable<typename std::remove_cv<
+                  T>::type>::value&& std::is_trivially_destructible<T>::value>
 class optional_data;
 
 // Trivially copyable types
 template <typename T>
 class optional_data<T, true> : public optional_data_base<T> {
-protected:
+ protected:
   using optional_data_base<T>::optional_data_base;
 };
 
 template <typename T>
 class optional_data<T, false> : public optional_data_base<T> {
-protected:
+ protected:
   using optional_data_base<T>::optional_data_base;
 
   optional_data() = default;
 
-  optional_data(const optional_data &rhs) : optional_data_base<T>() {
+  optional_data(const optional_data& rhs) : optional_data_base<T>() {
     if (rhs.engaged_) {
       this->construct(rhs.data_);
     }
   }
 
-  optional_data(optional_data &&rhs) noexcept(
+  optional_data(optional_data&& rhs) noexcept(
       absl::default_allocator_is_nothrow::value ||
       std::is_nothrow_move_constructible<T>::value)
       : optional_data_base<T>() {
@@ -174,7 +177,7 @@ protected:
     }
   }
 
-  optional_data &operator=(const optional_data &rhs) {
+  optional_data& operator=(const optional_data& rhs) {
     if (rhs.engaged_) {
       this->assign(rhs.data_);
     } else {
@@ -183,9 +186,9 @@ protected:
     return *this;
   }
 
-  optional_data &operator=(optional_data &&rhs) noexcept(
-      std::is_nothrow_move_assignable<T>::value &&
-      std::is_nothrow_move_constructible<T>::value) {
+  optional_data& operator=(optional_data&& rhs) noexcept(
+      std::is_nothrow_move_assignable<T>::value&&
+          std::is_nothrow_move_constructible<T>::value) {
     if (rhs.engaged_) {
       this->assign(std::move(rhs.data_));
     } else {
@@ -200,104 +203,115 @@ protected:
 enum class copy_traits { copyable = 0, movable = 1, non_movable = 2 };
 
 // Base class for enabling/disabling copy/move constructor.
-template <copy_traits> class optional_ctor_base;
+template <copy_traits>
+class optional_ctor_base;
 
-template <> class optional_ctor_base<copy_traits::copyable> {
-public:
+template <>
+class optional_ctor_base<copy_traits::copyable> {
+ public:
   constexpr optional_ctor_base() = default;
-  optional_ctor_base(const optional_ctor_base &) = default;
-  optional_ctor_base(optional_ctor_base &&) = default;
-  optional_ctor_base &operator=(const optional_ctor_base &) = default;
-  optional_ctor_base &operator=(optional_ctor_base &&) = default;
+  optional_ctor_base(const optional_ctor_base&) = default;
+  optional_ctor_base(optional_ctor_base&&) = default;
+  optional_ctor_base& operator=(const optional_ctor_base&) = default;
+  optional_ctor_base& operator=(optional_ctor_base&&) = default;
 };
 
-template <> class optional_ctor_base<copy_traits::movable> {
-public:
+template <>
+class optional_ctor_base<copy_traits::movable> {
+ public:
   constexpr optional_ctor_base() = default;
-  optional_ctor_base(const optional_ctor_base &) = delete;
-  optional_ctor_base(optional_ctor_base &&) = default;
-  optional_ctor_base &operator=(const optional_ctor_base &) = default;
-  optional_ctor_base &operator=(optional_ctor_base &&) = default;
+  optional_ctor_base(const optional_ctor_base&) = delete;
+  optional_ctor_base(optional_ctor_base&&) = default;
+  optional_ctor_base& operator=(const optional_ctor_base&) = default;
+  optional_ctor_base& operator=(optional_ctor_base&&) = default;
 };
 
-template <> class optional_ctor_base<copy_traits::non_movable> {
-public:
+template <>
+class optional_ctor_base<copy_traits::non_movable> {
+ public:
   constexpr optional_ctor_base() = default;
-  optional_ctor_base(const optional_ctor_base &) = delete;
-  optional_ctor_base(optional_ctor_base &&) = delete;
-  optional_ctor_base &operator=(const optional_ctor_base &) = default;
-  optional_ctor_base &operator=(optional_ctor_base &&) = default;
+  optional_ctor_base(const optional_ctor_base&) = delete;
+  optional_ctor_base(optional_ctor_base&&) = delete;
+  optional_ctor_base& operator=(const optional_ctor_base&) = default;
+  optional_ctor_base& operator=(optional_ctor_base&&) = default;
 };
 
 // Base class for enabling/disabling copy/move assignment.
-template <copy_traits> class optional_assign_base;
+template <copy_traits>
+class optional_assign_base;
 
-template <> class optional_assign_base<copy_traits::copyable> {
-public:
+template <>
+class optional_assign_base<copy_traits::copyable> {
+ public:
   constexpr optional_assign_base() = default;
-  optional_assign_base(const optional_assign_base &) = default;
-  optional_assign_base(optional_assign_base &&) = default;
-  optional_assign_base &operator=(const optional_assign_base &) = default;
-  optional_assign_base &operator=(optional_assign_base &&) = default;
+  optional_assign_base(const optional_assign_base&) = default;
+  optional_assign_base(optional_assign_base&&) = default;
+  optional_assign_base& operator=(const optional_assign_base&) = default;
+  optional_assign_base& operator=(optional_assign_base&&) = default;
 };
 
-template <> class optional_assign_base<copy_traits::movable> {
-public:
+template <>
+class optional_assign_base<copy_traits::movable> {
+ public:
   constexpr optional_assign_base() = default;
-  optional_assign_base(const optional_assign_base &) = default;
-  optional_assign_base(optional_assign_base &&) = default;
-  optional_assign_base &operator=(const optional_assign_base &) = delete;
-  optional_assign_base &operator=(optional_assign_base &&) = default;
+  optional_assign_base(const optional_assign_base&) = default;
+  optional_assign_base(optional_assign_base&&) = default;
+  optional_assign_base& operator=(const optional_assign_base&) = delete;
+  optional_assign_base& operator=(optional_assign_base&&) = default;
 };
 
-template <> class optional_assign_base<copy_traits::non_movable> {
-public:
+template <>
+class optional_assign_base<copy_traits::non_movable> {
+ public:
   constexpr optional_assign_base() = default;
-  optional_assign_base(const optional_assign_base &) = default;
-  optional_assign_base(optional_assign_base &&) = default;
-  optional_assign_base &operator=(const optional_assign_base &) = delete;
-  optional_assign_base &operator=(optional_assign_base &&) = delete;
+  optional_assign_base(const optional_assign_base&) = default;
+  optional_assign_base(optional_assign_base&&) = default;
+  optional_assign_base& operator=(const optional_assign_base&) = delete;
+  optional_assign_base& operator=(optional_assign_base&&) = delete;
 };
 
-template <typename T> struct ctor_copy_traits {
+template <typename T>
+struct ctor_copy_traits {
   static constexpr copy_traits traits =
-      std::is_copy_constructible<T>::value   ? copy_traits::copyable
-      : std::is_move_constructible<T>::value ? copy_traits::movable
-                                             : copy_traits::non_movable;
+      std::is_copy_constructible<T>::value
+          ? copy_traits::copyable
+          : std::is_move_constructible<T>::value ? copy_traits::movable
+                                                 : copy_traits::non_movable;
 };
 
-template <typename T> struct assign_copy_traits {
+template <typename T>
+struct assign_copy_traits {
   static constexpr copy_traits traits =
       absl::is_copy_assignable<T>::value && std::is_copy_constructible<T>::value
           ? copy_traits::copyable
-      : absl::is_move_assignable<T>::value &&
-              std::is_move_constructible<T>::value
-          ? copy_traits::movable
-          : copy_traits::non_movable;
+          : absl::is_move_assignable<T>::value &&
+                    std::is_move_constructible<T>::value
+                ? copy_traits::movable
+                : copy_traits::non_movable;
 };
 
 // Whether T is constructible or convertible from optional<U>.
 template <typename T, typename U>
 struct is_constructible_convertible_from_optional
     : std::integral_constant<
-          bool, std::is_constructible<T, optional<U> &>::value ||
-                    std::is_constructible<T, optional<U> &&>::value ||
-                    std::is_constructible<T, const optional<U> &>::value ||
-                    std::is_constructible<T, const optional<U> &&>::value ||
-                    std::is_convertible<optional<U> &, T>::value ||
-                    std::is_convertible<optional<U> &&, T>::value ||
-                    std::is_convertible<const optional<U> &, T>::value ||
-                    std::is_convertible<const optional<U> &&, T>::value> {};
+          bool, std::is_constructible<T, optional<U>&>::value ||
+                    std::is_constructible<T, optional<U>&&>::value ||
+                    std::is_constructible<T, const optional<U>&>::value ||
+                    std::is_constructible<T, const optional<U>&&>::value ||
+                    std::is_convertible<optional<U>&, T>::value ||
+                    std::is_convertible<optional<U>&&, T>::value ||
+                    std::is_convertible<const optional<U>&, T>::value ||
+                    std::is_convertible<const optional<U>&&, T>::value> {};
 
 // Whether T is constructible or convertible or assignable from optional<U>.
 template <typename T, typename U>
 struct is_constructible_convertible_assignable_from_optional
     : std::integral_constant<
           bool, is_constructible_convertible_from_optional<T, U>::value ||
-                    std::is_assignable<T &, optional<U> &>::value ||
-                    std::is_assignable<T &, optional<U> &&>::value ||
-                    std::is_assignable<T &, const optional<U> &>::value ||
-                    std::is_assignable<T &, const optional<U> &&>::value> {};
+                    std::is_assignable<T&, optional<U>&>::value ||
+                    std::is_assignable<T&, optional<U>&&>::value ||
+                    std::is_assignable<T&, const optional<U>&>::value ||
+                    std::is_assignable<T&, const optional<U>&&>::value> {};
 
 // Helper function used by [optional.relops], [optional.comp_with_t],
 // for checking whether an expression is convertible to bool.
@@ -307,31 +321,32 @@ bool convertible_to_bool(bool);
 // If std::hash<std::remove_const_t<T>> is enabled, it provides operator() to
 // compute the hash; Otherwise, it is disabled.
 // Reference N4659 23.14.15 [unord.hash].
-template <typename T, typename = size_t> struct optional_hash_base {
+template <typename T, typename = size_t>
+struct optional_hash_base {
   optional_hash_base() = delete;
-  optional_hash_base(const optional_hash_base &) = delete;
-  optional_hash_base(optional_hash_base &&) = delete;
-  optional_hash_base &operator=(const optional_hash_base &) = delete;
-  optional_hash_base &operator=(optional_hash_base &&) = delete;
+  optional_hash_base(const optional_hash_base&) = delete;
+  optional_hash_base(optional_hash_base&&) = delete;
+  optional_hash_base& operator=(const optional_hash_base&) = delete;
+  optional_hash_base& operator=(optional_hash_base&&) = delete;
 };
 
 template <typename T>
-struct optional_hash_base<T, decltype(std::hash<absl::remove_const_t<T>>()(
-                                 std::declval<absl::remove_const_t<T>>()))> {
+struct optional_hash_base<T, decltype(std::hash<absl::remove_const_t<T> >()(
+                                 std::declval<absl::remove_const_t<T> >()))> {
   using argument_type = absl::optional<T>;
   using result_type = size_t;
-  size_t operator()(const absl::optional<T> &opt) const {
+  size_t operator()(const absl::optional<T>& opt) const {
     absl::type_traits_internal::AssertHashEnabled<absl::remove_const_t<T>>();
     if (opt) {
-      return std::hash<absl::remove_const_t<T>>()(*opt);
+      return std::hash<absl::remove_const_t<T> >()(*opt);
     } else {
       return static_cast<size_t>(0x297814aaad196e6dULL);
     }
   }
 };
 
-} // namespace optional_internal
+}  // namespace optional_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_TYPES_INTERNAL_OPTIONAL_H_
+#endif  // ABSL_TYPES_INTERNAL_OPTIONAL_H_

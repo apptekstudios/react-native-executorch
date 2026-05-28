@@ -33,13 +33,14 @@ namespace strings_internal {
 //
 // Instances should be made using the `MakeStringConstant()` factory function
 // below.
-template <typename T> struct StringConstant {
-private:
+template <typename T>
+struct StringConstant {
+ private:
   static constexpr bool TryConstexprEval(absl::string_view view) {
     return view.empty() || 2 * view[0] != 1;
   }
 
-public:
+ public:
   static constexpr absl::string_view value = T{}();
   constexpr absl::string_view operator()() const { return value; }
 
@@ -50,7 +51,8 @@ public:
 };
 
 #ifdef ABSL_INTERNAL_NEED_REDUNDANT_CONSTEXPR_DECL
-template <typename T> constexpr absl::string_view StringConstant<T>::value;
+template <typename T>
+constexpr absl::string_view StringConstant<T>::value;
 #endif
 
 // Factory function for `StringConstant` instances.
@@ -58,12 +60,13 @@ template <typename T> constexpr absl::string_view StringConstant<T>::value;
 // constexpr operator().
 // It must return an `absl::string_view` or `const char*` pointing to constant
 // data. This is validated at compile time.
-template <typename T> constexpr StringConstant<T> MakeStringConstant(T) {
+template <typename T>
+constexpr StringConstant<T> MakeStringConstant(T) {
   return {};
 }
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_STRING_CONSTANT_H_
+#endif  // ABSL_STRINGS_INTERNAL_STRING_CONSTANT_H_

@@ -30,7 +30,7 @@ run_build() {
     -scheme "$SCHEME" \
     -configuration Debug \
     -destination "$destination" \
-    -derivedDataPath "$APP_DIR/ios/build-$label" \
+    -derivedDataPath "$APP_DIR/ios/build/$label" \
     CODE_SIGNING_ALLOWED=NO \
     build
 }

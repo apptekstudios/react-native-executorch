@@ -1,3 +1,22 @@
 *.pbxproj -text
 # specific for windows script files
 *.bat text eol=crlf
+
+# Vendored native binaries → Git LFS. Static archives + shared libs from
+# scripts/maccatalyst/, scripts/opencv/, and the Android third-party drop.
+# Note: this only catches commits going forward; existing copies in history
+# stay in regular pack files until you rewrite history (git-filter-repo).
+*.a   filter=lfs diff=lfs merge=lfs -text
+*.so  filter=lfs diff=lfs merge=lfs -text
+# xcframework Mach-O binaries (named after the framework, no extension).
+# Explicit per-framework patterns because gitattributes can't easily match
+# "files with no extension under a directory tree".
+**/ExecutorchLib.framework/ExecutorchLib             filter=lfs diff=lfs merge=lfs -text
+**/ExecutorchLib.framework/Versions/*/ExecutorchLib  filter=lfs diff=lfs merge=lfs -text
+**/opencv2.framework/opencv2                         filter=lfs diff=lfs merge=lfs -text
+**/opencv2.framework/Versions/*/opencv2              filter=lfs diff=lfs merge=lfs -text
+*.a !text !filter !merge !diff
+*.so !text !filter !merge !diff
+**/ExecutorchLib !text !filter !merge !diff
+**/opencv2.framework/opencv2 !text !filter !merge !diff
+**/opencv2.framework/Versions/*/opencv2 !text !filter !merge !diff

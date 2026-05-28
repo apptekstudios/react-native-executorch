@@ -11,7 +11,6 @@ PODS:
   - MMKV (2.3.0):
     - MMKVCore (~> 2.3.0)
   - MMKVCore (2.3.0)
-  - opencv-rne (4.11.0)
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -1781,14 +1780,13 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-executorch (0.9.0):
+  - react-native-executorch (0.10.0):
     - boost
     - DoubleConversion
     - fast_float
     - fmt
     - glog
     - hermes-engine
-    - opencv-rne (~> 4.11.0)
     - RCT-Folly
     - RCT-Folly/Fabric
     - RCTRequired
@@ -2516,7 +2514,6 @@ SPEC REPOS:
   trunk:
     - MMKV
     - MMKVCore
-    - opencv-rne
     - SocketRocket
 
 EXTERNAL SOURCES:
@@ -2682,7 +2679,6 @@ SPEC CHECKSUMS:
   hermes-engine: 9f4dfe93326146a1c99eb535b1cb0b857a3cd172
   MMKV: c953dbaac0da392c24b005e763c03ce2638b4ed7
   MMKVCore: d078dce7d6586a888b2c2ef5343b6242678e3ee8
-  opencv-rne: 2305807573b6e29c8c87e3416ab096d09047a7a0
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: 5eb1d2eeff5fb91151e8a8eef45b6c7658b6c897
   RCTRequired: cebcf9442fc296c9b89ac791dfd463021d9f6f23
@@ -2717,7 +2713,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 94f4264de2cb156960cd82b338a403f4653f2fd9
   React-microtasksnativemodule: 6c4ee39a36958c39c97b074d28f360246a335e84
   react-native-background-downloader: 114f96122822fa97b06ea0f2250b8e8270696995
-  react-native-executorch: 273c1ffd131a92738c35267c7af737275e8b32a5
+  react-native-executorch: cd9ff8cbabcea74307024049b7976482c4708371
   react-native-safe-area-context: befb5404eb8a16fdc07fa2bebab3568ecabcbb8a
   React-NativeModulesApple: ebf2ce72b35870036900d6498b33724386540a71
   React-oscompat: eb0626e8ba1a2c61673c991bf9dc21834898475d
@@ -2753,6 +2749,6 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 728df40394d49f3f471688747cf558158b3a3bd1
 
-PODFILE CHECKSUM: 421dcdee6cbb1e2a032c3b2e3ffc9371849b2199
+PODFILE CHECKSUM: ab3aa387643187062356cfaea1c5c73d99e36f8c
 
 COCOAPODS: 1.16.2

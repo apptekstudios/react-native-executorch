@@ -62,7 +62,14 @@ Pod::Spec.new do |s|
       '"$(PODS_TARGET_SRCROOT)/third-party/include/pthreadpool" '+
       '"$(PODS_TARGET_SRCROOT)/common" ' +
       '"$(PODS_TARGET_SRCROOT)/third-party/common/phonemis/src" ',
-    "GCC_PREPROCESSOR_DEFINITIONS" => '$(inherited) ET_ON=1',
+    # C10_USING_CUSTOM_GENERATED_MACROS tells executorch's vendored portable_type/c10
+    # headers (torch/headeronly/macros/Macros.h, Export.h) not to pull in a
+    # cmake_macros.h that we don't ship. Without it the include chain hits
+    # 'torch/headeronly/macros/cmake_macros.h file not found' the first time
+    # anything dragging in <executorch/extension/module/module.h> is compiled.
+    # Matches the build flag upstream sets in scripts/build_apple_frameworks.sh
+    # for the prebuilt xcframework.
+    "GCC_PREPROCESSOR_DEFINITIONS" => '$(inherited) ET_ON=1 C10_USING_CUSTOM_GENERATED_MACROS=1',
     "CLANG_CXX_LANGUAGE_STANDARD" => "c++20",
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64',
     'EXCLUDED_ARCHS[sdk=macosx*]' => 'x86_64',

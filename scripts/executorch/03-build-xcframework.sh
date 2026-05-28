@@ -1,8 +1,9 @@
 #!/bin/bash
 #
-# Regenerate ExecutorchLib.xcframework with the new ios-arm64-maccatalyst
-# slice. Wraps third-party/ios/ExecutorchLib/build.sh and verifies the
-# resulting Info.plist contains the catalyst entry.
+# Regenerate ExecutorchLib.xcframework with all three slices (ios-arm64,
+# ios-arm64-simulator, ios-arm64-maccatalyst). Wraps
+# third-party/ios/ExecutorchLib/build.sh and verifies the resulting Info.plist
+# contains every expected entry.
 
 set -euo pipefail
 
@@ -29,13 +30,17 @@ echo "==> Inspecting Info.plist"
 PLIST="$XCFRAMEWORK_DST/Info.plist"
 plutil -p "$PLIST"
 
-if ! plutil -p "$PLIST" | grep -q '"LibraryIdentifier" => "ios-arm64-maccatalyst"'; then
-  echo "ERROR: Info.plist is missing the ios-arm64-maccatalyst entry." >&2
-  echo "       Confirm SUPPORTS_MACCATALYST=YES took effect during xcodebuild archive." >&2
-  exit 1
-fi
+echo
+echo "==> Verifying all three slices are present"
+for slot in ios-arm64 ios-arm64-simulator ios-arm64-maccatalyst; do
+  if ! plutil -p "$PLIST" | grep -q "\"LibraryIdentifier\" => \"$slot\""; then
+    echo "ERROR: Info.plist is missing the $slot entry." >&2
+    exit 1
+  fi
+  echo "    + $slot"
+done
 
 echo
-echo "==> ExecutorchLib.xcframework updated with the maccatalyst slice."
+echo "==> ExecutorchLib.xcframework updated with all three slices."
 echo "    Commit $XCFRAMEWORK_DST and the in-repo edits, then proceed to:"
-echo "    scripts/maccatalyst/04-verify-example-app.sh"
+echo "    scripts/executorch/04-verify-example-app.sh"

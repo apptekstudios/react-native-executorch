@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Verify the new Mac Catalyst slice links cleanly into a real consumer by
-# building apps/bare-rn for both Mac Catalyst and the iOS Simulator
-# (regression check).
+# Verify the rebuilt ExecutorchLib.xcframework links cleanly into a real
+# consumer by building apps/bare-rn for both Mac Catalyst and the iOS
+# Simulator.
 
 set -euo pipefail
 

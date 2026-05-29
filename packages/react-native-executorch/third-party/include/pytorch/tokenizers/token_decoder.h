@@ -28,7 +28,7 @@ namespace tokenizers {
  * Base class for all token decoders
  */
 class TokenDecoder {
- public:
+public:
   /* -- Types -- */
 
   /** Shared pointer type */
@@ -45,8 +45,8 @@ class TokenDecoder {
    *
    * @returns decoded: The decoded token string
    */
-  virtual std::vector<std::string> decode(
-      const std::vector<std::string>& tokens) const = 0;
+  virtual std::vector<std::string>
+  decode(const std::vector<std::string> &tokens) const = 0;
 
   // virtual destructor
   virtual ~TokenDecoder() = default;
@@ -59,7 +59,7 @@ class TokenDecoder {
  * Factory and config class for creating a new TokenDecoder
  */
 class TokenDecoderConfig {
- public:
+public:
   /**
    * The Type name string matching from decoders
    * https://github.com/huggingface/tokenizers/blob/main/tokenizers/src/decoders/mod.rs#L55
@@ -78,6 +78,10 @@ class TokenDecoderConfig {
   size_t strip_start;
   size_t strip_stop;
 
+  // Parameters for WordPiece decoder
+  std::string wordpiece_prefix;
+  bool wordpiece_cleanup;
+
   /*----------------*/
   /* Public methods */
   /*----------------*/
@@ -95,7 +99,7 @@ class TokenDecoderConfig {
   /**
    * Populate from a json config file
    */
-  TokenDecoderConfig& parse_json(const nlohmann::json& json_config);
+  TokenDecoderConfig &parse_json(const nlohmann::json &json_config);
 }; // end class TokenDecoderConfig
 
 // -- ByteLevel ----------------------------------------------------------------
@@ -104,9 +108,9 @@ class TokenDecoderConfig {
 // https://github.com/huggingface/tokenizers/blob/main/tokenizers/src/pre_tokenizers/byte_level.rs
 
 class ByteLevelTokenDecoder : public TokenDecoder {
- public:
-  std::vector<std::string> decode(
-      const std::vector<std::string>& tokens) const override;
+public:
+  std::vector<std::string>
+  decode(const std::vector<std::string> &tokens) const override;
 
 }; // end class ByteLevelTokenDecoder
 
@@ -114,14 +118,13 @@ class ByteLevelTokenDecoder : public TokenDecoder {
 // Replaces a pattern with a replacement string
 
 class ReplaceTokenDecoder : public TokenDecoder {
- public:
-  explicit ReplaceTokenDecoder(
-      const std::string& pattern,
-      const std::string& content);
-  std::vector<std::string> decode(
-      const std::vector<std::string>& tokens) const override;
+public:
+  explicit ReplaceTokenDecoder(const std::string &pattern,
+                               const std::string &content);
+  std::vector<std::string>
+  decode(const std::vector<std::string> &tokens) const override;
 
- private:
+private:
   std::string pattern_;
   std::string content_;
 }; // end class ReplaceTokenDecoder
@@ -130,9 +133,9 @@ class ReplaceTokenDecoder : public TokenDecoder {
 // Handles byte fallback decoding
 
 class ByteFallbackTokenDecoder : public TokenDecoder {
- public:
-  std::vector<std::string> decode(
-      const std::vector<std::string>& tokens) const override;
+public:
+  std::vector<std::string>
+  decode(const std::vector<std::string> &tokens) const override;
 
 }; // end class ByteFallbackTokenDecoder
 
@@ -140,9 +143,9 @@ class ByteFallbackTokenDecoder : public TokenDecoder {
 // Fuses tokens together
 
 class FuseTokenDecoder : public TokenDecoder {
- public:
-  std::vector<std::string> decode(
-      const std::vector<std::string>& tokens) const override;
+public:
+  std::vector<std::string>
+  decode(const std::vector<std::string> &tokens) const override;
 
 }; // end class FuseTokenDecoder
 
@@ -150,15 +153,13 @@ class FuseTokenDecoder : public TokenDecoder {
 // Strips characters from tokens
 
 class StripTokenDecoder : public TokenDecoder {
- public:
-  explicit StripTokenDecoder(
-      const std::string& content_str,
-      size_t start,
-      size_t stop);
-  std::vector<std::string> decode(
-      const std::vector<std::string>& tokens) const override;
+public:
+  explicit StripTokenDecoder(const std::string &content_str, size_t start,
+                             size_t stop);
+  std::vector<std::string>
+  decode(const std::vector<std::string> &tokens) const override;
 
- private:
+private:
   uint32_t content_;
   size_t start_;
   size_t stop_;
@@ -168,13 +169,33 @@ class StripTokenDecoder : public TokenDecoder {
 // Applies a sequence of decoders in order
 
 class SequenceTokenDecoder : public TokenDecoder {
- public:
+public:
   explicit SequenceTokenDecoder(std::vector<TokenDecoder::Ptr> decoders);
-  std::vector<std::string> decode(
-      const std::vector<std::string>& tokens) const override;
+  std::vector<std::string>
+  decode(const std::vector<std::string> &tokens) const override;
 
- private:
+private:
   std::vector<TokenDecoder::Ptr> decoders_;
 }; // end class SequenceTokenDecoder
+
+// -- WordPiece ---------------------------------------------------------------
+// Reverses WordPiece sub-word splitting: tokens after the first either drop
+// their continuation prefix (default "##") or get a leading space prepended,
+// so a join yields whitespace-separated words. Optional `cleanup` collapses
+// the punctuation/contraction artefacts that BERT-family tokenisers emit.
+// Matches huggingface/tokenizers/src/decoders/wordpiece.rs.
+
+class WordPieceTokenDecoder : public TokenDecoder {
+public:
+  explicit WordPieceTokenDecoder(std::string prefix = "##", bool cleanup = true)
+      : prefix_(std::move(prefix)), cleanup_(cleanup) {}
+
+  std::vector<std::string>
+  decode(const std::vector<std::string> &tokens) const override;
+
+private:
+  const std::string prefix_;
+  const bool cleanup_;
+}; // end class WordPieceTokenDecoder
 
 } // namespace tokenizers

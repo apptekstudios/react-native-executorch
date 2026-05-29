@@ -2,21 +2,14 @@
 # specific for windows script files
 *.bat text eol=crlf
 
-# Vendored native binaries → Git LFS. Static archives + shared libs from
-# scripts/executorch/, scripts/opencv/, and the Android third-party drop.
-# Note: this only catches commits going forward; existing copies in history
-# stay in regular pack files until you rewrite history (git-filter-repo).
-*.a   filter=lfs diff=lfs merge=lfs -text
-*.so  filter=lfs diff=lfs merge=lfs -text
-# xcframework Mach-O binaries (named after the framework, no extension).
-# Explicit per-framework patterns because gitattributes can't easily match
-# "files with no extension under a directory tree".
-**/ExecutorchLib.framework/ExecutorchLib             filter=lfs diff=lfs merge=lfs -text
-**/ExecutorchLib.framework/Versions/*/ExecutorchLib  filter=lfs diff=lfs merge=lfs -text
-**/opencv2.framework/opencv2                         filter=lfs diff=lfs merge=lfs -text
-**/opencv2.framework/Versions/*/opencv2              filter=lfs diff=lfs merge=lfs -text
-*.a !text !filter !merge !diff
-*.so !text !filter !merge !diff
+# Vendored native binaries are committed inline (not Git LFS). Public-fork
+# LFS uploads are blocked by GitHub policy, so the previously-LFS .a / .so /
+# xcframework Mach-O patterns are stored as plain binary blobs. The
+# `!filter !merge !diff` negations explicitly clear any inherited LFS
+# attributes so the smudge/clean filters never re-attach. `git lfs migrate
+# export` rewrote the existing branch history to drop the pointers in
+# place.
+*.a              !text !filter !merge !diff
+*.so             !text !filter !merge !diff
 **/ExecutorchLib !text !filter !merge !diff
-**/opencv2.framework/opencv2 !text !filter !merge !diff
-**/opencv2.framework/Versions/*/opencv2 !text !filter !merge !diff
+**/opencv2       !text !filter !merge !diff

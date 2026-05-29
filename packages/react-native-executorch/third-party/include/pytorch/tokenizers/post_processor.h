@@ -25,7 +25,7 @@ namespace tokenizers {
  * Base class for all post-processors
  */
 class PostProcessor {
- public:
+public:
   /** Shared pointer type */
   using Ptr = std::shared_ptr<PostProcessor>;
 
@@ -39,17 +39,17 @@ class PostProcessor {
   /**
    * Process the token IDs (single sequence).
    */
-  virtual std::vector<uint64_t> process(
-      const std::vector<uint64_t>& tokens,
-      bool add_special_tokens = true) const = 0;
+  virtual std::vector<uint64_t>
+  process(const std::vector<uint64_t> &tokens,
+          bool add_special_tokens = true) const = 0;
 
   /**
    * Process the token IDs (pair sequence).
    */
-  virtual std::vector<uint64_t> process(
-      const std::vector<uint64_t>& tokens_a,
-      const std::vector<uint64_t>& tokens_b,
-      bool add_special_tokens = true) const = 0;
+  virtual std::vector<uint64_t>
+  process(const std::vector<uint64_t> &tokens_a,
+          const std::vector<uint64_t> &tokens_b,
+          bool add_special_tokens = true) const = 0;
 };
 
 // -- Factory/Common Types -----------------------------------------------------
@@ -80,61 +80,54 @@ struct SpecialToken {
 // -- TemplateProcessing -------------------------------------------------------
 
 class TemplateProcessing : public PostProcessor {
- public:
-  TemplateProcessing(
-      Template single,
-      Template pair,
-      std::map<std::string, SpecialToken> special_tokens);
+public:
+  TemplateProcessing(Template single, Template pair,
+                     std::map<std::string, SpecialToken> special_tokens);
 
   size_t added_tokens(bool is_pair) const override;
 
-  std::vector<uint64_t> process(
-      const std::vector<uint64_t>& tokens,
-      bool add_special_tokens = true) const override;
+  std::vector<uint64_t> process(const std::vector<uint64_t> &tokens,
+                                bool add_special_tokens = true) const override;
 
-  std::vector<uint64_t> process(
-      const std::vector<uint64_t>& tokens_a,
-      const std::vector<uint64_t>& tokens_b,
-      bool add_special_tokens = true) const override;
+  std::vector<uint64_t> process(const std::vector<uint64_t> &tokens_a,
+                                const std::vector<uint64_t> &tokens_b,
+                                bool add_special_tokens = true) const override;
 
- private:
+private:
   Template single_;
   Template pair_;
   std::map<std::string, SpecialToken> special_tokens_;
   size_t added_single_;
   size_t added_pair_;
 
-  std::vector<uint64_t> apply_template(
-      const Template& tmpl,
-      const std::vector<uint64_t>& tokens_a,
-      const std::vector<uint64_t>* tokens_b,
-      bool add_special_tokens) const;
+  std::vector<uint64_t> apply_template(const Template &tmpl,
+                                       const std::vector<uint64_t> &tokens_a,
+                                       const std::vector<uint64_t> *tokens_b,
+                                       bool add_special_tokens) const;
 };
 
 // -- SequenceProcessing -------------------------------------------------------
 class Sequence : public PostProcessor {
- public:
+public:
   explicit Sequence(std::vector<PostProcessor::Ptr> processors);
 
   size_t added_tokens(bool is_pair) const override;
 
-  std::vector<uint64_t> process(
-      const std::vector<uint64_t>& tokens,
-      bool add_special_tokens = true) const override;
+  std::vector<uint64_t> process(const std::vector<uint64_t> &tokens,
+                                bool add_special_tokens = true) const override;
 
-  std::vector<uint64_t> process(
-      const std::vector<uint64_t>& tokens_a,
-      const std::vector<uint64_t>& tokens_b,
-      bool add_special_tokens = true) const override;
+  std::vector<uint64_t> process(const std::vector<uint64_t> &tokens_a,
+                                const std::vector<uint64_t> &tokens_b,
+                                bool add_special_tokens = true) const override;
 
- private:
+private:
   std::vector<PostProcessor::Ptr> processors_;
 };
 
 // -- Config -------------------------------------------------------------------
 
 class PostProcessorConfig {
- public:
+public:
   std::string type;
 
   // TemplateProcessing
@@ -155,14 +148,67 @@ class PostProcessorConfig {
 
   PostProcessor::Ptr create() const;
 
-  PostProcessorConfig& parse_json(const nlohmann::json& json_config);
+  PostProcessorConfig &parse_json(const nlohmann::json &json_config);
 };
 
 // -- BertProcessing -----------------------------------------------------------
-// TODO: Implement BertProcessor
+// Wraps single sequences as [CLS] tokens [SEP] and pairs as
+//   [CLS] tokens_a [SEP] tokens_b [SEP]
+// Mirrors huggingface/tokenizers/src/processors/bert.rs (BertProcessing).
+// Type ids (0 for sequence A / first SEP, 1 for sequence B / second SEP) are
+// not surfaced because our PostProcessor interface only exposes token IDs.
+
+class BertProcessing : public PostProcessor {
+public:
+  BertProcessing(std::pair<std::string, uint64_t> sep,
+                 std::pair<std::string, uint64_t> cls)
+      : sep_(std::move(sep)), cls_(std::move(cls)) {}
+
+  size_t added_tokens(bool is_pair) const override { return is_pair ? 3 : 2; }
+
+  std::vector<uint64_t> process(const std::vector<uint64_t> &tokens,
+                                bool add_special_tokens = true) const override;
+
+  std::vector<uint64_t> process(const std::vector<uint64_t> &tokens_a,
+                                const std::vector<uint64_t> &tokens_b,
+                                bool add_special_tokens = true) const override;
+
+private:
+  std::pair<std::string, uint64_t> sep_;
+  std::pair<std::string, uint64_t> cls_;
+};
 
 // -- RobertaProcessing --------------------------------------------------------
-// TODO: Implement RobertaProcessor
+// Single: <s> tokens </s>                          (added: 2)
+// Pair:   <s> tokens_a </s> </s> tokens_b </s>    (added: 4 — note the
+// duplicated </s> separator between the two sequences). Mirrors
+// huggingface/tokenizers/src/processors/roberta.rs. trim_offsets and
+// add_prefix_space are accepted from JSON but no-op here: they only affect
+// offset post-processing, and our interface does not carry offsets.
+
+class RobertaProcessing : public PostProcessor {
+public:
+  RobertaProcessing(std::pair<std::string, uint64_t> sep,
+                    std::pair<std::string, uint64_t> cls,
+                    bool trim_offsets = true, bool add_prefix_space = true)
+      : sep_(std::move(sep)), cls_(std::move(cls)), trim_offsets_(trim_offsets),
+        add_prefix_space_(add_prefix_space) {}
+
+  size_t added_tokens(bool is_pair) const override { return is_pair ? 4 : 2; }
+
+  std::vector<uint64_t> process(const std::vector<uint64_t> &tokens,
+                                bool add_special_tokens = true) const override;
+
+  std::vector<uint64_t> process(const std::vector<uint64_t> &tokens_a,
+                                const std::vector<uint64_t> &tokens_b,
+                                bool add_special_tokens = true) const override;
+
+private:
+  std::pair<std::string, uint64_t> sep_;
+  std::pair<std::string, uint64_t> cls_;
+  const bool trim_offsets_;
+  const bool add_prefix_space_;
+};
 
 // -- ByteLevel
 // ----------------------------------------------------------------

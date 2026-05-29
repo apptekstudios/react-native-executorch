@@ -240,3 +240,14 @@ swiftc
 xcodeproj
 archs
 kwarg
+xcworkspace
+initialised
+behaviour
+Metaspace
+metaspace
+wordpiece
+Unigram
+NFKC
+NFKD
+tolower
+cpts

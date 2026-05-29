@@ -27,6 +27,7 @@ scripts/executorch/01-build-upstream-libs.sh   # ~90-180 min (3 platforms), netw
 scripts/executorch/02-stage-and-verify-libs.sh # copies artifacts in, lipo/otool checks
 scripts/executorch/03-build-xcframework.sh     # regenerates ExecutorchLib.xcframework
 scripts/executorch/04-verify-example-app.sh    # pod install + Catalyst + simulator builds of bare-rn
+scripts/executorch/05-reinstall-app-pods.sh    # pod install across every apps/* and prints `open …xcworkspace` lines
 ```
 
 Each script is idempotent and bails on the first failure (`set -euo pipefail`).
@@ -54,6 +55,48 @@ Clones `pytorch/executorch` and `Maratyszcza/pthreadpool` into
 builds — one per Apple platform slice — from the same source tree at the
 same ref. Default `EXECUTORCH_REF=v1.3.0`; override only if you also
 update the bridge consumer code to match the new API.
+
+After ExecuTorch is checked out and its submodules are initialised, the
+script bumps `extension/llm/tokenizers` to `TOKENIZERS_REF` (default
+`origin/main`, currently `4834da0`) — ExecuTorch v1.3.0 ships an older
+tokenizers pin (b642403) that lacks several normalizer types HuggingFace
+`tokenizer.json` files routinely contain. It then overlays
+`scripts/executorch/patches/tokenizers/{normalizer,pre_tokenizer}.{h,cpp}`
+on top of the tokenizers source, adding:
+
+- **Normalizers**: `BertNormalizer`, `LowercaseNormalizer`,
+  `NFDNormalizer`, `NFKC`/`NFKDNormalizer`, `StripNormalizer`,
+  `StripAccentsNormalizer`, `NmtNormalizer`, `ByteLevelNormalizer`, and a
+  passthrough `PrecompiledNormalizer`.
+- **Pre-tokenizers**: `BertPreTokenizer` (whitespace split → punctuation
+  isolation, per `huggingface/tokenizers/src/pre_tokenizers/bert.rs`) and
+  `MetaspacePreTokenizer` (substitute spaces with `▁`/U+2581, optional
+  prepend, optional split-on-replacement, per `metaspace.rs`).
+- **Decoders**: `WordPiece` (strip `##` continuation prefix, optional
+  cleanup of contraction/punctuation spacing, per `decoders/wordpiece.rs`).
+- **Post-processors**: `BertProcessing` and `RobertaProcessing` (per
+  `processors/bert.rs` / `roberta.rs`). Both wrap a single sequence as
+  `[cls, …, sep]`; pair form is `[cls, A, sep, B, sep]` for Bert and
+  `[cls, A, sep, sep, B, sep]` for Roberta (duplicated separator).
+  `trim_offsets` / `add_prefix_space` are accepted but no-op because our
+  PostProcessor interface only carries token IDs, not offsets.
+- **HFTokenizer**: a small fix to `parse_merges` so non-BPE models
+  (WordPiece / Unigram / WordLevel) load cleanly. Upstream unconditionally
+  reads `/model/merges` and throws `key 'merges' not found` for BERT-family
+  tokenizer.json files; the overlay returns `Error::Ok` early when the
+  model self-identifies as non-BPE or has no `merges` field.
+
+Together these cover all tokenizer.json variants used by the example apps
+(BERT-family SentenceTransformer embeddings → BertPreTokenizer + WordPiece +
+BertProcessing/RobertaProcessing; SentencePiece LLMs like Hammer 2.1 →
+Metaspace).
+
+Behaviour matches the HuggingFace Rust `tokenizers` crate; implementations
+lean on the bundled `llama.cpp-unicode` primitives (`unicode_tolower`,
+`unicode_cpts_normalize_nfd`, `unicode_byte_to_utf8`, `unicode_cpt_flags`).
+Without the overlay, loading any tokenizer.json with one of these types
+fails with `Unsupported Normalizer type: …` or `Unsupported PreTokenizer
+type: …` and the JS layer surfaces error code 122.
 
 Each platform gets its own `cmake-out-{name}` build dir, freshly wiped per
 configure pass (`ios.toolchain.cmake` prepends to `CMAKE_C_FLAGS … CACHE

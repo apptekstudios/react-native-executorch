@@ -265,5 +265,23 @@ if ! lipo -archs "$CPUINFO_LIB" | grep -q "arm64"; then
 fi
 
 echo
+echo "==> Re-vendoring tokenizers headers from the install tree"
+# The 01 script overlays our own normalizer.{h,cpp} on top of the tokenizers
+# submodule before building. `cmake --install` then copies the overlaid header
+# into install/<name>/include/pytorch/tokenizers/. Mirror it back into the
+# bundled headers so consumer code sees the API the libs were compiled with.
+# Headers are platform-independent — picking simulator is arbitrary.
+TK_HEADERS_SRC="$BUILD_DIR/install/simulator/include/pytorch/tokenizers"
+TK_HEADERS_DST="$REPO_ROOT/packages/react-native-executorch/third-party/include/pytorch/tokenizers"
+for hdr in normalizer.h pre_tokenizer.h token_decoder.h post_processor.h; do
+  if [ ! -f "$TK_HEADERS_SRC/$hdr" ]; then
+    echo "ERROR: $TK_HEADERS_SRC/$hdr missing — rerun 01 first" >&2
+    exit 1
+  fi
+  cp "$TK_HEADERS_SRC/$hdr" "$TK_HEADERS_DST/$hdr"
+  echo "    -> $TK_HEADERS_DST/$hdr"
+done
+
+echo
 echo "==> All three slices staged and verified."
 echo "    Next: scripts/executorch/03-build-xcframework.sh"

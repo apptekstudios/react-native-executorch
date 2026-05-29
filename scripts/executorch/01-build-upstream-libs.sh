@@ -21,6 +21,16 @@ EXECUTORCH_REPO="https://github.com/pytorch/executorch.git"
 # break the build at link time.
 EXECUTORCH_REF="${EXECUTORCH_REF:-v1.3.0}"
 
+# Override the tokenizers submodule pin that ExecuTorch v1.3.0 ships with
+# (b642403, ~= v1.0.1+19). Latest meta-pytorch/tokenizers main carries memory
+# safety + thread-safety fixes; HEAD as of this commit is 4834da0. The overlay
+# step further down adds a local normalizer.{h,cpp} with the extra normalizer
+# types HF tokenizer.json files commonly use (BertNormalizer, Lowercase, NFD,
+# StripAccents, Nmt, ByteLevel, Precompiled). Without those, loading a real
+# HuggingFace tokenizer.json hits "Unsupported Normalizer type: ..." and the
+# load fails with error code 122 at the JS layer.
+TOKENIZERS_REF="${TOKENIZERS_REF:-origin/main}"
+
 PTHREADPOOL_REPO="https://github.com/Maratyszcza/pthreadpool.git"
 PTHREADPOOL_REF="${PTHREADPOOL_REF:-master}"
 
@@ -54,6 +64,7 @@ echo "    macOS clang     : $CC_MACOS"
 echo "    iOS clang       : $CC_IOS"
 echo "    sim clang       : $CC_SIM"
 echo "    executorch ref  : $EXECUTORCH_REF"
+echo "    tokenizers ref  : $TOKENIZERS_REF"
 echo "    pthreadpool ref : $PTHREADPOOL_REF"
 echo
 
@@ -77,6 +88,51 @@ if [ -z "$DESIRED_REF" ] || [ "$CURRENT_REF" != "$DESIRED_REF" ]; then
   git -C "$ET_SRC" checkout "$EXECUTORCH_REF"
   git -C "$ET_SRC" submodule update --init --recursive
 fi
+
+# --- Bump tokenizers submodule + apply overlays ----------------------------
+# ExecuTorch v1.3.0 pins meta-pytorch/tokenizers at b642403, which lacks
+# BertNormalizer / Lowercase / NFD / StripAccents / Nmt / ByteLevel /
+# Precompiled (normalizers) and BertPreTokenizer (pre-tokenizers). We bump to
+# TOKENIZERS_REF (default origin/main) and overlay our own normalizer.{h,cpp}
+# + pre_tokenizer.{h,cpp} from scripts/executorch/patches/tokenizers/ to add
+# those types. The overlay is idempotent: re-running this script always
+# copies the patch tree on top regardless of prior state.
+TK_SRC="$ET_SRC/extension/llm/tokenizers"
+TK_OVERLAY_DIR="$SCRIPT_DIR/patches/tokenizers"
+
+echo
+echo "==> Bumping tokenizers submodule to $TOKENIZERS_REF"
+git -C "$TK_SRC" fetch --force origin
+# Reset before checkout so a prior overlay (uncommitted changes to
+# normalizer.{h,cpp}) doesn't block the checkout. The overlay is re-applied
+# immediately afterwards, so wiping it here is safe.
+git -C "$TK_SRC" reset --hard HEAD
+git -C "$TK_SRC" -c advice.detachedHead=false checkout "$TOKENIZERS_REF"
+echo "    tokenizers HEAD: $(git -C "$TK_SRC" rev-parse --short HEAD) ($(git -C "$TK_SRC" log -1 --format=%s))"
+
+echo "==> Overlaying tokenizers sources from $TK_OVERLAY_DIR"
+# Pairs of <overlay-basename> -> <relative path inside tokenizers source tree>.
+overlay_pairs=(
+  "normalizer.h:include/pytorch/tokenizers/normalizer.h"
+  "normalizer.cpp:src/normalizer.cpp"
+  "pre_tokenizer.h:include/pytorch/tokenizers/pre_tokenizer.h"
+  "pre_tokenizer.cpp:src/pre_tokenizer.cpp"
+  "token_decoder.h:include/pytorch/tokenizers/token_decoder.h"
+  "token_decoder.cpp:src/token_decoder.cpp"
+  "post_processor.h:include/pytorch/tokenizers/post_processor.h"
+  "post_processor.cpp:src/post_processor.cpp"
+  "hf_tokenizer.cpp:src/hf_tokenizer.cpp"
+)
+for pair in "${overlay_pairs[@]}"; do
+  src="$TK_OVERLAY_DIR/${pair%%:*}"
+  dst="$TK_SRC/${pair##*:}"
+  if [ ! -f "$src" ]; then
+    echo "ERROR: overlay source missing: $src" >&2
+    exit 1
+  fi
+  cp "$src" "$dst"
+  echo "    + ${pair%%:*} -> ${pair##*:}"
+done
 
 # Patch upstream third-party/CMakeLists.txt so the host macOS flatc/flatcc
 # subbuilds don't inherit the project's iOS DEPLOYMENT_TARGET (17.0). On

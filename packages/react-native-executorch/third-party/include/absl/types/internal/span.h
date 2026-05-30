@@ -29,24 +29,25 @@
 namespace absl {
 ABSL_NAMESPACE_BEGIN
 
-template <typename T> class Span;
+template <typename T>
+class Span;
 
 namespace span_internal {
 // Wrappers for access to container data pointers.
 template <typename C>
-constexpr auto GetDataImpl(C &c, char) noexcept // NOLINT(runtime/references)
+constexpr auto GetDataImpl(C& c, char) noexcept  // NOLINT(runtime/references)
     -> decltype(c.data()) {
   return c.data();
 }
 
 // Before C++17, std::string::data returns a const char* in all cases.
-inline char *GetDataImpl(std::string &s, // NOLINT(runtime/references)
+inline char* GetDataImpl(std::string& s,  // NOLINT(runtime/references)
                          int) noexcept {
   return &s[0];
 }
 
 template <typename C>
-constexpr auto GetData(C &c) noexcept // NOLINT(runtime/references)
+constexpr auto GetData(C& c) noexcept  // NOLINT(runtime/references)
     -> decltype(GetDataImpl(c, 0)) {
   return GetDataImpl(c, 0);
 }
@@ -54,7 +55,7 @@ constexpr auto GetData(C &c) noexcept // NOLINT(runtime/references)
 // Detection idioms for size() and data().
 template <typename C>
 using HasSize =
-    std::is_integral<absl::decay_t<decltype(std::declval<C &>().size())>>;
+    std::is_integral<absl::decay_t<decltype(std::declval<C&>().size())>>;
 
 // We want to enable conversion from vector<T*> to Span<const T* const> but
 // disable conversion from vector<Derived> to Span<Base>. Here we use
@@ -64,19 +65,22 @@ using HasSize =
 // which returns a reference.
 template <typename T, typename C>
 using HasData =
-    std::is_convertible<absl::decay_t<decltype(GetData(std::declval<C &>()))> *,
-                        T *const *>;
+    std::is_convertible<absl::decay_t<decltype(GetData(std::declval<C&>()))>*,
+                        T* const*>;
 
 // Extracts value type from a Container
-template <typename C> struct ElementType {
+template <typename C>
+struct ElementType {
   using type = typename absl::remove_reference_t<C>::value_type;
 };
 
-template <typename T, size_t N> struct ElementType<T (&)[N]> {
+template <typename T, size_t N>
+struct ElementType<T (&)[N]> {
   using type = T;
 };
 
-template <typename C> using ElementT = typename ElementType<C>::type;
+template <typename C>
+using ElementT = typename ElementType<C>::type;
 
 template <typename T>
 using EnableIfMutable =
@@ -103,22 +107,21 @@ using EnableIfConvertibleTo =
 // IsView is true for types where the return type of .data() is the same for
 // mutable and const instances. This isn't foolproof, but it's only used to
 // enable a compiler warning.
-template <typename T, typename = void, typename = void> struct IsView {
+template <typename T, typename = void, typename = void>
+struct IsView {
   static constexpr bool value = false;
 };
 
 template <typename T>
 struct IsView<
-    T,
-    absl::void_t<decltype(span_internal::GetData(std::declval<const T &>()))>,
-    absl::void_t<decltype(span_internal::GetData(std::declval<T &>()))>> {
-private:
+    T, absl::void_t<decltype(span_internal::GetData(std::declval<const T&>()))>,
+    absl::void_t<decltype(span_internal::GetData(std::declval<T&>()))>> {
+ private:
   using Container = std::remove_const_t<T>;
   using ConstData =
-      decltype(span_internal::GetData(std::declval<const Container &>()));
-  using MutData = decltype(span_internal::GetData(std::declval<Container &>()));
-
-public:
+      decltype(span_internal::GetData(std::declval<const Container&>()));
+  using MutData = decltype(span_internal::GetData(std::declval<Container&>()));
+ public:
   static constexpr bool value = std::is_same<ConstData, MutData>::value;
 };
 
@@ -130,8 +133,8 @@ using EnableIfIsView = std::enable_if_t<IsView<T>::value, int>;
 template <typename T>
 using EnableIfNotIsView = std::enable_if_t<!IsView<T>::value, int>;
 
-} // namespace span_internal
+}  // namespace span_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_TYPES_INTERNAL_SPAN_H_
+#endif  // ABSL_TYPES_INTERNAL_SPAN_H_

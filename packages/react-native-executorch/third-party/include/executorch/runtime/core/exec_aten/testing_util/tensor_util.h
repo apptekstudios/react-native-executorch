@@ -67,10 +67,11 @@ constexpr double kDefaultBFloat16Atol = 1e-2;
  * @retval false One or more corresponding elements of the two tensors are
  *     outside of the specified tolerance of each other.
  */
-bool tensors_are_close(const executorch::aten::Tensor &a,
-                       const executorch::aten::Tensor &b,
-                       double rtol = internal::kDefaultRtol,
-                       std::optional<double> opt_atol = std::nullopt);
+bool tensors_are_close(
+    const executorch::aten::Tensor& a,
+    const executorch::aten::Tensor& b,
+    double rtol = internal::kDefaultRtol,
+    std::optional<double> opt_atol = std::nullopt);
 
 /**
  * Returns true if the tensors are of the same numel and dtype, and if all
@@ -97,22 +98,24 @@ bool tensors_are_close(const executorch::aten::Tensor &a,
  * @retval false One or more corresponding elements of the two tensors are
  *     outside of the specified tolerance of each other.
  */
-bool tensor_data_is_close(const executorch::aten::Tensor &a,
-                          const executorch::aten::Tensor &b,
-                          double rtol = internal::kDefaultRtol,
-                          std::optional<double> opt_atol = std::nullopt);
+bool tensor_data_is_close(
+    const executorch::aten::Tensor& a,
+    const executorch::aten::Tensor& b,
+    double rtol = internal::kDefaultRtol,
+    std::optional<double> opt_atol = std::nullopt);
 
 /**
  * Returns true if the two lists are of the same length, and
  * tensor_data_is_close(tensors_a[i], tensors_b[i], rtol, atol) is true for all
  * i.
  */
-bool tensor_lists_are_close(const executorch::aten::Tensor *tensors_a,
-                            size_t num_tensors_a,
-                            const executorch::aten::Tensor *tensors_b,
-                            size_t num_tensors_b,
-                            double rtol = internal::kDefaultRtol,
-                            std::optional<double> opt_atol = std::nullopt);
+bool tensor_lists_are_close(
+    const executorch::aten::Tensor* tensors_a,
+    size_t num_tensors_a,
+    const executorch::aten::Tensor* tensors_b,
+    size_t num_tensors_b,
+    double rtol = internal::kDefaultRtol,
+    std::optional<double> opt_atol = std::nullopt);
 
 /**
  * Lets gtest users write `EXPECT_THAT(tensor1, IsCloseTo(tensor2))` or
@@ -120,7 +123,9 @@ bool tensor_lists_are_close(const executorch::aten::Tensor *tensors_a,
  *
  * See also `EXPECT_TENSOR_CLOSE()` and `EXPECT_TENSOR_NOT_CLOSE()`.
  */
-MATCHER_P(IsCloseTo, other, "") { return tensors_are_close(arg, other); }
+MATCHER_P(IsCloseTo, other, "") {
+  return tensors_are_close(arg, other);
+}
 
 /**
  * Lets gtest users write
@@ -150,7 +155,9 @@ MATCHER_P(IsEqualTo, other, "") {
  *
  * See also `EXPECT_TENSOR_DATA_CLOSE()` and `EXPECT_TENSOR_DATA_NOT_CLOSE()`.
  */
-MATCHER_P(IsDataCloseTo, other, "") { return tensor_data_is_close(arg, other); }
+MATCHER_P(IsDataCloseTo, other, "") {
+  return tensor_data_is_close(arg, other);
+}
 
 /**
  * Lets gtest users write
@@ -184,8 +191,8 @@ MATCHER_P(IsDataEqualTo, other, "") {
  * See also `EXPECT_TENSOR_LISTS_CLOSE()` and `EXPECT_TENSOR_LISTS_NOT_CLOSE()`.
  */
 MATCHER_P(IsListCloseTo, other, "") {
-  return tensor_lists_are_close(arg.data(), arg.size(), other.data(),
-                                other.size());
+  return tensor_lists_are_close(
+      arg.data(), arg.size(), other.data(), other.size());
 }
 
 /**
@@ -198,10 +205,13 @@ MATCHER_P(IsListCloseTo, other, "") {
  * See also `EXPECT_TENSOR_LISTS_EQ()` and `EXPECT_TENSOR_LISTS_NE()`.
  */
 MATCHER_P(IsListEqualTo, other, "") {
-  return tensor_lists_are_close(arg.data(), arg.size(), other.data(),
-                                other.size(),
-                                /*rtol=*/0,
-                                /*atol=*/0);
+  return tensor_lists_are_close(
+      arg.data(),
+      arg.size(),
+      other.data(),
+      other.size(),
+      /*rtol=*/0,
+      /*atol=*/0);
 }
 
 /*
@@ -212,101 +222,107 @@ MATCHER_P(IsListEqualTo, other, "") {
  * element-by-element comparison. This causes an ambiguous conflict with the
  * `bool`-returning operator.
  */
-#define EXPECT_TENSOR_EQ(t1, t2)                                               \
+#define EXPECT_TENSOR_EQ(t1, t2) \
   EXPECT_THAT((t1), ::executorch::runtime::testing::IsEqualTo(t2))
-#define EXPECT_TENSOR_NE(t1, t2)                                               \
+#define EXPECT_TENSOR_NE(t1, t2) \
   EXPECT_THAT((t1), ::testing::Not(executorch::runtime::testing::IsEqualTo(t2)))
-#define ASSERT_TENSOR_EQ(t1, t2)                                               \
+#define ASSERT_TENSOR_EQ(t1, t2) \
   ASSERT_THAT((t1), ::executorch::runtime::testing::IsEqualTo(t2))
-#define ASSERT_TENSOR_NE(t1, t2)                                               \
+#define ASSERT_TENSOR_NE(t1, t2) \
   ASSERT_THAT((t1), ::testing::Not(executorch::runtime::testing::IsEqualTo(t2)))
 
-#define EXPECT_TENSOR_CLOSE(t1, t2)                                            \
+#define EXPECT_TENSOR_CLOSE(t1, t2) \
   EXPECT_THAT((t1), ::executorch::runtime::testing::IsCloseTo(t2))
-#define EXPECT_TENSOR_NOT_CLOSE(t1, t2)                                        \
+#define EXPECT_TENSOR_NOT_CLOSE(t1, t2) \
   EXPECT_THAT((t1), ::testing::Not(executorch::runtime::testing::IsCloseTo(t2)))
-#define ASSERT_TENSOR_CLOSE(t1, t2)                                            \
+#define ASSERT_TENSOR_CLOSE(t1, t2) \
   ASSERT_THAT((t1), ::executorch::runtime::testing::IsCloseTo(t2))
-#define ASSERT_TENSOR_NOT_CLOSE(t1, t2)                                        \
+#define ASSERT_TENSOR_NOT_CLOSE(t1, t2) \
   ASSERT_THAT((t1), ::testing::Not(executorch::runtime::testing::IsCloseTo(t2)))
 
-#define EXPECT_TENSOR_CLOSE_WITH_TOL(t1, t2, rtol, atol)                       \
-  EXPECT_THAT(                                                                 \
+#define EXPECT_TENSOR_CLOSE_WITH_TOL(t1, t2, rtol, atol) \
+  EXPECT_THAT(                                           \
       (t1), ::executorch::runtime::testing::IsCloseToWithTol(t2, rtol, atol))
-#define EXPECT_TENSOR_NOT_CLOSE_WITH_TOL(t1, t2, rtol, atol)                   \
-  EXPECT_THAT((t1),                                                            \
-              ::testing::Not(executorch::runtime::testing::IsCloseToWithTol(   \
-                  t2, rtol, atol)))
-#define ASSERT_TENSOR_CLOSE_WITH_TOL(t1, t2, rtol, atol)                       \
-  ASSERT_THAT(                                                                 \
+#define EXPECT_TENSOR_NOT_CLOSE_WITH_TOL(t1, t2, rtol, atol) \
+  EXPECT_THAT(                                               \
+      (t1),                                                  \
+      ::testing::Not(                                        \
+          executorch::runtime::testing::IsCloseToWithTol(t2, rtol, atol)))
+#define ASSERT_TENSOR_CLOSE_WITH_TOL(t1, t2, rtol, atol) \
+  ASSERT_THAT(                                           \
       (t1), ::executorch::runtime::testing::IsCloseToWithTol(t2, rtol, atol))
-#define ASSERT_TENSOR_NOT_CLOSE_WITH_TOL(t1, t2, rtol, atol)                   \
-  ASSERT_THAT((t1),                                                            \
-              ::testing::Not(executorch::runtime::testing::IsCloseToWithTol(   \
-                  t2, rtol, atol)))
+#define ASSERT_TENSOR_NOT_CLOSE_WITH_TOL(t1, t2, rtol, atol) \
+  ASSERT_THAT(                                               \
+      (t1),                                                  \
+      ::testing::Not(                                        \
+          executorch::runtime::testing::IsCloseToWithTol(t2, rtol, atol)))
 
-#define EXPECT_TENSOR_DATA_EQ(t1, t2)                                          \
+#define EXPECT_TENSOR_DATA_EQ(t1, t2) \
   EXPECT_THAT((t1), ::executorch::runtime::testing::IsDataEqualTo(t2))
-#define EXPECT_TENSOR_DATA_NE(t1, t2)                                          \
-  EXPECT_THAT((t1),                                                            \
-              ::testing::Not(executorch::runtime::testing::IsDataEqualTo(t2)))
-#define ASSERT_TENSOR_DATA_EQ(t1, t2)                                          \
+#define EXPECT_TENSOR_DATA_NE(t1, t2) \
+  EXPECT_THAT(                        \
+      (t1), ::testing::Not(executorch::runtime::testing::IsDataEqualTo(t2)))
+#define ASSERT_TENSOR_DATA_EQ(t1, t2) \
   ASSERT_THAT((t1), ::executorch::runtime::testing::IsDataEqualTo(t2))
-#define ASSERT_TENSOR_DATA_NE(t1, t2)                                          \
-  ASSERT_THAT((t1),                                                            \
-              ::testing::Not(executorch::runtime::testing::IsDataEqualTo(t2)))
+#define ASSERT_TENSOR_DATA_NE(t1, t2) \
+  ASSERT_THAT(                        \
+      (t1), ::testing::Not(executorch::runtime::testing::IsDataEqualTo(t2)))
 
-#define EXPECT_TENSOR_DATA_CLOSE(t1, t2)                                       \
+#define EXPECT_TENSOR_DATA_CLOSE(t1, t2) \
   EXPECT_THAT((t1), ::executorch::runtime::testing::IsDataCloseTo(t2))
-#define EXPECT_TENSOR_DATA_NOT_CLOSE(t1, t2)                                   \
-  EXPECT_THAT((t1),                                                            \
-              ::testing::Not(executorch::runtime::testing::IsDataCloseTo(t2)))
-#define ASSERT_TENSOR_DATA_CLOSE(t1, t2)                                       \
+#define EXPECT_TENSOR_DATA_NOT_CLOSE(t1, t2) \
+  EXPECT_THAT(                               \
+      (t1), ::testing::Not(executorch::runtime::testing::IsDataCloseTo(t2)))
+#define ASSERT_TENSOR_DATA_CLOSE(t1, t2) \
   ASSERT_THAT((t1), ::executorch::runtime::testing::IsDataCloseTo(t2))
-#define ASSERT_TENSOR_DATA_NOT_CLOSE(t1, t2)                                   \
-  ASSERT_THAT((t1),                                                            \
-              ::testing::Not(executorch::runtime::testing::IsDataCloseTo(t2)))
+#define ASSERT_TENSOR_DATA_NOT_CLOSE(t1, t2) \
+  ASSERT_THAT(                               \
+      (t1), ::testing::Not(executorch::runtime::testing::IsDataCloseTo(t2)))
 
-#define EXPECT_TENSOR_DATA_CLOSE_WITH_TOL(t1, t2, rtol, atol)                  \
-  EXPECT_THAT((t1), ::executorch::runtime::testing::IsDataCloseToWithTol(      \
-                        t2, rtol, atol))
-#define EXPECT_TENSOR_DATA_NOT_CLOSE_WITH_TOL(t1, t2, rtol, atol)              \
-  EXPECT_THAT(                                                                 \
-      (t1), ::testing::Not(executorch::runtime::testing::IsDataCloseToWithTol( \
-                t2, rtol, atol)))
-#define ASSERT_TENSOR_DATA_CLOSE_WITH_TOL(t1, t2, rtol, atol)                  \
-  ASSERT_THAT((t1), ::executorch::runtime::testing::IsDataCloseToWithTol(      \
-                        t2, rtol, atol))
-#define ASSERT_TENSOR_DATA_NOT_CLOSE_WITH_TOL(t1, t2, rtol, atol)              \
-  ASSERT_THAT(                                                                 \
-      (t1), ::testing::Not(executorch::runtime::testing::IsDataCloseToWithTol( \
-                t2, rtol, atol)))
+#define EXPECT_TENSOR_DATA_CLOSE_WITH_TOL(t1, t2, rtol, atol) \
+  EXPECT_THAT(                                                \
+      (t1),                                                   \
+      ::executorch::runtime::testing::IsDataCloseToWithTol(t2, rtol, atol))
+#define EXPECT_TENSOR_DATA_NOT_CLOSE_WITH_TOL(t1, t2, rtol, atol) \
+  EXPECT_THAT(                                                    \
+      (t1),                                                       \
+      ::testing::Not(                                             \
+          executorch::runtime::testing::IsDataCloseToWithTol(t2, rtol, atol)))
+#define ASSERT_TENSOR_DATA_CLOSE_WITH_TOL(t1, t2, rtol, atol) \
+  ASSERT_THAT(                                                \
+      (t1),                                                   \
+      ::executorch::runtime::testing::IsDataCloseToWithTol(t2, rtol, atol))
+#define ASSERT_TENSOR_DATA_NOT_CLOSE_WITH_TOL(t1, t2, rtol, atol) \
+  ASSERT_THAT(                                                    \
+      (t1),                                                       \
+      ::testing::Not(                                             \
+          executorch::runtime::testing::IsDataCloseToWithTol(t2, rtol, atol)))
 
 /*
  * Helpers for comparing lists of Tensors.
  */
 
-#define EXPECT_TENSOR_LISTS_EQ(t1, t2)                                         \
+#define EXPECT_TENSOR_LISTS_EQ(t1, t2) \
   EXPECT_THAT((t1), ::executorch::runtime::testing::IsListEqualTo(t2))
-#define EXPECT_TENSOR_LISTS_NE(t1, t2)                                         \
-  EXPECT_THAT((t1),                                                            \
-              ::testing::Not(executorch::runtime::testing::IsListEqualTo(t2)))
-#define ASSERT_TENSOR_LISTS_EQ(t1, t2)                                         \
+#define EXPECT_TENSOR_LISTS_NE(t1, t2) \
+  EXPECT_THAT(                         \
+      (t1), ::testing::Not(executorch::runtime::testing::IsListEqualTo(t2)))
+#define ASSERT_TENSOR_LISTS_EQ(t1, t2) \
   ASSERT_THAT((t1), ::executorch::runtime::testing::IsListEqualTo(t2))
-#define ASSERT_TENSOR_LISTS_NE(t1, t2)                                         \
-  ASSERT_THAT((t1),                                                            \
-              ::testing::Not(executorch::runtime::testing::IsListEqualTo(t2)))
+#define ASSERT_TENSOR_LISTS_NE(t1, t2) \
+  ASSERT_THAT(                         \
+      (t1), ::testing::Not(executorch::runtime::testing::IsListEqualTo(t2)))
 
-#define EXPECT_TENSOR_LISTS_CLOSE(t1, t2)                                      \
+#define EXPECT_TENSOR_LISTS_CLOSE(t1, t2) \
   EXPECT_THAT((t1), ::executorch::runtime::testing::IsListCloseTo(t2))
-#define EXPECT_TENSOR_LISTS_NOT_CLOSE(t1, t2)                                  \
-  EXPECT_THAT((t1),                                                            \
-              ::testing::Not(executorch::runtime::testing::IsListCloseTo(t2)))
-#define ASSERT_TENSOR_LISTS_CLOSE(t1, t2)                                      \
+#define EXPECT_TENSOR_LISTS_NOT_CLOSE(t1, t2) \
+  EXPECT_THAT(                                \
+      (t1), ::testing::Not(executorch::runtime::testing::IsListCloseTo(t2)))
+#define ASSERT_TENSOR_LISTS_CLOSE(t1, t2) \
   ASSERT_THAT((t1), ::executorch::runtime::testing::IsListCloseTo(t2))
-#define ASSERT_TENSOR_LISTS_NOT_CLOSE(t1, t2)                                  \
-  ASSERT_THAT((t1),                                                            \
-              ::testing::Not(executorch::runtime::testing::IsListCloseTo(t2)))
+#define ASSERT_TENSOR_LISTS_NOT_CLOSE(t1, t2) \
+  ASSERT_THAT(                                \
+      (t1), ::testing::Not(executorch::runtime::testing::IsListCloseTo(t2)))
 
 } // namespace testing
 } // namespace runtime
@@ -328,12 +344,12 @@ namespace etensor {
  *
  * See also executorch::runtime::toString(ScalarType t) in ScalarTypeUtil.h.
  */
-std::ostream &operator<<(std::ostream &os, const ScalarType &t);
+std::ostream& operator<<(std::ostream& os, const ScalarType& t);
 
 /**
  * Prints the Tensor to the stream as a human-readable string.
  */
-std::ostream &operator<<(std::ostream &os, const Tensor &t);
+std::ostream& operator<<(std::ostream& os, const Tensor& t);
 
 } // namespace etensor
 } // namespace runtime

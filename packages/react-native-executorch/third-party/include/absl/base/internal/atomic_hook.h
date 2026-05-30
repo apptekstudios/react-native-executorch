@@ -39,7 +39,8 @@ namespace absl {
 ABSL_NAMESPACE_BEGIN
 namespace base_internal {
 
-template <typename T> class AtomicHook;
+template <typename T>
+class AtomicHook;
 
 // To workaround AtomicHook not being constant-initializable on some platforms,
 // prefer to annotate instances with `ABSL_INTERNAL_ATOMIC_HOOK_ATTRIBUTES`
@@ -69,7 +70,7 @@ template <typename T> class AtomicHook;
 // semantics.
 template <typename ReturnType, typename... Args>
 class AtomicHook<ReturnType (*)(Args...)> {
-public:
+ public:
   using FnPtr = ReturnType (*)(Args...);
 
   // Constructs an object that by default performs a no-op (and
@@ -112,7 +113,7 @@ public:
   // Invokes the registered callback.  If no callback has yet been registered, a
   // default-constructed object of the appropriate type is returned instead.
   template <typename... CallArgs>
-  ReturnType operator()(CallArgs &&...args) const {
+  ReturnType operator()(CallArgs&&... args) const {
     return DoLoad()(std::forward<CallArgs>(args)...);
   }
 
@@ -130,8 +131,10 @@ public:
     return (ptr == DummyFunction) ? nullptr : ptr;
   }
 
-private:
-  static ReturnType DummyFunction(Args...) { return ReturnType(); }
+ private:
+  static ReturnType DummyFunction(Args...) {
+    return ReturnType();
+  }
 
   // Current versions of MSVC (as of September 2017) have a broken
   // implementation of std::atomic<T*>:  Its constructor attempts to do the
@@ -156,7 +159,7 @@ private:
   }
 
   std::atomic<FnPtr> hook_;
-#else // !ABSL_HAVE_WORKING_ATOMIC_POINTER
+#else  // !ABSL_HAVE_WORKING_ATOMIC_POINTER
   // Use a sentinel value unlikely to be the address of an actual function.
   static constexpr intptr_t kUninitialized = 0;
 
@@ -190,8 +193,8 @@ private:
 #undef ABSL_HAVE_WORKING_ATOMIC_POINTER
 #undef ABSL_HAVE_WORKING_CONSTEXPR_STATIC_INIT
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_ATOMIC_HOOK_H_
+#endif  // ABSL_BASE_INTERNAL_ATOMIC_HOOK_H_

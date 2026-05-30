@@ -30,4 +30,4 @@
 #error "Unsupported compiler"
 #endif
 
-#endif // ABSL_BASE_INTERNAL_PRETTY_FUNCTION_H_
+#endif  // ABSL_BASE_INTERNAL_PRETTY_FUNCTION_H_

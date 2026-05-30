@@ -14,6 +14,7 @@
 #include <vector>
 
 #include <c10/macros/Macros.h>
+#include <c10/util/safe_numerics.h>
 #include <executorch/runtime/core/error.h>
 #include <executorch/runtime/core/exec_aten/exec_aten.h>
 #include <executorch/runtime/core/exec_aten/util/scalar_type_util.h>
@@ -42,15 +43,16 @@ using TensorPtr = std::shared_ptr<executorch::aten::Tensor>;
  * object is destroyed.
  * @return A TensorPtr that manages the newly created Tensor.
  */
-TensorPtr
-make_tensor_ptr(std::vector<executorch::aten::SizesType> sizes, void *data,
-                std::vector<executorch::aten::DimOrderType> dim_order,
-                std::vector<executorch::aten::StridesType> strides,
-                const executorch::aten::ScalarType type =
-                    executorch::aten::ScalarType::Float,
-                const executorch::aten::TensorShapeDynamism dynamism =
-                    executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND,
-                std::function<void(void *)> deleter = nullptr);
+TensorPtr make_tensor_ptr(
+    std::vector<executorch::aten::SizesType> sizes,
+    void* data,
+    std::vector<executorch::aten::DimOrderType> dim_order,
+    std::vector<executorch::aten::StridesType> strides,
+    const executorch::aten::ScalarType type =
+        executorch::aten::ScalarType::Float,
+    const executorch::aten::TensorShapeDynamism dynamism =
+        executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND,
+    std::function<void(void*)> deleter = nullptr);
 
 /**
  * Creates a TensorPtr that manages a Tensor with the specified properties.
@@ -64,15 +66,16 @@ make_tensor_ptr(std::vector<executorch::aten::SizesType> sizes, void *data,
  * object is destroyed.
  * @return A TensorPtr that manages the newly created Tensor.
  */
-inline TensorPtr
-make_tensor_ptr(std::vector<executorch::aten::SizesType> sizes, void *data,
-                const executorch::aten::ScalarType type =
-                    executorch::aten::ScalarType::Float,
-                const executorch::aten::TensorShapeDynamism dynamism =
-                    executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND,
-                std::function<void(void *)> deleter = nullptr) {
-  return make_tensor_ptr(std::move(sizes), data, {}, {}, type, dynamism,
-                         std::move(deleter));
+inline TensorPtr make_tensor_ptr(
+    std::vector<executorch::aten::SizesType> sizes,
+    void* data,
+    const executorch::aten::ScalarType type =
+        executorch::aten::ScalarType::Float,
+    const executorch::aten::TensorShapeDynamism dynamism =
+        executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND,
+    std::function<void(void*)> deleter = nullptr) {
+  return make_tensor_ptr(
+      std::move(sizes), data, {}, {}, type, dynamism, std::move(deleter));
 }
 
 /**
@@ -95,23 +98,40 @@ make_tensor_ptr(std::vector<executorch::aten::SizesType> sizes, void *data,
  * @param dynamism Specifies the mutability of the tensor's shape.
  * @return A TensorPtr that manages the newly created TensorImpl.
  */
-template <typename T = float, executorch::aten::ScalarType deduced_type =
-                                  runtime::CppTypeToScalarType<T>::value>
-inline TensorPtr
-make_tensor_ptr(std::vector<executorch::aten::SizesType> sizes,
-                std::vector<T> data,
-                std::vector<executorch::aten::DimOrderType> dim_order = {},
-                std::vector<executorch::aten::StridesType> strides = {},
-                executorch::aten::ScalarType type = deduced_type,
-                executorch::aten::TensorShapeDynamism dynamism =
-                    executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND) {
-  ET_CHECK_MSG(data.size() ==
-                   executorch::aten::compute_numel(sizes.data(), sizes.size()),
-               "Data size does not match tensor size.");
+template <
+    typename T = float,
+    executorch::aten::ScalarType deduced_type =
+        runtime::CppTypeToScalarType<T>::value>
+inline TensorPtr make_tensor_ptr(
+    std::vector<executorch::aten::SizesType> sizes,
+    std::vector<T> data,
+    std::vector<executorch::aten::DimOrderType> dim_order = {},
+    std::vector<executorch::aten::StridesType> strides = {},
+    executorch::aten::ScalarType type = deduced_type,
+    executorch::aten::TensorShapeDynamism dynamism =
+        executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND) {
+  auto numel_result = executorch::aten::safe_numel(sizes.data(), sizes.size());
+  ET_CHECK_MSG(
+      numel_result.ok(),
+      "safe_numel failed: %d",
+      static_cast<int>(numel_result.error()));
+  ET_CHECK_MSG(
+      data.size() == static_cast<size_t>(numel_result.get()),
+      "Data size does not match tensor size.");
   if (type != deduced_type) {
-    ET_CHECK_MSG(runtime::canCast(deduced_type, type),
-                 "Cannot cast deduced type to specified type.");
-    std::vector<uint8_t> casted_data(data.size() * aten::elementSize(type));
+    ET_CHECK_MSG(
+        runtime::canCast(deduced_type, type),
+        "Cannot cast deduced type to specified type.");
+    size_t casted_bytes = 0;
+    ET_CHECK_MSG(
+        !c10::mul_overflows(
+            data.size(),
+            static_cast<size_t>(aten::elementSize(type)),
+            &casted_bytes),
+        "casted_data size overflow: %zu elements * %zu bytes/element",
+        data.size(),
+        static_cast<size_t>(aten::elementSize(type)));
+    std::vector<uint8_t> casted_data(casted_bytes);
 
     // Create a minimal context for error handling in ET_SWITCH
     struct {
@@ -122,22 +142,34 @@ make_tensor_ptr(std::vector<executorch::aten::SizesType> sizes,
 
     ET_SWITCH_REALHBBF16_AND_UINT_TYPES(
         type, ctx, "make_tensor_ptr", CTYPE, [&] {
-          std::transform(data.begin(), data.end(),
-                         reinterpret_cast<CTYPE *>(casted_data.data()),
-                         [](const T &val) { return static_cast<CTYPE>(val); });
+          std::transform(
+              data.begin(),
+              data.end(),
+              reinterpret_cast<CTYPE*>(casted_data.data()),
+              [](const T& val) { return static_cast<CTYPE>(val); });
         });
     const auto raw_data_ptr = casted_data.data();
     auto data_ptr =
         std::make_shared<std::vector<uint8_t>>(std::move(casted_data));
-    return make_tensor_ptr(std::move(sizes), raw_data_ptr, std::move(dim_order),
-                           std::move(strides), type, dynamism,
-                           [data_ptr = std::move(data_ptr)](void *) {});
+    return make_tensor_ptr(
+        std::move(sizes),
+        raw_data_ptr,
+        std::move(dim_order),
+        std::move(strides),
+        type,
+        dynamism,
+        [data_ptr = std::move(data_ptr)](void*) {});
   }
   const auto raw_data_ptr = data.data();
   auto data_ptr = std::make_shared<std::vector<T>>(std::move(data));
-  return make_tensor_ptr(std::move(sizes), raw_data_ptr, std::move(dim_order),
-                         std::move(strides), type, dynamism,
-                         [data_ptr = std::move(data_ptr)](void *) {});
+  return make_tensor_ptr(
+      std::move(sizes),
+      raw_data_ptr,
+      std::move(dim_order),
+      std::move(strides),
+      type,
+      dynamism,
+      [data_ptr = std::move(data_ptr)](void*) {});
 }
 
 /**
@@ -157,17 +189,19 @@ make_tensor_ptr(std::vector<executorch::aten::SizesType> sizes,
  * @param dynamism Specifies the mutability of the tensor's shape.
  * @return A TensorPtr that manages the newly created TensorImpl.
  */
-template <typename T = float, executorch::aten::ScalarType deduced_type =
-                                  runtime::CppTypeToScalarType<T>::value>
-inline TensorPtr
-make_tensor_ptr(std::vector<T> data,
-                executorch::aten::ScalarType type = deduced_type,
-                executorch::aten::TensorShapeDynamism dynamism =
-                    executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND) {
+template <
+    typename T = float,
+    executorch::aten::ScalarType deduced_type =
+        runtime::CppTypeToScalarType<T>::value>
+inline TensorPtr make_tensor_ptr(
+    std::vector<T> data,
+    executorch::aten::ScalarType type = deduced_type,
+    executorch::aten::TensorShapeDynamism dynamism =
+        executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND) {
   std::vector<executorch::aten::SizesType> sizes{
       executorch::aten::SizesType(data.size())};
-  return make_tensor_ptr(std::move(sizes), std::move(data), {0}, {1}, type,
-                         dynamism);
+  return make_tensor_ptr(
+      std::move(sizes), std::move(data), {0}, {1}, type, dynamism);
 }
 
 /**
@@ -192,19 +226,25 @@ make_tensor_ptr(std::vector<T> data,
  * @param dynamism Specifies the mutability of the tensor's shape.
  * @return A TensorPtr that manages the newly created TensorImpl.
  */
-template <typename T = float, executorch::aten::ScalarType deduced_type =
-                                  runtime::CppTypeToScalarType<T>::value>
-inline TensorPtr
-make_tensor_ptr(std::vector<executorch::aten::SizesType> sizes,
-                std::initializer_list<T> list,
-                std::vector<executorch::aten::DimOrderType> dim_order = {},
-                std::vector<executorch::aten::StridesType> strides = {},
-                executorch::aten::ScalarType type = deduced_type,
-                executorch::aten::TensorShapeDynamism dynamism =
-                    executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND) {
-  return make_tensor_ptr(std::move(sizes), std::vector<T>(std::move(list)),
-                         std::move(dim_order), std::move(strides), type,
-                         dynamism);
+template <
+    typename T = float,
+    executorch::aten::ScalarType deduced_type =
+        runtime::CppTypeToScalarType<T>::value>
+inline TensorPtr make_tensor_ptr(
+    std::vector<executorch::aten::SizesType> sizes,
+    std::initializer_list<T> list,
+    std::vector<executorch::aten::DimOrderType> dim_order = {},
+    std::vector<executorch::aten::StridesType> strides = {},
+    executorch::aten::ScalarType type = deduced_type,
+    executorch::aten::TensorShapeDynamism dynamism =
+        executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND) {
+  return make_tensor_ptr(
+      std::move(sizes),
+      std::vector<T>(std::move(list)),
+      std::move(dim_order),
+      std::move(strides),
+      type,
+      dynamism);
 }
 
 /**
@@ -226,17 +266,19 @@ make_tensor_ptr(std::vector<executorch::aten::SizesType> sizes,
  * @param dynamism Specifies the mutability of the tensor's shape.
  * @return A TensorPtr that manages the newly created TensorImpl.
  */
-template <typename T = float, executorch::aten::ScalarType deduced_type =
-                                  runtime::CppTypeToScalarType<T>::value>
-inline TensorPtr
-make_tensor_ptr(std::initializer_list<T> list,
-                executorch::aten::ScalarType type = deduced_type,
-                executorch::aten::TensorShapeDynamism dynamism =
-                    executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND) {
+template <
+    typename T = float,
+    executorch::aten::ScalarType deduced_type =
+        runtime::CppTypeToScalarType<T>::value>
+inline TensorPtr make_tensor_ptr(
+    std::initializer_list<T> list,
+    executorch::aten::ScalarType type = deduced_type,
+    executorch::aten::TensorShapeDynamism dynamism =
+        executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND) {
   std::vector<executorch::aten::SizesType> sizes{
       executorch::aten::SizesType(list.size())};
-  return make_tensor_ptr(std::move(sizes), std::move(list), {0}, {1}, type,
-                         dynamism);
+  return make_tensor_ptr(
+      std::move(sizes), std::move(list), {0}, {1}, type, dynamism);
 }
 
 /**
@@ -246,9 +288,10 @@ make_tensor_ptr(std::initializer_list<T> list,
  * @param value The scalar value to be used for the Tensor.
  * @return A TensorPtr that manages the newly created TensorImpl.
  */
-template <typename T> inline TensorPtr make_tensor_ptr(T value) {
-  return make_tensor_ptr(std::vector<executorch::aten::SizesType>{},
-                         std::vector<T>{value});
+template <typename T>
+inline TensorPtr make_tensor_ptr(T value) {
+  return make_tensor_ptr(
+      std::vector<executorch::aten::SizesType>{}, std::vector<T>{value});
 }
 
 /**
@@ -267,7 +310,8 @@ template <typename T> inline TensorPtr make_tensor_ptr(T value) {
  * @return A TensorPtr managing the newly created Tensor.
  */
 TensorPtr make_tensor_ptr(
-    std::vector<executorch::aten::SizesType> sizes, std::vector<uint8_t> data,
+    std::vector<executorch::aten::SizesType> sizes,
+    std::vector<uint8_t> data,
     std::vector<executorch::aten::DimOrderType> dim_order,
     std::vector<executorch::aten::StridesType> strides,
     executorch::aten::ScalarType type = executorch::aten::ScalarType::Float,
@@ -288,12 +332,13 @@ TensorPtr make_tensor_ptr(
  * @return A TensorPtr managing the newly created Tensor.
  */
 inline TensorPtr make_tensor_ptr(
-    std::vector<executorch::aten::SizesType> sizes, std::vector<uint8_t> data,
+    std::vector<executorch::aten::SizesType> sizes,
+    std::vector<uint8_t> data,
     executorch::aten::ScalarType type = executorch::aten::ScalarType::Float,
     executorch::aten::TensorShapeDynamism dynamism =
         executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND) {
-  return make_tensor_ptr(std::move(sizes), std::move(data), {}, {}, type,
-                         dynamism);
+  return make_tensor_ptr(
+      std::move(sizes), std::move(data), {}, {}, type, dynamism);
 }
 
 /**
@@ -315,20 +360,25 @@ inline TensorPtr make_tensor_ptr(
  * original Tensor.
  * @return A TensorPtr aliasing the same storage with requested metadata.
  */
-inline TensorPtr
-make_tensor_ptr(const executorch::aten::Tensor &tensor,
-                std::vector<executorch::aten::SizesType> sizes = {},
-                std::vector<executorch::aten::DimOrderType> dim_order = {},
-                std::vector<executorch::aten::StridesType> strides = {},
-                std::function<void(void *)> deleter = nullptr) {
+inline TensorPtr make_tensor_ptr(
+    const executorch::aten::Tensor& tensor,
+    std::vector<executorch::aten::SizesType> sizes = {},
+    std::vector<executorch::aten::DimOrderType> dim_order = {},
+    std::vector<executorch::aten::StridesType> strides = {},
+    std::function<void(void*)> deleter = nullptr) {
   if (sizes.empty()) {
     sizes.assign(tensor.sizes().begin(), tensor.sizes().end());
   }
   const auto same_rank = sizes.size() == static_cast<size_t>(tensor.dim());
-  const auto same_shape = same_rank && std::equal(sizes.begin(), sizes.end(),
-                                                  tensor.sizes().begin());
-  const auto element_count =
-      executorch::aten::compute_numel(sizes.data(), sizes.size());
+  const auto same_shape = same_rank &&
+      std::equal(sizes.begin(), sizes.end(), tensor.sizes().begin());
+  auto element_count_result =
+      executorch::aten::safe_numel(sizes.data(), sizes.size());
+  ET_CHECK_MSG(
+      element_count_result.ok(),
+      "safe_numel failed: %d",
+      static_cast<int>(element_count_result.error()));
+  const auto element_count = element_count_result.get();
   const auto parent_element_count = tensor.numel();
   ET_CHECK_MSG(
       element_count <= parent_element_count,
@@ -343,15 +393,18 @@ make_tensor_ptr(const executorch::aten::Tensor &tensor,
   if (strides.empty() && dim_order.empty() && same_shape) {
     strides.assign(tensor.strides().begin(), tensor.strides().end());
   }
-  return make_tensor_ptr(std::move(sizes), tensor.mutable_data_ptr(),
-                         std::move(dim_order), std::move(strides),
-                         tensor.scalar_type(),
+  return make_tensor_ptr(
+      std::move(sizes),
+      tensor.mutable_data_ptr(),
+      std::move(dim_order),
+      std::move(strides),
+      tensor.scalar_type(),
 #ifndef USE_ATEN_LIB
-                         tensor.shape_dynamism(),
-#else  // USE_ATEN_LIB
-                         executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND,
+      tensor.shape_dynamism(),
+#else // USE_ATEN_LIB
+      executorch::aten::TensorShapeDynamism::DYNAMIC_BOUND,
 #endif // USE_ATEN_LIB
-                         std::move(deleter));
+      std::move(deleter));
 }
 
 /**
@@ -364,13 +417,17 @@ make_tensor_ptr(const executorch::aten::Tensor &tensor,
  * @param strides Optional strides override.
  * @return A TensorPtr aliasing the same storage with requested metadata.
  */
-inline TensorPtr
-make_tensor_ptr(const TensorPtr &tensor_ptr,
-                std::vector<executorch::aten::SizesType> sizes = {},
-                std::vector<executorch::aten::DimOrderType> dim_order = {},
-                std::vector<executorch::aten::StridesType> strides = {}) {
-  return make_tensor_ptr(*tensor_ptr, std::move(sizes), std::move(dim_order),
-                         std::move(strides), [tensor_ptr](void *) {});
+inline TensorPtr make_tensor_ptr(
+    const TensorPtr& tensor_ptr,
+    std::vector<executorch::aten::SizesType> sizes = {},
+    std::vector<executorch::aten::DimOrderType> dim_order = {},
+    std::vector<executorch::aten::StridesType> strides = {}) {
+  return make_tensor_ptr(
+      *tensor_ptr,
+      std::move(sizes),
+      std::move(dim_order),
+      std::move(strides),
+      [tensor_ptr](void*) {});
 }
 
 /**
@@ -384,8 +441,9 @@ make_tensor_ptr(const TensorPtr &tensor_ptr,
  * @return A new TensorPtr that manages a Tensor with the specified type
  * and copied/cast data.
  */
-TensorPtr clone_tensor_ptr(const executorch::aten::Tensor &tensor,
-                           executorch::aten::ScalarType type);
+TensorPtr clone_tensor_ptr(
+    const executorch::aten::Tensor& tensor,
+    executorch::aten::ScalarType type);
 
 /**
  * Creates a TensorPtr that manages a new Tensor with the same properties
@@ -396,7 +454,7 @@ TensorPtr clone_tensor_ptr(const executorch::aten::Tensor &tensor,
  * @return A new TensorPtr that manages a Tensor with the same properties as the
  * original but with copied data.
  */
-inline TensorPtr clone_tensor_ptr(const executorch::aten::Tensor &tensor) {
+inline TensorPtr clone_tensor_ptr(const executorch::aten::Tensor& tensor) {
   return clone_tensor_ptr(tensor, tensor.scalar_type());
 }
 
@@ -410,8 +468,9 @@ inline TensorPtr clone_tensor_ptr(const executorch::aten::Tensor &tensor) {
  * @return A new TensorPtr that manages a Tensor with the specified type
  * and copied/cast data.
  */
-inline TensorPtr clone_tensor_ptr(const TensorPtr &tensor,
-                                  executorch::aten::ScalarType type) {
+inline TensorPtr clone_tensor_ptr(
+    const TensorPtr& tensor,
+    executorch::aten::ScalarType type) {
   return clone_tensor_ptr(*tensor, type);
 }
 
@@ -423,7 +482,7 @@ inline TensorPtr clone_tensor_ptr(const TensorPtr &tensor,
  * @return A new TensorPtr that manages a Tensor with the same properties as the
  * original but with copied data.
  */
-inline TensorPtr clone_tensor_ptr(const TensorPtr &tensor) {
+inline TensorPtr clone_tensor_ptr(const TensorPtr& tensor) {
   return clone_tensor_ptr(*tensor, tensor->scalar_type());
 }
 
@@ -435,9 +494,9 @@ inline TensorPtr clone_tensor_ptr(const TensorPtr &tensor) {
  * @return Error::Ok on success, or an appropriate error code on failure.
  */
 ET_NODISCARD
-runtime::Error
-resize_tensor_ptr(TensorPtr &tensor,
-                  const std::vector<executorch::aten::SizesType> &sizes);
+runtime::Error resize_tensor_ptr(
+    TensorPtr& tensor,
+    const std::vector<executorch::aten::SizesType>& sizes);
 
 } // namespace extension
 } // namespace executorch

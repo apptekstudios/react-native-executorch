@@ -35,7 +35,7 @@
 namespace executorch::extension::threadpool {
 
 class ThreadPool final {
-public:
+ public:
   explicit ThreadPool(size_t thread_count = 0);
   ~ThreadPool() = default;
 
@@ -43,12 +43,12 @@ public:
   // Non-copyable: threadpool cannot be copied because it will
   // effectively require cloning of threadpool.
   // Cloning can be done by just calling create_thread_pool.
-  ThreadPool(const ThreadPool &) = delete;
-  ThreadPool &operator=(const ThreadPool &) = delete;
+  ThreadPool(const ThreadPool&) = delete;
+  ThreadPool& operator=(const ThreadPool&) = delete;
 
   // Make threadpool non-movable.
-  ThreadPool(ThreadPool &&) = delete;
-  ThreadPool &operator=(ThreadPool &&) = delete;
+  ThreadPool(ThreadPool&&) = delete;
+  ThreadPool& operator=(ThreadPool&&) = delete;
 
   size_t get_thread_count() const;
 
@@ -65,8 +65,8 @@ public:
    * provides a safer way to select a subset of threads, from threadpool, to run
    * the model on.
    */
-  [[deprecated("This API is experimental and may change without notice. "
-               "Consider using UseNThreadsThreadPoolGuard")]]
+  [[deprecated(
+      "This API is experimental and may change without notice. Consider using UseNThreadsThreadPoolGuard")]]
   bool _unsafe_reset_threadpool(uint32_t num_threads);
 
   /**
@@ -87,10 +87,10 @@ public:
    */
   void run(runtime::FunctionRef<void(size_t)> fn, size_t range);
 
-private:
+ private:
   friend pthreadpool_t get_pthreadpool();
 
-private:
+ private:
   // This mutex is used inside get_thread_count API but it is not really needed
   // since data members of ThreadPool objects are not really mutable.
   // TODO(kimishpatel): Figure out if we will allow set_num_threads API, in
@@ -102,7 +102,7 @@ private:
 /**
  * Returns the singleton instance of ThreadPool for ATen/TH multithreading.
  */
-ThreadPool *get_threadpool();
+ThreadPool* get_threadpool();
 
 /**
  * Returns the underlying pthreadpool instance used by the implementation of
@@ -119,6 +119,6 @@ namespace torch::executorch::threadpool { // DEPRECATED
 // to the new `::executorch` namespaces. Note that threadpool incorrectly used
 // the namespace `torch::executorch` instead of `torch::executor`.
 using ::executorch::extension::threadpool::get_pthreadpool; // DEPRECATED
-using ::executorch::extension::threadpool::get_threadpool;  // DEPRECATED
-using ::executorch::extension::threadpool::ThreadPool;      // DEPRECATED
+using ::executorch::extension::threadpool::get_threadpool; // DEPRECATED
+using ::executorch::extension::threadpool::ThreadPool; // DEPRECATED
 } // namespace torch::executorch::threadpool

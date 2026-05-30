@@ -87,8 +87,8 @@ using pal_current_ticks_method = et_timestamp_t (*)();
  *
  * @retval The ratio of nanoseconds to system ticks.
  */
-et_tick_ratio_t
-et_pal_ticks_to_ns_multiplier(void) ET_INTERNAL_PLATFORM_WEAKNESS;
+et_tick_ratio_t et_pal_ticks_to_ns_multiplier(void)
+    ET_INTERNAL_PLATFORM_WEAKNESS;
 using pal_ticks_to_ns_multiplier_method = et_tick_ratio_t (*)();
 
 /**
@@ -115,13 +115,22 @@ typedef enum {
  * @param[in] message Message string to log.
  * @param[in] length Message string length.
  */
-void et_pal_emit_log_message(et_timestamp_t timestamp, et_pal_log_level_t level,
-                             const char *filename, const char *function,
-                             size_t line, const char *message,
-                             size_t length) ET_INTERNAL_PLATFORM_WEAKNESS;
+void et_pal_emit_log_message(
+    et_timestamp_t timestamp,
+    et_pal_log_level_t level,
+    const char* filename,
+    const char* function,
+    size_t line,
+    const char* message,
+    size_t length) ET_INTERNAL_PLATFORM_WEAKNESS;
 using pal_emit_log_message_method = void (*)(
-    et_timestamp_t timestamp, et_pal_log_level_t level, const char *filename,
-    const char *function, size_t line, const char *message, size_t length);
+    et_timestamp_t timestamp,
+    et_pal_log_level_t level,
+    const char* filename,
+    const char* function,
+    size_t line,
+    const char* message,
+    size_t length);
 
 /**
  * NOTE: Core runtime code must not call this directly. It may only be called by
@@ -133,16 +142,16 @@ using pal_emit_log_message_method = void (*)(
  * @returns the allocated memory, or nullptr on failure. Must be freed using
  *     et_pal_free().
  */
-void *et_pal_allocate(size_t size) ET_INTERNAL_PLATFORM_WEAKNESS;
-using pal_allocate_method = void *(*)(size_t size);
+void* et_pal_allocate(size_t size) ET_INTERNAL_PLATFORM_WEAKNESS;
+using pal_allocate_method = void* (*)(size_t size);
 
 /**
  * Frees memory allocated by et_pal_allocate().
  *
  * @param[in] ptr Pointer to memory to free. May be nullptr.
  */
-void et_pal_free(void *ptr) ET_INTERNAL_PLATFORM_WEAKNESS;
-using pal_free_method = void (*)(void *ptr);
+void et_pal_free(void* ptr) ET_INTERNAL_PLATFORM_WEAKNESS;
+using pal_free_method = void (*)(void* ptr);
 
 } // extern "C"
 
@@ -156,16 +165,19 @@ struct PalImpl {
   // the singleton instance can be initialized without relying on a global
   // constructor. If it does require a global constructor, there can be a race
   // between the init of the default PAL and the user static registration code.
-  static PalImpl create(pal_emit_log_message_method emit_log_message,
-                        const char *source_filename);
+  static PalImpl create(
+      pal_emit_log_message_method emit_log_message,
+      const char* source_filename);
 
-  static PalImpl
-  create(pal_init_method init, pal_abort_method abort,
-         pal_current_ticks_method current_ticks,
-         pal_ticks_to_ns_multiplier_method ticks_to_ns_multiplier,
-         pal_emit_log_message_method emit_log_message,
-         pal_allocate_method allocate, pal_free_method free,
-         const char *source_filename);
+  static PalImpl create(
+      pal_init_method init,
+      pal_abort_method abort,
+      pal_current_ticks_method current_ticks,
+      pal_ticks_to_ns_multiplier_method ticks_to_ns_multiplier,
+      pal_emit_log_message_method emit_log_message,
+      pal_allocate_method allocate,
+      pal_free_method free,
+      const char* source_filename);
 
   pal_init_method init = nullptr;
   pal_abort_method abort = nullptr;
@@ -177,7 +189,7 @@ struct PalImpl {
 
   // An optional metadata field, indicating the name of the source
   // file that registered the PAL implementation.
-  const char *source_filename;
+  const char* source_filename;
 };
 
 /**
@@ -192,7 +204,7 @@ bool register_pal(PalImpl impl);
  * Returns the PAL function table, which contains function pointers to the
  * active implementation of each PAL function.
  */
-const PalImpl *get_pal_impl();
+const PalImpl* get_pal_impl();
 
 /**
  * Initialize the platform abstraction layer.
@@ -233,9 +245,14 @@ et_tick_ratio_t pal_ticks_to_ns_multiplier();
  * Severity level of a log message. Values must map to printable 7-bit ASCII
  * uppercase letters.
  */
-void pal_emit_log_message(et_timestamp_t timestamp, et_pal_log_level_t level,
-                          const char *filename, const char *function,
-                          size_t line, const char *message, size_t length);
+void pal_emit_log_message(
+    et_timestamp_t timestamp,
+    et_pal_log_level_t level,
+    const char* filename,
+    const char* function,
+    size_t line,
+    const char* message,
+    size_t length);
 
 /**
  * NOTE: Core runtime code must not call this directly. It may only be called by
@@ -247,13 +264,13 @@ void pal_emit_log_message(et_timestamp_t timestamp, et_pal_log_level_t level,
  * @returns the allocated memory, or nullptr on failure. Must be freed using
  *     et_pal_free().
  */
-void *pal_allocate(size_t size);
+void* pal_allocate(size_t size);
 
 /**
  * Frees memory allocated by et_pal_allocate().
  *
  * @param[in] ptr Pointer to memory to free. May be nullptr.
  */
-void pal_free(void *ptr);
+void pal_free(void* ptr);
 
 } // namespace executorch::runtime

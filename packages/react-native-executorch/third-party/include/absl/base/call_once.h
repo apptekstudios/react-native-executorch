@@ -47,9 +47,9 @@ ABSL_NAMESPACE_BEGIN
 class once_flag;
 
 namespace base_internal {
-absl::Nonnull<std::atomic<uint32_t> *>
-ControlWord(absl::Nonnull<absl::once_flag *> flag);
-} // namespace base_internal
+absl::Nonnull<std::atomic<uint32_t>*> ControlWord(
+    absl::Nonnull<absl::once_flag*> flag);
+}  // namespace base_internal
 
 // call_once()
 //
@@ -76,7 +76,7 @@ ControlWord(absl::Nonnull<absl::once_flag *> flag);
 //  }
 //
 template <typename Callable, typename... Args>
-void call_once(absl::once_flag &flag, Callable &&fn, Args &&...args);
+void call_once(absl::once_flag& flag, Callable&& fn, Args&&... args);
 
 // once_flag
 //
@@ -85,14 +85,14 @@ void call_once(absl::once_flag &flag, Callable &&fn, Args &&...args);
 // type is not copyable or movable. However, it has a `constexpr`
 // constructor, and is safe to use as a namespace-scoped global variable.
 class once_flag {
-public:
+ public:
   constexpr once_flag() : control_(0) {}
-  once_flag(const once_flag &) = delete;
-  once_flag &operator=(const once_flag &) = delete;
+  once_flag(const once_flag&) = delete;
+  once_flag& operator=(const once_flag&) = delete;
 
-private:
-  friend absl::Nonnull<std::atomic<uint32_t> *>
-  base_internal::ControlWord(absl::Nonnull<once_flag *> flag);
+ private:
+  friend absl::Nonnull<std::atomic<uint32_t>*> base_internal::ControlWord(
+      absl::Nonnull<once_flag*> flag);
   std::atomic<uint32_t> control_;
 };
 
@@ -106,13 +106,13 @@ namespace base_internal {
 // Like call_once, but uses KERNEL_ONLY scheduling. Intended to be used to
 // initialize entities used by the scheduler implementation.
 template <typename Callable, typename... Args>
-void LowLevelCallOnce(absl::Nonnull<absl::once_flag *> flag, Callable &&fn,
-                      Args &&...args);
+void LowLevelCallOnce(absl::Nonnull<absl::once_flag*> flag, Callable&& fn,
+                      Args&&... args);
 
 // Disables scheduling while on stack when scheduling mode is non-cooperative.
 // No effect for cooperative scheduling modes.
 class SchedulingHelper {
-public:
+ public:
   explicit SchedulingHelper(base_internal::SchedulingMode mode) : mode_(mode) {
     if (mode_ == base_internal::SCHEDULE_KERNEL_ONLY) {
       guard_result_ = base_internal::SchedulingGuard::DisableRescheduling();
@@ -125,7 +125,7 @@ public:
     }
   }
 
-private:
+ private:
   base_internal::SchedulingMode mode_;
   bool guard_result_ = false;
 };
@@ -143,24 +143,26 @@ enum {
   // A very small constant is chosen for kOnceDone so that it fit in a single
   // compare with immediate instruction for most common ISAs.  This is verified
   // for x86, POWER and ARM.
-  kOnceDone = 221, // Random Number
+  kOnceDone = 221,    // Random Number
 };
 
 template <typename Callable, typename... Args>
-ABSL_ATTRIBUTE_NOINLINE void
-CallOnceImpl(absl::Nonnull<std::atomic<uint32_t> *> control,
-             base_internal::SchedulingMode scheduling_mode, Callable &&fn,
-             Args &&...args) {
+ABSL_ATTRIBUTE_NOINLINE void CallOnceImpl(
+    absl::Nonnull<std::atomic<uint32_t>*> control,
+    base_internal::SchedulingMode scheduling_mode, Callable&& fn,
+    Args&&... args) {
 #ifndef NDEBUG
   {
     uint32_t old_control = control->load(std::memory_order_relaxed);
-    if (old_control != kOnceInit && old_control != kOnceRunning &&
-        old_control != kOnceWaiter && old_control != kOnceDone) {
+    if (old_control != kOnceInit &&
+        old_control != kOnceRunning &&
+        old_control != kOnceWaiter &&
+        old_control != kOnceDone) {
       ABSL_RAW_LOG(FATAL, "Unexpected value for control word: 0x%lx",
-                   static_cast<unsigned long>(old_control)); // NOLINT
+                   static_cast<unsigned long>(old_control));  // NOLINT
     }
   }
-#endif // NDEBUG
+#endif  // NDEBUG
   static const base_internal::SpinLockWaitTransition trans[] = {
       {kOnceInit, kOnceRunning, true},
       {kOnceRunning, kOnceWaiter, false},
@@ -184,18 +186,18 @@ CallOnceImpl(absl::Nonnull<std::atomic<uint32_t> *> control,
     if (old_control == base_internal::kOnceWaiter) {
       base_internal::SpinLockWake(control, true);
     }
-  } // else *control is already kOnceDone
+  }  // else *control is already kOnceDone
 }
 
-inline absl::Nonnull<std::atomic<uint32_t> *>
-ControlWord(absl::Nonnull<once_flag *> flag) {
+inline absl::Nonnull<std::atomic<uint32_t>*> ControlWord(
+    absl::Nonnull<once_flag*> flag) {
   return &flag->control_;
 }
 
 template <typename Callable, typename... Args>
-void LowLevelCallOnce(absl::Nonnull<absl::once_flag *> flag, Callable &&fn,
-                      Args &&...args) {
-  std::atomic<uint32_t> *once = base_internal::ControlWord(flag);
+void LowLevelCallOnce(absl::Nonnull<absl::once_flag*> flag, Callable&& fn,
+                      Args&&... args) {
+  std::atomic<uint32_t>* once = base_internal::ControlWord(flag);
   uint32_t s = once->load(std::memory_order_acquire);
   if (ABSL_PREDICT_FALSE(s != base_internal::kOnceDone)) {
     base_internal::CallOnceImpl(once, base_internal::SCHEDULE_KERNEL_ONLY,
@@ -204,11 +206,11 @@ void LowLevelCallOnce(absl::Nonnull<absl::once_flag *> flag, Callable &&fn,
   }
 }
 
-} // namespace base_internal
+}  // namespace base_internal
 
 template <typename Callable, typename... Args>
-void call_once(absl::once_flag &flag, Callable &&fn, Args &&...args) {
-  std::atomic<uint32_t> *once = base_internal::ControlWord(&flag);
+void call_once(absl::once_flag& flag, Callable&& fn, Args&&... args) {
+  std::atomic<uint32_t>* once = base_internal::ControlWord(&flag);
   uint32_t s = once->load(std::memory_order_acquire);
   if (ABSL_PREDICT_FALSE(s != base_internal::kOnceDone)) {
     base_internal::CallOnceImpl(
@@ -218,6 +220,6 @@ void call_once(absl::once_flag &flag, Callable &&fn, Args &&...args) {
 }
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_CALL_ONCE_H_
+#endif  // ABSL_BASE_CALL_ONCE_H_

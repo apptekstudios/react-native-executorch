@@ -23,7 +23,7 @@
 #include <utility>
 
 #include "absl/base/port.h"
-#include "absl/meta/type_traits.h" //  for void_t
+#include "absl/meta/type_traits.h"  //  for void_t
 
 namespace absl {
 ABSL_NAMESPACE_BEGIN
@@ -35,16 +35,16 @@ namespace strings_internal {
 template <typename string_type, typename = void>
 struct ResizeUninitializedTraits {
   using HasMember = std::false_type;
-  static void Resize(string_type *s, size_t new_size) { s->resize(new_size); }
+  static void Resize(string_type* s, size_t new_size) { s->resize(new_size); }
 };
 
 // __resize_default_init is provided by libc++ >= 8.0
 template <typename string_type>
 struct ResizeUninitializedTraits<
-    string_type, absl::void_t<decltype(std::declval<string_type &>()
-                                           .__resize_default_init(237))>> {
+    string_type, absl::void_t<decltype(std::declval<string_type&>()
+                                           .__resize_default_init(237))> > {
   using HasMember = std::true_type;
-  static void Resize(string_type *s, size_t new_size) {
+  static void Resize(string_type* s, size_t new_size) {
     s->__resize_default_init(new_size);
   }
 };
@@ -55,7 +55,7 @@ struct ResizeUninitializedTraits<
 // (A better name might be "STLStringSupportsUninitializedResize", alluding to
 // the previous function.)
 template <typename string_type>
-inline constexpr bool STLStringSupportsNontrashingResize(string_type *) {
+inline constexpr bool STLStringSupportsNontrashingResize(string_type*) {
   return ResizeUninitializedTraits<string_type>::HasMember::value;
 }
 
@@ -64,7 +64,7 @@ inline constexpr bool STLStringSupportsNontrashingResize(string_type *) {
 // '0' bytes. Typically used when code is then going to overwrite the backing
 // store of the std::string with known data.
 template <typename string_type, typename = void>
-inline void STLStringResizeUninitialized(string_type *s, size_t new_size) {
+inline void STLStringResizeUninitialized(string_type* s, size_t new_size) {
   ResizeUninitializedTraits<string_type>::Resize(s, new_size);
 }
 
@@ -72,7 +72,7 @@ inline void STLStringResizeUninitialized(string_type *s, size_t new_size) {
 // increasing the string size by a small amount is O(1), in contrast to
 // O(str->size()) in the case of precise growth.
 template <typename string_type>
-void STLStringReserveAmortized(string_type *s, size_t new_size) {
+void STLStringReserveAmortized(string_type* s, size_t new_size) {
   const size_t cap = s->capacity();
   if (new_size > cap) {
     // Make sure to always grow by at least a factor of 2x.
@@ -84,16 +84,18 @@ void STLStringReserveAmortized(string_type *s, size_t new_size) {
 // we use it if available, otherwise, we use append.
 template <typename string_type, typename = void>
 struct AppendUninitializedTraits {
-  static void Append(string_type *s, size_t n) {
+  static void Append(string_type* s, size_t n) {
     s->append(n, typename string_type::value_type());
   }
 };
 
 template <typename string_type>
 struct AppendUninitializedTraits<
-    string_type, absl::void_t<decltype(std::declval<string_type &>()
-                                           .__append_default_init(237))>> {
-  static void Append(string_type *s, size_t n) { s->__append_default_init(n); }
+    string_type, absl::void_t<decltype(std::declval<string_type&>()
+                                           .__append_default_init(237))> > {
+  static void Append(string_type* s, size_t n) {
+    s->__append_default_init(n);
+  }
 };
 
 // Like STLStringResizeUninitialized(str, new_size), except guaranteed to use
@@ -101,7 +103,7 @@ struct AppendUninitializedTraits<
 // size by a small amount is O(1), in contrast to O(str->size()) in the case of
 // precise growth.
 template <typename string_type>
-void STLStringResizeUninitializedAmortized(string_type *s, size_t new_size) {
+void STLStringResizeUninitializedAmortized(string_type* s, size_t new_size) {
   const size_t size = s->size();
   if (new_size > size) {
     AppendUninitializedTraits<string_type>::Append(s, new_size - size);
@@ -110,8 +112,8 @@ void STLStringResizeUninitializedAmortized(string_type *s, size_t new_size) {
   }
 }
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_RESIZE_UNINITIALIZED_H_
+#endif  // ABSL_STRINGS_INTERNAL_RESIZE_UNINITIALIZED_H_

@@ -33,7 +33,7 @@
 #ifdef __cplusplus
 // Included for std::unreachable()
 #include <utility>
-#endif // __cplusplus
+#endif  // __cplusplus
 
 #include "absl/base/config.h"
 #include "absl/base/options.h"
@@ -52,10 +52,7 @@
 //     return result;
 //   }
 #if defined(__pnacl__)
-#define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION()                                    \
-  if (volatile int x = 0) {                                                    \
-    (void)x;                                                                   \
-  }
+#define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION() if (volatile int x = 0) { (void)x; }
 #elif defined(__clang__)
 // Clang will not tail call given inline volatile assembly.
 #define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION() __asm__ __volatile__("")
@@ -67,10 +64,7 @@
 // The __nop() intrinsic blocks the optimisation.
 #define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION() __nop()
 #else
-#define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION()                                    \
-  if (volatile int x = 0) {                                                    \
-    (void)x;                                                                   \
-  }
+#define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION() if (volatile int x = 0) { (void)x; }
 #endif
 
 // ABSL_CACHELINE_SIZE
@@ -190,7 +184,7 @@
 // branch in a codebase is likely counterproductive; however, annotating
 // specific branches that are both hot and consistently mispredicted is likely
 // to yield performance improvements.
-#if ABSL_HAVE_BUILTIN(__builtin_expect) ||                                     \
+#if ABSL_HAVE_BUILTIN(__builtin_expect) || \
     (defined(__GNUC__) && !defined(__clang__))
 #define ABSL_PREDICT_FALSE(x) (__builtin_expect(false || (x), false))
 #define ABSL_PREDICT_TRUE(x) (__builtin_expect(false || (x), true))
@@ -203,7 +197,7 @@
 // possible way, with no attempt at logging. One use is to implement hardening
 // aborts with ABSL_OPTION_HARDENED.  Since this is an internal symbol, it
 // should not be used directly outside of Abseil.
-#if ABSL_HAVE_BUILTIN(__builtin_trap) ||                                       \
+#if ABSL_HAVE_BUILTIN(__builtin_trap) || \
     (defined(__GNUC__) && !defined(__clang__))
 #define ABSL_INTERNAL_IMMEDIATE_ABORT_IMPL() __builtin_trap()
 #else
@@ -230,19 +224,19 @@
 // one has undefined behavior, and the compiler may optimize accordingly.
 #if ABSL_OPTION_HARDENED == 1 && defined(NDEBUG)
 // Abort in hardened mode to avoid dangerous undefined behavior.
-#define ABSL_UNREACHABLE()                                                     \
-  do {                                                                         \
-    ABSL_INTERNAL_IMMEDIATE_ABORT_IMPL();                                      \
-    ABSL_INTERNAL_UNREACHABLE_IMPL();                                          \
+#define ABSL_UNREACHABLE()                \
+  do {                                    \
+    ABSL_INTERNAL_IMMEDIATE_ABORT_IMPL(); \
+    ABSL_INTERNAL_UNREACHABLE_IMPL();     \
   } while (false)
 #else
 // The assert only fires in debug mode to aid in debugging.
 // When NDEBUG is defined, reaching ABSL_UNREACHABLE() is undefined behavior.
-#define ABSL_UNREACHABLE()                                                     \
-  do {                                                                         \
-    /* NOLINTNEXTLINE: misc-static-assert */                                   \
-    assert(false && "ABSL_UNREACHABLE reached");                               \
-    ABSL_INTERNAL_UNREACHABLE_IMPL();                                          \
+#define ABSL_UNREACHABLE()                       \
+  do {                                           \
+    /* NOLINTNEXTLINE: misc-static-assert */     \
+    assert(false && "ABSL_UNREACHABLE reached"); \
+    ABSL_INTERNAL_UNREACHABLE_IMPL();            \
   } while (false)
 #endif
 
@@ -277,21 +271,19 @@
 #elif defined(_MSC_VER)
 #define ABSL_ASSUME(cond) __assume(cond)
 #elif defined(__cpp_lib_unreachable) && __cpp_lib_unreachable >= 202202L
-#define ABSL_ASSUME(cond)                                                      \
-  do {                                                                         \
-    if (!(cond))                                                               \
-      std::unreachable();                                                      \
+#define ABSL_ASSUME(cond)            \
+  do {                               \
+    if (!(cond)) std::unreachable(); \
   } while (false)
 #elif defined(__GNUC__) || ABSL_HAVE_BUILTIN(__builtin_unreachable)
-#define ABSL_ASSUME(cond)                                                      \
-  do {                                                                         \
-    if (!(cond))                                                               \
-      __builtin_unreachable();                                                 \
+#define ABSL_ASSUME(cond)                 \
+  do {                                    \
+    if (!(cond)) __builtin_unreachable(); \
   } while (false)
 #else
-#define ABSL_ASSUME(cond)                                                      \
-  do {                                                                         \
-    static_cast<void>(false && (cond));                                        \
+#define ABSL_ASSUME(cond)               \
+  do {                                  \
+    static_cast<void>(false && (cond)); \
   } while (false)
 #endif
 
@@ -315,10 +307,10 @@
 #if defined(__GNUC__)
 #define ABSL_INTERNAL_UNIQUE_SMALL_NAME2(x) #x
 #define ABSL_INTERNAL_UNIQUE_SMALL_NAME1(x) ABSL_INTERNAL_UNIQUE_SMALL_NAME2(x)
-#define ABSL_INTERNAL_UNIQUE_SMALL_NAME()                                      \
+#define ABSL_INTERNAL_UNIQUE_SMALL_NAME() \
   asm(ABSL_INTERNAL_UNIQUE_SMALL_NAME1(.absl.__COUNTER__))
 #else
 #define ABSL_INTERNAL_UNIQUE_SMALL_NAME()
 #endif
 
-#endif // ABSL_BASE_OPTIMIZATION_H_
+#endif  // ABSL_BASE_OPTIMIZATION_H_

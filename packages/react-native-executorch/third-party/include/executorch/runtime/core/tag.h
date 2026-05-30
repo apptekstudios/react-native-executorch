@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <cstdint>
 #include <executorch/runtime/core/defines.h>
 #include <executorch/runtime/platform/compiler.h>
+#include <cstdint>
 
 // X11 headers via volk define None, so we need to undef it
 #if defined(__linux__)
@@ -20,18 +20,18 @@
 namespace executorch {
 namespace runtime {
 
-#define EXECUTORCH_FORALL_TAGS(_)                                              \
-  _(None)                                                                      \
-  _(Tensor)                                                                    \
-  _(String)                                                                    \
-  _(Double)                                                                    \
-  _(Int)                                                                       \
-  _(Bool)                                                                      \
-  _(ListBool)                                                                  \
-  _(ListDouble)                                                                \
-  _(ListInt)                                                                   \
-  _(ListTensor)                                                                \
-  _(ListScalar)                                                                \
+#define EXECUTORCH_FORALL_TAGS(_) \
+  _(None)                         \
+  _(Tensor)                       \
+  _(String)                       \
+  _(Double)                       \
+  _(Int)                          \
+  _(Bool)                         \
+  _(ListBool)                     \
+  _(ListDouble)                   \
+  _(ListInt)                      \
+  _(ListTensor)                   \
+  _(ListScalar)                   \
   _(ListOptionalTensor)
 
 /**
@@ -44,15 +44,15 @@ enum class Tag : uint32_t {
 };
 
 #if ET_ENABLE_ENUM_STRINGS
-inline const char *tag_to_string(Tag tag) {
+inline const char* tag_to_string(Tag tag) {
   switch (tag) {
-#define CASE_TAG(x)                                                            \
-  case Tag::x:                                                                 \
+#define CASE_TAG(x) \
+  case Tag::x:      \
     return #x;
     EXECUTORCH_FORALL_TAGS(CASE_TAG)
 #undef CASE_TAG
-  default:
-    return "Unknown";
+    default:
+      return "Unknown";
   }
 }
 #endif // ET_ENABLE_ENUM_STRINGS
@@ -70,7 +70,7 @@ inline const char *tag_to_string(Tag tag) {
  * truncation, the number of characters that would be written if the buffer was
  * large enough.
  */
-size_t tag_to_string(Tag tag, char *buffer, size_t buffer_size);
+size_t tag_to_string(Tag tag, char* buffer, size_t buffer_size);
 
 /* The size of the buffer needed to hold the longest tag string, including the
  * null terminator. This value is expected to be updated manually, but it

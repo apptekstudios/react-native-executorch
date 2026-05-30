@@ -35,7 +35,7 @@ namespace cord_internal {
 // This class is thread-safe. But as per above comments, all non-const methods
 // should be used single-threaded only: updates are thread-safe but lossy.
 class CordzUpdateTracker {
-public:
+ public:
   // Tracked update methods.
   enum MethodIdentifier {
     kUnknown,
@@ -72,10 +72,10 @@ public:
   constexpr CordzUpdateTracker() noexcept : values_{} {}
 
   // Copy constructs a new instance.
-  CordzUpdateTracker(const CordzUpdateTracker &rhs) noexcept { *this = rhs; }
+  CordzUpdateTracker(const CordzUpdateTracker& rhs) noexcept { *this = rhs; }
 
   // Assigns the provided value to this instance.
-  CordzUpdateTracker &operator=(const CordzUpdateTracker &rhs) noexcept {
+  CordzUpdateTracker& operator=(const CordzUpdateTracker& rhs) noexcept {
     for (int i = 0; i < kNumMethods; ++i) {
       values_[i].store(rhs.values_[i].load(std::memory_order_relaxed),
                        std::memory_order_relaxed);
@@ -90,13 +90,13 @@ public:
 
   // Increases the value for the specified method by `n`
   void LossyAdd(MethodIdentifier method, int64_t n = 1) {
-    auto &value = values_[method];
+    auto& value = values_[method];
     value.store(value.load(std::memory_order_relaxed) + n,
                 std::memory_order_relaxed);
   }
 
   // Adds all the values from `src` to this instance
-  void LossyAdd(const CordzUpdateTracker &src) {
+  void LossyAdd(const CordzUpdateTracker& src) {
     for (int i = 0; i < kNumMethods; ++i) {
       MethodIdentifier method = static_cast<MethodIdentifier>(i);
       if (int64_t value = src.Value(method)) {
@@ -105,19 +105,19 @@ public:
     }
   }
 
-private:
+ private:
   // Until C++20 std::atomic is not constexpr default-constructible, so we need
   // a wrapper for this class to be constexpr constructible.
   class Counter : public std::atomic<int64_t> {
-  public:
+   public:
     constexpr Counter() noexcept : std::atomic<int64_t>(0) {}
   };
 
   Counter values_[kNumMethods];
 };
 
-} // namespace cord_internal
+}  // namespace cord_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CORDZ_UPDATE_TRACKER_H_
+#endif  // ABSL_STRINGS_INTERNAL_CORDZ_UPDATE_TRACKER_H_

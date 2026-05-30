@@ -32,7 +32,7 @@
 // GCC supports it if the appropriate version of glibc is available,
 // which the programmer can indicate by defining ABSL_HAVE_TLS
 
-#include "absl/base/port.h" // For ABSL_HAVE_TLS
+#include "absl/base/port.h"  // For ABSL_HAVE_TLS
 
 #if defined(ABSL_PER_THREAD_TLS)
 #error ABSL_PER_THREAD_TLS cannot be directly set
@@ -49,4 +49,4 @@
 #define ABSL_PER_THREAD_TLS 0
 #endif
 
-#endif // ABSL_BASE_INTERNAL_PER_THREAD_TLS_H_
+#endif  // ABSL_BASE_INTERNAL_PER_THREAD_TLS_H_

@@ -67,8 +67,8 @@ pid_t GetTID();
 // an asynchronous signal-handling context nor right after a call to fork().
 pid_t GetCachedTID();
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_SYSINFO_H_
+#endif  // ABSL_BASE_INTERNAL_SYSINFO_H_

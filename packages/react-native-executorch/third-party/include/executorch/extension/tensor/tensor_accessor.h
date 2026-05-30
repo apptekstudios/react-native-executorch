@@ -19,30 +19,40 @@ namespace internal {
  * Base class template storing the underlying data with size and stride helpers.
  * Inherited by TensorAccessor<> which requires specialization on rank.
  */
-template <typename T, ssize_t N> class TensorAccessorBase {
-public:
+template <typename T, ssize_t N>
+class TensorAccessorBase {
+ public:
   /// Returns the size of the underlying tensor at the given dimension.
   executorch::aten::SizesType size(ssize_t i) const {
-    ET_CHECK_MSG(i < dim_ && i >= 0, "Dimension outside of [0, %zd], got %zd",
-                 dim_ - 1, i);
+    ET_CHECK_MSG(
+        i < dim_ && i >= 0,
+        "Dimension outside of [0, %zd], got %zd",
+        dim_ - 1,
+        i);
     return sizes_[i];
   }
 
   /// Returns the stride of the underlying tensor at the given dimension.
   executorch::aten::StridesType stride(ssize_t i) const {
-    ET_CHECK_MSG(i < dim_ && i >= 0, "Dimension outside of [0, %zd], got %zd",
-                 dim_ - 1, i);
+    ET_CHECK_MSG(
+        i < dim_ && i >= 0,
+        "Dimension outside of [0, %zd], got %zd",
+        dim_ - 1,
+        i);
     return strides_[i];
   }
 
-protected:
-  TensorAccessorBase(T *data, const executorch::aten::SizesType *sizes,
-                     const executorch::aten::StridesType *strides, ssize_t dim)
+ protected:
+  TensorAccessorBase(
+      T* data,
+      const executorch::aten::SizesType* sizes,
+      const executorch::aten::StridesType* strides,
+      ssize_t dim)
       : data_(data), sizes_(sizes), strides_(strides), dim_(dim) {}
 
-  T *data_;
-  const executorch::aten::SizesType *sizes_;
-  const executorch::aten::StridesType *strides_;
+  T* data_;
+  const executorch::aten::SizesType* sizes_;
+  const executorch::aten::StridesType* strides_;
   ssize_t dim_;
 };
 
@@ -56,7 +66,7 @@ protected:
  */
 template <typename T, ssize_t N>
 class TensorAccessor : public internal::TensorAccessorBase<T, N> {
-public:
+ public:
   /**
    * Index into the the outer most dimension.
    *
@@ -66,9 +76,11 @@ public:
    * specialization.
    */
   TensorAccessor<T, N - 1> operator[](ssize_t i) {
-    return TensorAccessor<T, N - 1>(this->data_ + this->strides_[0] * i,
-                                    this->sizes_ + 1, this->strides_ + 1,
-                                    N - 1);
+    return TensorAccessor<T, N - 1>(
+        this->data_ + this->strides_[0] * i,
+        this->sizes_ + 1,
+        this->strides_ + 1,
+        N - 1);
   }
 
   /**
@@ -80,21 +92,27 @@ public:
    * TensorAccessor<T, 1> specialization.
    */
   const TensorAccessor<T, N - 1> operator[](ssize_t i) const {
-    return TensorAccessor<T, N - 1>(this->data_ + this->strides_[0] * i,
-                                    this->sizes_ + 1, this->strides_ + 1,
-                                    N - 1);
+    return TensorAccessor<T, N - 1>(
+        this->data_ + this->strides_[0] * i,
+        this->sizes_ + 1,
+        this->strides_ + 1,
+        N - 1);
   }
 
-private:
-  TensorAccessor(T *data, const executorch::aten::SizesType *sizes,
-                 const executorch::aten::StridesType *strides, ssize_t dim)
+ private:
+  TensorAccessor(
+      T* data,
+      const executorch::aten::SizesType* sizes,
+      const executorch::aten::StridesType* strides,
+      ssize_t dim)
       : internal::TensorAccessorBase<T, N>(data, sizes, strides, dim) {}
 
-  template <typename T2, ssize_t N2> friend class TensorAccessor;
+  template <typename T2, ssize_t N2>
+  friend class TensorAccessor;
 
   template <typename T2, ssize_t N2>
   friend executorch::runtime::Result<TensorAccessor<T2, N2>>
-  make_tensor_accessor(const executorch::aten::Tensor &t);
+  make_tensor_accessor(const executorch::aten::Tensor& t);
 };
 
 /**
@@ -103,14 +121,16 @@ private:
  */
 template <typename T>
 class TensorAccessor<T, 1> : public internal::TensorAccessorBase<T, 1> {
-public:
+ public:
   /**
    * Index into the the outer most dimension.
    *
    * @param i Index.
    * @return Reference to the underlying scalar.
    */
-  T &operator[](ssize_t i) { return this->data_[this->strides_[0] * i]; }
+  T& operator[](ssize_t i) {
+    return this->data_[this->strides_[0] * i];
+  }
 
   /**
    * Index into the the outer most dimension.
@@ -118,20 +138,24 @@ public:
    * @param i Index.
    * @return Constant reference to the underlying scalar.
    */
-  const T &operator[](ssize_t i) const {
+  const T& operator[](ssize_t i) const {
     return this->data_[this->strides_[0] * i];
   }
 
-private:
-  TensorAccessor(T *data, const executorch::aten::SizesType *sizes,
-                 const executorch::aten::StridesType *strides, ssize_t dim)
+ private:
+  TensorAccessor(
+      T* data,
+      const executorch::aten::SizesType* sizes,
+      const executorch::aten::StridesType* strides,
+      ssize_t dim)
       : internal::TensorAccessorBase<T, 1>(data, sizes, strides, dim) {}
 
-  template <typename T2, ssize_t N2> friend class TensorAccessor;
+  template <typename T2, ssize_t N2>
+  friend class TensorAccessor;
 
   template <typename T2, ssize_t N2>
   friend executorch::runtime::Result<TensorAccessor<T2, N2>>
-  make_tensor_accessor(const executorch::aten::Tensor &t);
+  make_tensor_accessor(const executorch::aten::Tensor& t);
 };
 
 /**
@@ -146,23 +170,27 @@ private:
  * @retval Error::NotSupported Input tensor has non-trivial dimension onrder.
  */
 template <typename T, ssize_t N>
-executorch::runtime::Result<TensorAccessor<T, N>>
-make_tensor_accessor(const executorch::aten::Tensor &tensor) {
-  static_assert(N > 0, "TensorAccessor is used for indexing tensors, for "
-                       "scalar use *_data_ptr<T>()");
+executorch::runtime::Result<TensorAccessor<T, N>> make_tensor_accessor(
+    const executorch::aten::Tensor& tensor) {
+  static_assert(
+      N > 0,
+      "TensorAccessor is used for indexing tensors, for scalar use *_data_ptr<T>()");
 
   if (N != tensor.dim()) {
-    ET_LOG(Error, "Expecting %zd dimensions but tensor has %zd.",
-           static_cast<ssize_t>(N), static_cast<ssize_t>(tensor.dim()));
+    ET_LOG(
+        Error,
+        "Expecting %zd dimensions but tensor has %zd.",
+        static_cast<ssize_t>(N),
+        static_cast<ssize_t>(tensor.dim()));
     return executorch::runtime::Error::InvalidArgument;
   }
 
   if (sizeof(T) != tensor.element_size()) {
-    ET_LOG(Error,
-           "Size of data type template argument (%zd) not equal to tensor "
-           "element size (%zd)",
-           static_cast<ssize_t>(sizeof(T)),
-           static_cast<ssize_t>(tensor.element_size()));
+    ET_LOG(
+        Error,
+        "Size of data type template argument (%zd) not equal to tensor element size (%zd)",
+        static_cast<ssize_t>(sizeof(T)),
+        static_cast<ssize_t>(tensor.element_size()));
     return executorch::runtime::Error::InvalidArgument;
   }
 
@@ -176,14 +204,14 @@ make_tensor_accessor(const executorch::aten::Tensor &tensor) {
   }
 #endif
 
-  T *ptr = nullptr;
+  T* ptr = nullptr;
   if constexpr (std::is_const_v<T>) {
     ptr = tensor.const_data_ptr<T>();
   } else {
     ptr = tensor.mutable_data_ptr<T>();
   }
-  return TensorAccessor<T, N>(ptr, tensor.sizes().data(),
-                              tensor.strides().data(), N);
+  return TensorAccessor<T, N>(
+      ptr, tensor.sizes().data(), tensor.strides().data(), N);
 }
 
 } // namespace extension

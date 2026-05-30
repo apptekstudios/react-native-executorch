@@ -45,7 +45,7 @@ namespace cord_internal {
 // placed on the global_delete_queue, the CordzInfo object will be cleaned in
 // the destructor of a CordzSampleToken object.
 class ABSL_LOCKABLE CordzInfo : public CordzHandle {
-public:
+ public:
   using MethodIdentifier = CordzUpdateTracker::MethodIdentifier;
 
   // TrackCord creates a CordzInfo instance which tracks important metrics of
@@ -60,7 +60,7 @@ public:
   // and/or deleted. `method` identifies the Cord public API method initiating
   // the cord to be sampled.
   // Requires `cord` to hold a tree, and `cord.cordz_info()` to be null.
-  static void TrackCord(InlineData &cord, MethodIdentifier method,
+  static void TrackCord(InlineData& cord, MethodIdentifier method,
                         int64_t sampling_stride);
 
   // Identical to TrackCord(), except that this function fills the
@@ -69,13 +69,13 @@ public:
   // This function should be used for sampling 'copy constructed' and 'copy
   // assigned' cords. This function allows 'cord` to be already sampled, in
   // which case the CordzInfo will be newly created from `src`.
-  static void TrackCord(InlineData &cord, const InlineData &src,
+  static void TrackCord(InlineData& cord, const InlineData& src,
                         MethodIdentifier method);
 
   // Maybe sample the cord identified by 'cord' for method 'method'.
   // Uses `cordz_should_profile` to randomly pick cords to be sampled, and if
   // so, invokes `TrackCord` to start sampling `cord`.
-  static void MaybeTrackCord(InlineData &cord, MethodIdentifier method);
+  static void MaybeTrackCord(InlineData& cord, MethodIdentifier method);
 
   // Maybe sample the cord identified by 'cord' for method 'method'.
   // `src` identifies a 'parent' cord which is assigned to `cord`, typically the
@@ -103,7 +103,7 @@ public:
   //     //              ==> x converges to 'always profiled'
   //     x = y;
   //   }
-  static void MaybeTrackCord(InlineData &cord, const InlineData &src,
+  static void MaybeTrackCord(InlineData& cord, const InlineData& src,
                              MethodIdentifier method);
 
   // Stops tracking changes for a sampled cord, and deletes the provided info.
@@ -114,19 +114,19 @@ public:
   void Untrack();
 
   // Invokes UntrackCord() on `info` if `info` is not null.
-  static void MaybeUntrackCord(CordzInfo *info);
+  static void MaybeUntrackCord(CordzInfo* info);
 
   CordzInfo() = delete;
-  CordzInfo(const CordzInfo &) = delete;
-  CordzInfo &operator=(const CordzInfo &) = delete;
+  CordzInfo(const CordzInfo&) = delete;
+  CordzInfo& operator=(const CordzInfo&) = delete;
 
   // Retrieves the oldest existing CordzInfo.
-  static CordzInfo *
-  Head(const CordzSnapshot &snapshot) ABSL_NO_THREAD_SAFETY_ANALYSIS;
+  static CordzInfo* Head(const CordzSnapshot& snapshot)
+      ABSL_NO_THREAD_SAFETY_ANALYSIS;
 
   // Retrieves the next oldest existing CordzInfo older than 'this' instance.
-  CordzInfo *
-  Next(const CordzSnapshot &snapshot) const ABSL_NO_THREAD_SAFETY_ANALYSIS;
+  CordzInfo* Next(const CordzSnapshot& snapshot) const
+      ABSL_NO_THREAD_SAFETY_ANALYSIS;
 
   // Locks this instance for the update identified by `method`.
   // Increases the count for `method` in `update_tracker`.
@@ -147,20 +147,20 @@ public:
   // Requires a lock to be held through the `Lock()` method.
   // TODO(b/117940323): annotate with ABSL_EXCLUSIVE_LOCKS_REQUIRED once all
   // Cord code is in a state where this can be proven true by the compiler.
-  void SetCordRep(CordRep *rep);
+  void SetCordRep(CordRep* rep);
 
   // Returns the current `rep` property of this instance with a reference
   // added, or null if this instance represents a cord that has since been
   // deleted or untracked.
-  CordRep *RefCordRep() const ABSL_LOCKS_EXCLUDED(mutex_);
+  CordRep* RefCordRep() const ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Returns the current value of `rep_` for testing purposes only.
-  CordRep *GetCordRepForTesting() const ABSL_NO_THREAD_SAFETY_ANALYSIS {
+  CordRep* GetCordRepForTesting() const ABSL_NO_THREAD_SAFETY_ANALYSIS {
     return rep_;
   }
 
   // Sets the current value of `rep_` for testing purposes only.
-  void SetCordRepForTesting(CordRep *rep) ABSL_NO_THREAD_SAFETY_ANALYSIS {
+  void SetCordRepForTesting(CordRep* rep) ABSL_NO_THREAD_SAFETY_ANALYSIS {
     rep_ = rep;
   }
 
@@ -170,12 +170,12 @@ public:
   // was first created. Some cords are created as inlined cords, and only as
   // data is added do they become a non-inlined cord. However, typically the
   // location represents reasonably well where the cord is 'created'.
-  absl::Span<void *const> GetStack() const;
+  absl::Span<void* const> GetStack() const;
 
   // Returns the stack trace for a sampled cord's 'parent stack trace'. This
   // value may be set if the cord is sampled (promoted) after being created
   // from, or being assigned the value of an existing (sampled) cord.
-  absl::Span<void *const> GetParentStack() const;
+  absl::Span<void* const> GetParentStack() const;
 
   // Retrieves the CordzStatistics associated with this Cord. The statistics
   // are only updated when a Cord goes through a mutation, such as an Append
@@ -184,7 +184,7 @@ public:
 
   int64_t sampling_stride() const { return sampling_stride_; }
 
-private:
+ private:
   using SpinLock = absl::base_internal::SpinLock;
   using SpinLockHolder = ::absl::base_internal::SpinLockHolder;
 
@@ -196,30 +196,30 @@ private:
                 absl::base_internal::SCHEDULE_COOPERATIVE_AND_KERNEL) {}
 
     SpinLock mutex;
-    std::atomic<CordzInfo *> head ABSL_GUARDED_BY(mutex){nullptr};
+    std::atomic<CordzInfo*> head ABSL_GUARDED_BY(mutex){nullptr};
   };
 
   static constexpr size_t kMaxStackDepth = 64;
 
-  explicit CordzInfo(CordRep *rep, const CordzInfo *src,
+  explicit CordzInfo(CordRep* rep, const CordzInfo* src,
                      MethodIdentifier method, int64_t weight);
   ~CordzInfo() override;
 
   // Sets `rep_` without holding a lock.
-  void UnsafeSetCordRep(CordRep *rep) ABSL_NO_THREAD_SAFETY_ANALYSIS;
+  void UnsafeSetCordRep(CordRep* rep) ABSL_NO_THREAD_SAFETY_ANALYSIS;
 
   void Track();
 
   // Returns the parent method from `src`, which is either `parent_method_` or
   // `method_` depending on `parent_method_` being kUnknown.
   // Returns kUnknown if `src` is null.
-  static MethodIdentifier GetParentMethod(const CordzInfo *src);
+  static MethodIdentifier GetParentMethod(const CordzInfo* src);
 
   // Fills the provided stack from `src`, copying either `parent_stack_` or
   // `stack_` depending on `parent_stack_` being empty, returning the size of
   // the parent stack.
   // Returns 0 if `src` is null.
-  static size_t FillParentStack(const CordzInfo *src, void **stack);
+  static size_t FillParentStack(const CordzInfo* src, void** stack);
 
   void ODRCheck() const {
 #ifndef NDEBUG
@@ -230,23 +230,23 @@ private:
   // Non-inlined implementation of `MaybeTrackCord`, which is executed if
   // either `src` is sampled or `cord` is sampled, and either untracks or
   // tracks `cord` as documented per `MaybeTrackCord`.
-  static void MaybeTrackCordImpl(InlineData &cord, const InlineData &src,
+  static void MaybeTrackCordImpl(InlineData& cord, const InlineData& src,
                                  MethodIdentifier method);
 
   ABSL_CONST_INIT static List global_list_;
-  List *const list_ = &global_list_;
+  List* const list_ = &global_list_;
 
   // ci_prev_ and ci_next_ require the global list mutex to be held.
   // Unfortunately we can't use thread annotations such that the thread safety
   // analysis understands that list_ and global_list_ are one and the same.
-  std::atomic<CordzInfo *> ci_prev_{nullptr};
-  std::atomic<CordzInfo *> ci_next_{nullptr};
+  std::atomic<CordzInfo*> ci_prev_{nullptr};
+  std::atomic<CordzInfo*> ci_next_{nullptr};
 
   mutable absl::Mutex mutex_;
-  CordRep *rep_ ABSL_GUARDED_BY(mutex_);
+  CordRep* rep_ ABSL_GUARDED_BY(mutex_);
 
-  void *stack_[kMaxStackDepth];
-  void *parent_stack_[kMaxStackDepth];
+  void* stack_[kMaxStackDepth];
+  void* parent_stack_[kMaxStackDepth];
   const size_t stack_depth_;
   const size_t parent_stack_depth_;
   const MethodIdentifier method_;
@@ -256,24 +256,23 @@ private:
   const int64_t sampling_stride_;
 };
 
-inline ABSL_ATTRIBUTE_ALWAYS_INLINE void
-CordzInfo::MaybeTrackCord(InlineData &cord, MethodIdentifier method) {
+inline ABSL_ATTRIBUTE_ALWAYS_INLINE void CordzInfo::MaybeTrackCord(
+    InlineData& cord, MethodIdentifier method) {
   auto stride = cordz_should_profile();
   if (ABSL_PREDICT_FALSE(stride > 0)) {
     TrackCord(cord, method, stride);
   }
 }
 
-inline ABSL_ATTRIBUTE_ALWAYS_INLINE void
-CordzInfo::MaybeTrackCord(InlineData &cord, const InlineData &src,
-                          MethodIdentifier method) {
+inline ABSL_ATTRIBUTE_ALWAYS_INLINE void CordzInfo::MaybeTrackCord(
+    InlineData& cord, const InlineData& src, MethodIdentifier method) {
   if (ABSL_PREDICT_FALSE(InlineData::is_either_profiled(cord, src))) {
     MaybeTrackCordImpl(cord, src, method);
   }
 }
 
-inline ABSL_ATTRIBUTE_ALWAYS_INLINE void
-CordzInfo::MaybeUntrackCord(CordzInfo *info) {
+inline ABSL_ATTRIBUTE_ALWAYS_INLINE void CordzInfo::MaybeUntrackCord(
+    CordzInfo* info) {
   if (ABSL_PREDICT_FALSE(info)) {
     info->Untrack();
   }
@@ -285,20 +284,20 @@ inline void CordzInfo::AssertHeld() ABSL_ASSERT_EXCLUSIVE_LOCK(mutex_) {
 #endif
 }
 
-inline void CordzInfo::SetCordRep(CordRep *rep) {
+inline void CordzInfo::SetCordRep(CordRep* rep) {
   AssertHeld();
   rep_ = rep;
 }
 
-inline void CordzInfo::UnsafeSetCordRep(CordRep *rep) { rep_ = rep; }
+inline void CordzInfo::UnsafeSetCordRep(CordRep* rep) { rep_ = rep; }
 
-inline CordRep *CordzInfo::RefCordRep() const ABSL_LOCKS_EXCLUDED(mutex_) {
+inline CordRep* CordzInfo::RefCordRep() const ABSL_LOCKS_EXCLUDED(mutex_) {
   MutexLock lock(&mutex_);
   return rep_ ? CordRep::Ref(rep_) : nullptr;
 }
 
-} // namespace cord_internal
+}  // namespace cord_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CORDZ_INFO_H_
+#endif  // ABSL_STRINGS_INTERNAL_CORDZ_INFO_H_

@@ -51,14 +51,14 @@ namespace absl {
 ABSL_NAMESPACE_BEGIN
 namespace time_internal {
 class UnscaledCycleClockWrapperForGetCurrentTime;
-} // namespace time_internal
+}  // namespace time_internal
 
 namespace base_internal {
 class CycleClock;
 class UnscaledCycleClockWrapperForInitializeFrequency;
 
 class UnscaledCycleClock {
-private:
+ private:
   UnscaledCycleClock() = delete;
 
   // Return the value of a cycle counter that counts at a rate that is
@@ -87,10 +87,10 @@ inline int64_t UnscaledCycleClock::Now() {
 
 #endif
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_USE_UNSCALED_CYCLECLOCK
+#endif  // ABSL_USE_UNSCALED_CYCLECLOCK
 
-#endif // ABSL_BASE_INTERNAL_UNSCALEDCYCLECLOCK_H_
+#endif  // ABSL_BASE_INTERNAL_UNSCALEDCYCLECLOCK_H_

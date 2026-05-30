@@ -27,12 +27,12 @@ namespace executorch {
 namespace ET_RUNTIME_NAMESPACE {
 
 struct SizedBuffer {
-  void *buffer;
+  void* buffer;
   size_t nbytes; // number of bytes of buffer
 };
 
 struct CompileSpec {
-  const char *key;   // spec key
+  const char* key; // spec key
   SizedBuffer value; // spec value
 };
 
@@ -43,7 +43,7 @@ struct CompileSpec {
 using DelegateHandle = void;
 
 class BackendInterface {
-public:
+ public:
   virtual ~BackendInterface() = 0;
 
   /**
@@ -81,9 +81,10 @@ public:
    *     Error::DelegateInvalidCompatibility. Other backend delegate
    *     specific error codes can be found in error.h.
    */
-  ET_NODISCARD virtual Result<DelegateHandle *>
-  init(BackendInitContext &context, FreeableBuffer *processed,
-       ArrayRef<CompileSpec> compile_specs) const = 0;
+  ET_NODISCARD virtual Result<DelegateHandle*> init(
+      BackendInitContext& context,
+      FreeableBuffer* processed,
+      ArrayRef<CompileSpec> compile_specs) const = 0;
 
   /**
    * Responsible for executing the given method’s handle, as it was produced
@@ -95,9 +96,10 @@ public:
    * @param[in] args The method’s inputs and outputs.
    * @retval Error::Ok if successful.
    */
-  ET_NODISCARD virtual Error execute(BackendExecutionContext &context,
-                                     DelegateHandle *handle,
-                                     Span<EValue *> args) const = 0;
+  ET_NODISCARD virtual Error execute(
+      BackendExecutionContext& context,
+      DelegateHandle* handle,
+      Span<EValue*> args) const = 0;
 
   /**
    * Responsible update the backend status, if any. The backend options are
@@ -108,9 +110,9 @@ public:
    * @param[in] args A list of BackendOptions passed in by users.
    * @retval Error::Ok if successful.
    */
-  ET_NODISCARD virtual Error
-  set_option(__ET_UNUSED BackendOptionContext &context,
-             const executorch::runtime::Span<BackendOption> &backend_options) {
+  ET_NODISCARD virtual Error set_option(
+      __ET_UNUSED BackendOptionContext& context,
+      const executorch::runtime::Span<BackendOption>& backend_options) {
     return Error::Ok;
   };
 
@@ -124,9 +126,9 @@ public:
    * filled by the backend
    * @retval Error::Ok if successful.
    */
-  ET_NODISCARD virtual Error
-  get_option(__ET_UNUSED BackendOptionContext &context,
-             executorch::runtime::Span<BackendOption> &backend_options) {
+  ET_NODISCARD virtual Error get_option(
+      __ET_UNUSED BackendOptionContext& context,
+      executorch::runtime::Span<BackendOption>& backend_options) {
     return Error::Ok;
   };
 
@@ -139,7 +141,7 @@ public:
    * @param[in] handle The handle to be destroyed. An opaque handle returned by
    *     `init()`.
    */
-  virtual void destroy(ET_UNUSED DelegateHandle *handle) const {}
+  virtual void destroy(ET_UNUSED DelegateHandle* handle) const {}
 };
 
 /**
@@ -150,16 +152,16 @@ public:
  * @retval Pointer to the appropriate object that implements BackendInterface.
  *         Nullptr if it can't find anything with the given name.
  */
-BackendInterface *get_backend_class(const char *name);
+BackendInterface* get_backend_class(const char* name);
 
 /**
  * A named instance of a backend.
  */
 struct Backend {
   /// The name of the backend. Must match the string used in the PTE file.
-  const char *name;
+  const char* name;
   /// The instance of the backend to use when loading and executing programs.
-  BackendInterface *backend;
+  BackendInterface* backend;
 };
 
 /**
@@ -169,7 +171,7 @@ struct Backend {
  * @param[in] backend Backend object
  * @retval Error code representing whether registration was successful.
  */
-ET_NODISCARD Error register_backend(const Backend &backend);
+ET_NODISCARD Error register_backend(const Backend& backend);
 
 /**
  * Returns the number of registered backends.
@@ -179,7 +181,7 @@ size_t get_num_registered_backends();
 /**
  * Returns the backend name at the given index.
  */
-Result<const char *> get_backend_name(size_t index);
+Result<const char*> get_backend_name(size_t index);
 
 /**
  * Sets backend options for a specific backend.
@@ -191,7 +193,7 @@ Result<const char *> get_backend_name(size_t index);
  * other error codes on failure
  */
 Error set_option(
-    const char *backend_name,
+    const char* backend_name,
     const executorch::runtime::Span<executorch::runtime::BackendOption>
         backend_options);
 
@@ -204,9 +206,10 @@ Error set_option(
  * @return Error::Ok on success, Error::NotFound if backend is not found, or
  * other error codes on failure
  */
-Error get_option(const char *backend_name,
-                 executorch::runtime::Span<executorch::runtime::BackendOption>
-                     backend_options);
+Error get_option(
+    const char* backend_name,
+    executorch::runtime::Span<executorch::runtime::BackendOption>
+        backend_options);
 
 } // namespace ET_RUNTIME_NAMESPACE
 } // namespace executorch

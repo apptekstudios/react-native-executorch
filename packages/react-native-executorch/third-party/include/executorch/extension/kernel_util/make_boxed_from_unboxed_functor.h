@@ -35,7 +35,6 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <executorch/extension/kernel_util/meta_programming.h>
 #include <executorch/extension/kernel_util/type_list.h>
 #include <executorch/runtime/core/evalue.h>
@@ -43,6 +42,7 @@
 #include <executorch/runtime/core/exec_aten/exec_aten.h>
 #include <executorch/runtime/kernel/kernel_runtime_context.h>
 #include <executorch/runtime/kernel/operator_registry.h>
+#include <cstdlib>
 #include <memory>
 #include <type_traits>
 #include <typeinfo>
@@ -61,31 +61,35 @@ namespace extension {
 namespace kernel_util_internal {
 
 // Template trait to check if a type is a non-const tensor
-template <class T> struct is_nonconst_tensor : std::false_type {};
+template <class T>
+struct is_nonconst_tensor : std::false_type {};
 
 template <>
-struct is_nonconst_tensor<executorch::aten::Tensor &> : std::true_type {};
+struct is_nonconst_tensor<executorch::aten::Tensor&> : std::true_type {};
 
 // Template trait to check if a type is a non-const tensor
 // Count non-const tensors in a typelist
-template <class TypeList> struct count_nonconst_tensors;
+template <class TypeList>
+struct count_nonconst_tensors;
 
-template <> struct count_nonconst_tensors<typelist<>> {
+template <>
+struct count_nonconst_tensors<typelist<>> {
   static constexpr size_t value = 0;
 };
 
-template <class T> struct count_nonconst_tensors<typelist<T>> {
+template <class T>
+struct count_nonconst_tensors<typelist<T>> {
   static constexpr size_t value = 0;
 };
 
 template <>
-struct count_nonconst_tensors<typelist<executorch::aten::Tensor &>> {
+struct count_nonconst_tensors<typelist<executorch::aten::Tensor&>> {
   static constexpr size_t value = 1;
 };
 
 template <class Head, class... Tail>
 struct count_nonconst_tensors<typelist<Head, Tail...>> {
-private:
+ private:
   static constexpr size_t tail_tensor_count =
       count_nonconst_tensors<typelist<Tail...>>::value;
   static constexpr size_t tail_args_count = sizeof...(Tail);
@@ -93,64 +97,78 @@ private:
   static constexpr bool all_tail_args_are_tensor =
       tail_tensor_count == tail_args_count;
 
-public:
+ public:
   static constexpr size_t value = (is_head_a_tensor && all_tail_args_are_tensor)
-                                      ? tail_tensor_count + 1
-                                      : tail_tensor_count;
+      ? tail_tensor_count + 1
+      : tail_tensor_count;
 };
 
-template <class T> struct decay_if_not_tensor final {
+template <class T>
+struct decay_if_not_tensor final {
   using type = std::decay_t<T>;
 };
-template <> struct decay_if_not_tensor<executorch::aten::Tensor &> final {
-  using type = executorch::aten::Tensor &;
+template <>
+struct decay_if_not_tensor<executorch::aten::Tensor&> final {
+  using type = executorch::aten::Tensor&;
 };
-template <> struct decay_if_not_tensor<const executorch::aten::Tensor &> final {
-  using type = const executorch::aten::Tensor &;
-};
-
-template <class T> struct evalue_to_arg final {
-  static T call(executorch::runtime::EValue &v) { return std::move(v).to<T>(); }
+template <>
+struct decay_if_not_tensor<const executorch::aten::Tensor&> final {
+  using type = const executorch::aten::Tensor&;
 };
 
-template <> struct evalue_to_arg<executorch::aten::Tensor &> final {
-  static executorch::aten::Tensor &call(executorch::runtime::EValue &v) {
+template <class T>
+struct evalue_to_arg final {
+  static T call(executorch::runtime::EValue& v) {
+    return std::move(v).to<T>();
+  }
+};
+
+template <>
+struct evalue_to_arg<executorch::aten::Tensor&> final {
+  static executorch::aten::Tensor& call(executorch::runtime::EValue& v) {
     return v.toTensor();
   }
 };
 
-template <> struct evalue_to_arg<const executorch::aten::Tensor &> final {
-  static const executorch::aten::Tensor &call(executorch::runtime::EValue &v) {
+template <>
+struct evalue_to_arg<const executorch::aten::Tensor&> final {
+  static const executorch::aten::Tensor& call(executorch::runtime::EValue& v) {
     return v.toTensor();
   }
 };
 
-template <class T> struct evalue_to_arg<std::optional<T>> final {
-  static std::optional<T> call(executorch::runtime::EValue &v) {
+template <class T>
+struct evalue_to_arg<std::optional<T>> final {
+  static std::optional<T> call(executorch::runtime::EValue& v) {
     return v.toOptional<T>();
   }
 };
 
 template <class T>
 struct evalue_to_arg<executorch::aten::ArrayRef<std::optional<T>>> final {
-  static executorch::aten::ArrayRef<std::optional<T>>
-  call(executorch::runtime::EValue &v) {
+  static executorch::aten::ArrayRef<std::optional<T>> call(
+      executorch::runtime::EValue& v) {
     return v.toListOptionalTensor();
   }
 };
 
-template <class Functor, size_t nonconst_tensors_to_log,
-          size_t... evalue_arg_indices, typename... ArgTypes>
+template <
+    class Functor,
+    size_t nonconst_tensors_to_log,
+    size_t... evalue_arg_indices,
+    typename... ArgTypes>
 void call_functor_with_args_from_stack(
-    executorch::runtime::KernelRuntimeContext &ctx,
-    executorch::runtime::Span<executorch::runtime::EValue *> stack,
-    std::index_sequence<evalue_arg_indices...>, typelist<ArgTypes...> *) {
+    executorch::runtime::KernelRuntimeContext& ctx,
+    executorch::runtime::Span<executorch::runtime::EValue*> stack,
+    std::index_sequence<evalue_arg_indices...>,
+    typelist<ArgTypes...>*) {
   executorch::runtime::internal::EventTracerProfileOpScope
       event_tracer_op_scope(ctx.internal_event_tracer(), Functor::func_name_);
   EXECUTORCH_SCOPE_PROF(Functor::func_name_);
   (*Functor::func_ptr())(
-      ctx, evalue_to_arg<typename decay_if_not_tensor<ArgTypes>::type>::call(
-               *stack[evalue_arg_indices])...);
+      ctx,
+      evalue_to_arg<typename decay_if_not_tensor<ArgTypes>::type>::call(
+          *stack[evalue_arg_indices])...);
   constexpr size_t num_inputs =
       std::index_sequence<evalue_arg_indices...>::size();
   for (size_t i = num_inputs - nonconst_tensors_to_log; i < num_inputs; ++i) {
@@ -166,7 +184,8 @@ void call_functor_with_args_from_stack(
  * takes EValues as input and returns void. The wrapped functor will unbox all
  * inputs and forward them to unboxed kernel.
  */
-template <class FuncType> struct WrapUnboxedIntoFunctor {
+template <class FuncType>
+struct WrapUnboxedIntoFunctor {
   static_assert(
       kernel_util_internal::is_compile_time_function_pointer<FuncType>::value,
       "Can't handle function other than EXECUTORCH_FN");
@@ -180,32 +199,35 @@ template <class FuncType> struct WrapUnboxedIntoFunctor {
       ::executorch::runtime::KernelRuntimeContext,
       std::remove_reference_t<
           kernel_util_internal::head_with_default_t<void, ArgsType>>>::value;
-  using ContextRemovedArgsType =
-      std::conditional_t<first_arg_is_context,
-                         kernel_util_internal::drop_if_nonempty_t<ArgsType, 1>,
-                         ArgsType>;
+  using ContextRemovedArgsType = std::conditional_t<
+      first_arg_is_context,
+      kernel_util_internal::drop_if_nonempty_t<ArgsType, 1>,
+      ArgsType>;
 
-  static void
-  call(::executorch::runtime::KernelRuntimeContext &ctx,
-       executorch::runtime::Span<executorch::runtime::EValue *> stack) {
+  static void call(
+      ::executorch::runtime::KernelRuntimeContext& ctx,
+      executorch::runtime::Span<executorch::runtime::EValue*> stack) {
     constexpr size_t num_inputs =
         kernel_util_internal::size<ContextRemovedArgsType>::value;
     constexpr size_t num_nonconst_tensors =
         kernel_util_internal::count_nonconst_tensors<
             ContextRemovedArgsType>::value;
     static_assert(num_nonconst_tensors == 1, "Invalid number of inputs");
-    return kernel_util_internal::call_functor_with_args_from_stack<
-        FuncType, num_nonconst_tensors>(
-        ctx, stack, std::make_index_sequence<num_inputs>(),
-        static_cast<ContextRemovedArgsType *>(nullptr));
+    return kernel_util_internal::
+        call_functor_with_args_from_stack<FuncType, num_nonconst_tensors>(
+            ctx,
+            stack,
+            std::make_index_sequence<num_inputs>(),
+            static_cast<ContextRemovedArgsType*>(nullptr));
   }
 };
 
 template <typename FuncType>
-static executorch::runtime::Kernel make_boxed_kernel(const char *name,
-                                                     FuncType) {
-  return executorch::runtime::Kernel(name,
-                                     WrapUnboxedIntoFunctor<FuncType>::call);
+static executorch::runtime::Kernel make_boxed_kernel(
+    const char* name,
+    FuncType) {
+  return executorch::runtime::Kernel(
+      name, WrapUnboxedIntoFunctor<FuncType>::call);
 }
 
 } // namespace extension
@@ -216,16 +238,16 @@ static executorch::runtime::Kernel make_boxed_kernel(const char *name,
 #define ET_CONCATENATE(s1, s2) ET_CONCATENATE_IMPL(s1, s2)
 #define ET_UID __LINE__
 
-#define EXECUTORCH_LIBRARY(ns, op_name, func)                                  \
+#define EXECUTORCH_LIBRARY(ns, op_name, func) \
   _EXECUTORCH_LIBRARY_IMPL(ns, op_name, func, ET_UID)
 
-#define _EXECUTORCH_LIBRARY_IMPL(ns, op_name, func, uid)                       \
-  static constexpr const char ET_CONCATENATE(name_of_op_, uid)[] =             \
-      #ns "::" op_name;                                                        \
-  static auto ET_CONCATENATE(res_##ns##_, uid) =                               \
-      ::executorch::runtime::register_kernel(                                  \
-          ::executorch::extension::make_boxed_kernel(                          \
-              #ns "::" op_name,                                                \
+#define _EXECUTORCH_LIBRARY_IMPL(ns, op_name, func, uid)           \
+  static constexpr const char ET_CONCATENATE(name_of_op_, uid)[] = \
+      #ns "::" op_name;                                            \
+  static auto ET_CONCATENATE(res_##ns##_, uid) =                   \
+      ::executorch::runtime::register_kernel(                      \
+          ::executorch::extension::make_boxed_kernel(              \
+              #ns "::" op_name,                                    \
               EXECUTORCH_FN(func, ET_CONCATENATE(name_of_op_, uid))))
 
 namespace torch {

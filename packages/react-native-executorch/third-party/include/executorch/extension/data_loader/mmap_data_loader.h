@@ -23,7 +23,7 @@ namespace extension {
  * avoid the overhead of opening it again for every load() call.
  */
 class MmapDataLoader final : public executorch::runtime::DataLoader {
-public:
+ public:
   /**
    * Describes how and whether to lock loaded pages with `mlock()`.
    *
@@ -38,6 +38,10 @@ public:
     UseMlock,
     /// Call `mlock()` on loaded pages, ignoring errors if it fails.
     UseMlockIgnoreErrors,
+    /// Use madvise(MADV_WILLNEED | MADV_SEQUENTIAL) instead of mlock.
+    /// Tells the kernel to prefetch pages eagerly and optimize for
+    /// sequential reads, without pinning them in RAM.
+    UseMadvise,
   };
 
   /**
@@ -50,67 +54,81 @@ public:
    * @param[in] mlock_config How and whether to lock loaded pages with
    *     `mlock()`.
    */
-  static executorch::runtime::Result<MmapDataLoader>
-  from(const char *file_name, MlockConfig mlock_config = MlockConfig::UseMlock);
+  static executorch::runtime::Result<MmapDataLoader> from(
+      const char* file_name,
+      MlockConfig mlock_config = MlockConfig::UseMlock);
 
   /// DEPRECATED: Use the lowercase `from()` instead.
-  ET_DEPRECATED static executorch::runtime::Result<MmapDataLoader>
-  From(const char *file_name,
-       MlockConfig mlock_config = MlockConfig::UseMlock) {
+  ET_DEPRECATED static executorch::runtime::Result<MmapDataLoader> From(
+      const char* file_name,
+      MlockConfig mlock_config = MlockConfig::UseMlock) {
     return from(file_name, mlock_config);
   }
 
   /// DEPRECATED: Use the version of `from()` that takes an MlockConfig.
   ET_DEPRECATED
-  static executorch::runtime::Result<MmapDataLoader> From(const char *file_name,
-                                                          bool use_mlock) {
+  static executorch::runtime::Result<MmapDataLoader> From(
+      const char* file_name,
+      bool use_mlock) {
     MlockConfig mlock_config =
         use_mlock ? MlockConfig::UseMlock : MlockConfig::NoMlock;
     return from(file_name, mlock_config);
   }
 
   // Movable to be compatible with Result.
-  MmapDataLoader(MmapDataLoader &&rhs) noexcept
-      : file_name_(rhs.file_name_), file_size_(rhs.file_size_),
-        page_size_(rhs.page_size_), fd_(rhs.fd_),
+  MmapDataLoader(MmapDataLoader&& rhs) noexcept
+      : file_name_(rhs.file_name_),
+        file_size_(rhs.file_size_),
+        page_size_(rhs.page_size_),
+        fd_(rhs.fd_),
         mlock_config_(rhs.mlock_config_) {
-    const_cast<const char *&>(rhs.file_name_) = nullptr;
-    const_cast<size_t &>(rhs.file_size_) = 0;
-    const_cast<size_t &>(rhs.page_size_) = 0;
-    const_cast<int &>(rhs.fd_) = -1;
-    const_cast<MlockConfig &>(rhs.mlock_config_) = MlockConfig::NoMlock;
+    const_cast<const char*&>(rhs.file_name_) = nullptr;
+    const_cast<size_t&>(rhs.file_size_) = 0;
+    const_cast<size_t&>(rhs.page_size_) = 0;
+    const_cast<int&>(rhs.fd_) = -1;
+    const_cast<MlockConfig&>(rhs.mlock_config_) = MlockConfig::NoMlock;
   }
 
   ~MmapDataLoader() override;
 
   ET_NODISCARD
-  executorch::runtime::Result<executorch::runtime::FreeableBuffer>
-  load(size_t offset, size_t size,
-       const DataLoader::SegmentInfo &segment_info) const override;
+  executorch::runtime::Result<executorch::runtime::FreeableBuffer> load(
+      size_t offset,
+      size_t size,
+      const DataLoader::SegmentInfo& segment_info) const override;
 
   ET_NODISCARD executorch::runtime::Result<size_t> size() const override;
 
   ET_NODISCARD
-  executorch::runtime::Error
-  load_into(size_t offset, size_t size,
-            ET_UNUSED const SegmentInfo &segment_info,
-            void *buffer) const override;
+  executorch::runtime::Error load_into(
+      size_t offset,
+      size_t size,
+      ET_UNUSED const SegmentInfo& segment_info,
+      void* buffer) const override;
 
-private:
-  MmapDataLoader(int fd, size_t file_size, const char *file_name,
-                 size_t page_size, MlockConfig mlock_config)
-      : file_name_(file_name), file_size_(file_size), page_size_(page_size),
-        fd_(fd), mlock_config_(mlock_config) {}
+ private:
+  MmapDataLoader(
+      int fd,
+      size_t file_size,
+      const char* file_name,
+      size_t page_size,
+      MlockConfig mlock_config)
+      : file_name_(file_name),
+        file_size_(file_size),
+        page_size_(page_size),
+        fd_(fd),
+        mlock_config_(mlock_config) {}
 
   // Not safely copyable.
-  MmapDataLoader(const MmapDataLoader &) = delete;
-  MmapDataLoader &operator=(const MmapDataLoader &) = delete;
-  MmapDataLoader &operator=(MmapDataLoader &&) = delete;
+  MmapDataLoader(const MmapDataLoader&) = delete;
+  MmapDataLoader& operator=(const MmapDataLoader&) = delete;
+  MmapDataLoader& operator=(MmapDataLoader&&) = delete;
 
-  ET_NODISCARD executorch::runtime::Error validate_input(size_t offset,
-                                                         size_t size) const;
+  ET_NODISCARD executorch::runtime::Error validate_input(
+      size_t offset,
+      size_t size) const;
 
-  const char *const file_name_; // String data is owned by the instance.
+  const char* const file_name_; // String data is owned by the instance.
   const size_t file_size_;
   const size_t page_size_;
   const int fd_; // Owned by the instance.

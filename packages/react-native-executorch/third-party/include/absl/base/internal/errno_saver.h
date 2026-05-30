@@ -27,17 +27,17 @@ namespace base_internal {
 // upon deletion.  It is used in low-level code and must be super fast.  Do not
 // add instrumentation, even in debug modes.
 class ErrnoSaver {
-public:
+ public:
   ErrnoSaver() : saved_errno_(errno) {}
   ~ErrnoSaver() { errno = saved_errno_; }
   int operator()() const { return saved_errno_; }
 
-private:
+ private:
   const int saved_errno_;
 };
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_ERRNO_SAVER_H_
+#endif  // ABSL_BASE_INTERNAL_ERRNO_SAVER_H_

@@ -32,9 +32,9 @@ namespace absl {
 ABSL_NAMESPACE_BEGIN
 namespace cordrep_testing {
 
-inline cord_internal::CordRepSubstring *
-MakeSubstring(size_t start, size_t len, cord_internal::CordRep *rep) {
-  auto *sub = new cord_internal::CordRepSubstring;
+inline cord_internal::CordRepSubstring* MakeSubstring(
+    size_t start, size_t len, cord_internal::CordRep* rep) {
+  auto* sub = new cord_internal::CordRepSubstring;
   sub->tag = cord_internal::SUBSTRING;
   sub->start = start;
   sub->length = len <= 0 ? rep->length - start + len : len;
@@ -42,24 +42,24 @@ MakeSubstring(size_t start, size_t len, cord_internal::CordRep *rep) {
   return sub;
 }
 
-inline cord_internal::CordRepFlat *MakeFlat(absl::string_view value) {
+inline cord_internal::CordRepFlat* MakeFlat(absl::string_view value) {
   assert(value.length() <= cord_internal::kMaxFlatLength);
-  auto *flat = cord_internal::CordRepFlat::New(value.length());
+  auto* flat = cord_internal::CordRepFlat::New(value.length());
   flat->length = value.length();
   memcpy(flat->Data(), value.data(), value.length());
   return flat;
 }
 
 // Creates an external node for testing
-inline cord_internal::CordRepExternal *MakeExternal(absl::string_view s) {
+inline cord_internal::CordRepExternal* MakeExternal(absl::string_view s) {
   struct Rep : public cord_internal::CordRepExternal {
     std::string s;
     explicit Rep(absl::string_view sv) : s(sv) {
       this->tag = cord_internal::EXTERNAL;
       this->base = s.data();
       this->length = s.length();
-      this->releaser_invoker = [](cord_internal::CordRepExternal *self) {
-        delete static_cast<Rep *>(self);
+      this->releaser_invoker = [](cord_internal::CordRepExternal* self) {
+        delete static_cast<Rep*>(self);
       };
     }
   };
@@ -67,9 +67,10 @@ inline cord_internal::CordRepExternal *MakeExternal(absl::string_view s) {
 }
 
 inline std::string CreateRandomString(size_t n) {
-  absl::string_view data = "abcdefghijklmnopqrstuvwxyz"
-                           "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                           "0123456789~!@#$%^&*()_+=-<>?:\"{}[]|";
+  absl::string_view data =
+      "abcdefghijklmnopqrstuvwxyz"
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      "0123456789~!@#$%^&*()_+=-<>?:\"{}[]|";
   std::minstd_rand rnd;
   std::uniform_int_distribution<size_t> dist(0, data.size() - 1);
   std::string s(n, ' ');
@@ -82,20 +83,20 @@ inline std::string CreateRandomString(size_t n) {
 // Creates an array of flats from the provided string, chopping
 // the provided string up into flats of size `chunk_size` characters
 // resulting in roughly `data.size() / chunk_size` total flats.
-inline std::vector<cord_internal::CordRep *>
-CreateFlatsFromString(absl::string_view data, size_t chunk_size) {
+inline std::vector<cord_internal::CordRep*> CreateFlatsFromString(
+    absl::string_view data, size_t chunk_size) {
   assert(chunk_size > 0);
-  std::vector<cord_internal::CordRep *> flats;
+  std::vector<cord_internal::CordRep*> flats;
   for (absl::string_view s = data; !s.empty(); s.remove_prefix(chunk_size)) {
     flats.push_back(MakeFlat(s.substr(0, chunk_size)));
   }
   return flats;
 }
 
-inline cord_internal::CordRepBtree *
-CordRepBtreeFromFlats(absl::Span<cord_internal::CordRep *const> flats) {
+inline cord_internal::CordRepBtree* CordRepBtreeFromFlats(
+    absl::Span<cord_internal::CordRep* const> flats) {
   assert(!flats.empty());
-  auto *node = cord_internal::CordRepBtree::Create(flats[0]);
+  auto* node = cord_internal::CordRepBtree::Create(flats[0]);
   for (size_t i = 1; i < flats.size(); ++i) {
     node = cord_internal::CordRepBtree::Append(node, flats[i]);
   }
@@ -103,39 +104,38 @@ CordRepBtreeFromFlats(absl::Span<cord_internal::CordRep *const> flats) {
 }
 
 template <typename Fn>
-inline void CordVisitReps(cord_internal::CordRep *rep, Fn &&fn) {
+inline void CordVisitReps(cord_internal::CordRep* rep, Fn&& fn) {
   fn(rep);
   while (rep->tag == cord_internal::SUBSTRING) {
     rep = rep->substring()->child;
     fn(rep);
   }
   if (rep->tag == cord_internal::BTREE) {
-    for (cord_internal::CordRep *edge : rep->btree()->Edges()) {
+    for (cord_internal::CordRep* edge : rep->btree()->Edges()) {
       CordVisitReps(edge, fn);
     }
   }
 }
 
 template <typename Predicate>
-inline std::vector<cord_internal::CordRep *>
-CordCollectRepsIf(Predicate &&predicate, cord_internal::CordRep *rep) {
-  std::vector<cord_internal::CordRep *> reps;
-  CordVisitReps(rep, [&reps, &predicate](cord_internal::CordRep *rep) {
-    if (predicate(rep))
-      reps.push_back(rep);
+inline std::vector<cord_internal::CordRep*> CordCollectRepsIf(
+    Predicate&& predicate, cord_internal::CordRep* rep) {
+  std::vector<cord_internal::CordRep*> reps;
+  CordVisitReps(rep, [&reps, &predicate](cord_internal::CordRep* rep) {
+    if (predicate(rep)) reps.push_back(rep);
   });
   return reps;
 }
 
-inline std::vector<cord_internal::CordRep *>
-CordCollectReps(cord_internal::CordRep *rep) {
-  std::vector<cord_internal::CordRep *> reps;
-  auto fn = [&reps](cord_internal::CordRep *rep) { reps.push_back(rep); };
+inline std::vector<cord_internal::CordRep*> CordCollectReps(
+    cord_internal::CordRep* rep) {
+  std::vector<cord_internal::CordRep*> reps;
+  auto fn = [&reps](cord_internal::CordRep* rep) { reps.push_back(rep); };
   CordVisitReps(rep, fn);
   return reps;
 }
 
-inline void CordToString(cord_internal::CordRep *rep, std::string &s) {
+inline void CordToString(cord_internal::CordRep* rep, std::string& s) {
   size_t offset = 0;
   size_t length = rep->length;
   while (rep->tag == cord_internal::SUBSTRING) {
@@ -143,7 +143,7 @@ inline void CordToString(cord_internal::CordRep *rep, std::string &s) {
     rep = rep->substring()->child;
   }
   if (rep->tag == cord_internal::BTREE) {
-    for (cord_internal::CordRep *edge : rep->btree()->Edges()) {
+    for (cord_internal::CordRep* edge : rep->btree()->Edges()) {
       CordToString(edge, s);
     }
   } else if (rep->tag >= cord_internal::FLAT) {
@@ -155,7 +155,7 @@ inline void CordToString(cord_internal::CordRep *rep, std::string &s) {
   }
 }
 
-inline std::string CordToString(cord_internal::CordRep *rep) {
+inline std::string CordToString(cord_internal::CordRep* rep) {
   std::string s;
   s.reserve(rep->length);
   CordToString(rep, s);
@@ -164,21 +164,22 @@ inline std::string CordToString(cord_internal::CordRep *rep) {
 
 // RAII Helper class to automatically unref reps on destruction.
 class AutoUnref {
-public:
+ public:
   ~AutoUnref() {
-    for (CordRep *rep : unrefs_)
-      CordRep::Unref(rep);
+    for (CordRep* rep : unrefs_) CordRep::Unref(rep);
   }
 
   // Adds `rep` to the list of reps to be unreffed at destruction.
-  template <typename CordRepType> CordRepType *Add(CordRepType *rep) {
+  template <typename CordRepType>
+  CordRepType* Add(CordRepType* rep) {
     unrefs_.push_back(rep);
     return rep;
   }
 
   // Increments the reference count of `rep` by one, and adds it to
   // the list of reps to be unreffed at destruction.
-  template <typename CordRepType> CordRepType *Ref(CordRepType *rep) {
+  template <typename CordRepType>
+  CordRepType* Ref(CordRepType* rep) {
     unrefs_.push_back(CordRep::Ref(rep));
     return rep;
   }
@@ -186,20 +187,19 @@ public:
   // Increments the reference count of `rep` by one if `condition` is true,
   // and adds it to the list of reps to be unreffed at destruction.
   template <typename CordRepType>
-  CordRepType *RefIf(bool condition, CordRepType *rep) {
-    if (condition)
-      unrefs_.push_back(CordRep::Ref(rep));
+  CordRepType* RefIf(bool condition, CordRepType* rep) {
+    if (condition) unrefs_.push_back(CordRep::Ref(rep));
     return rep;
   }
 
-private:
+ private:
   using CordRep = absl::cord_internal::CordRep;
 
-  std::vector<CordRep *> unrefs_;
+  std::vector<CordRep*> unrefs_;
 };
 
-} // namespace cordrep_testing
+}  // namespace cordrep_testing
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CORD_REP_TEST_UTIL_H_
+#endif  // ABSL_STRINGS_INTERNAL_CORD_REP_TEST_UTIL_H_

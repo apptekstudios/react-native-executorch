@@ -33,9 +33,9 @@ namespace absl {
 ABSL_NAMESPACE_BEGIN
 using std::bad_any_cast;
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#else // ABSL_USES_STD_ANY
+#else  // ABSL_USES_STD_ANY
 
 namespace absl {
 ABSL_NAMESPACE_BEGIN
@@ -57,19 +57,19 @@ ABSL_NAMESPACE_BEGIN
 //     std::cout << "Bad any cast: " << e.what() << '\n';
 //   }
 class bad_any_cast : public std::bad_cast {
-public:
+ public:
   ~bad_any_cast() override;
-  const char *what() const noexcept override;
+  const char* what() const noexcept override;
 };
 
 namespace any_internal {
 
 [[noreturn]] void ThrowBadAnyCast();
 
-} // namespace any_internal
+}  // namespace any_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_USES_STD_ANY
+#endif  // ABSL_USES_STD_ANY
 
-#endif // ABSL_TYPES_BAD_ANY_CAST_H_
+#endif  // ABSL_TYPES_BAD_ANY_CAST_H_

@@ -66,24 +66,24 @@ inline void UnalignedStore64(absl::Nonnull<void *> p, uint64_t v) {
   memcpy(p, &v, sizeof v);
 }
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#define ABSL_INTERNAL_UNALIGNED_LOAD16(_p)                                     \
+#define ABSL_INTERNAL_UNALIGNED_LOAD16(_p) \
   (absl::base_internal::UnalignedLoad16(_p))
-#define ABSL_INTERNAL_UNALIGNED_LOAD32(_p)                                     \
+#define ABSL_INTERNAL_UNALIGNED_LOAD32(_p) \
   (absl::base_internal::UnalignedLoad32(_p))
-#define ABSL_INTERNAL_UNALIGNED_LOAD64(_p)                                     \
+#define ABSL_INTERNAL_UNALIGNED_LOAD64(_p) \
   (absl::base_internal::UnalignedLoad64(_p))
 
-#define ABSL_INTERNAL_UNALIGNED_STORE16(_p, _val)                              \
+#define ABSL_INTERNAL_UNALIGNED_STORE16(_p, _val) \
   (absl::base_internal::UnalignedStore16(_p, _val))
-#define ABSL_INTERNAL_UNALIGNED_STORE32(_p, _val)                              \
+#define ABSL_INTERNAL_UNALIGNED_STORE32(_p, _val) \
   (absl::base_internal::UnalignedStore32(_p, _val))
-#define ABSL_INTERNAL_UNALIGNED_STORE64(_p, _val)                              \
+#define ABSL_INTERNAL_UNALIGNED_STORE64(_p, _val) \
   (absl::base_internal::UnalignedStore64(_p, _val))
 
-#endif // defined(__cplusplus), end of unaligned API
+#endif  // defined(__cplusplus), end of unaligned API
 
-#endif // ABSL_BASE_INTERNAL_UNALIGNED_ACCESS_H_
+#endif  // ABSL_BASE_INTERNAL_UNALIGNED_ACCESS_H_

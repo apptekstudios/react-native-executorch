@@ -28,7 +28,7 @@ namespace ET_BUNDLED_MODULE_NAMESPACE {
  * them.
  */
 class BundledModule : public Module {
-public:
+ public:
   /**
    * Constructs an instance with the bundled program buffer pointer.
    *
@@ -44,22 +44,22 @@ public:
    * @param[in] data_map_loader A DataLoader used for loading external weights.
    */
   explicit BundledModule(
-      const void *bundled_program_ptr,
+      const void* bundled_program_ptr,
       std::unique_ptr<runtime::MemoryAllocator> memory_allocator = nullptr,
       std::unique_ptr<runtime::MemoryAllocator> temp_allocator = nullptr,
       std::unique_ptr<runtime::EventTracer> event_tracer = nullptr,
       std::unique_ptr<runtime::DataLoader> data_map_loader = nullptr);
 
   // Disallow copying
-  BundledModule(const BundledModule &) = delete;
-  BundledModule &operator=(const BundledModule &) = delete;
+  BundledModule(const BundledModule&) = delete;
+  BundledModule& operator=(const BundledModule&) = delete;
   // Disallow copying
-  BundledModule(BundledModule &&) = delete;
-  BundledModule &operator=(BundledModule &&) = delete;
+  BundledModule(BundledModule&&) = delete;
+  BundledModule& operator=(BundledModule&&) = delete;
   // Default destructor
   ~BundledModule() {
     if (is_loaded_from_file_) {
-      delete[] static_cast<const uint8_t *>(bundled_program_ptr_);
+      delete[] static_cast<const uint8_t*>(bundled_program_ptr_);
     }
   }
 
@@ -76,7 +76,7 @@ public:
    * @param[in] data_map_loader A DataLoader used for loading external weights.
    */
   ET_NODISCARD static runtime::Result<std::unique_ptr<BundledModule>> from_file(
-      const std::string &file_path,
+      const std::string& file_path,
       std::unique_ptr<runtime::MemoryAllocator> memory_allocator = nullptr,
       std::unique_ptr<runtime::MemoryAllocator> temp_allocator = nullptr,
       std::unique_ptr<runtime::EventTracer> event_tracer = nullptr,
@@ -99,8 +99,9 @@ public:
    * execution.
    */
   ET_NODISCARD
-  runtime::Result<std::vector<runtime::EValue>>
-  execute(const std::string &method_name, const size_t testset_idx);
+  runtime::Result<std::vector<runtime::EValue>> execute(
+      const std::string& method_name,
+      const size_t testset_idx);
 
   /**
    * Verify the output of a specific method with the expected output from the
@@ -117,12 +118,14 @@ public:
    * execution.
    */
   ET_NODISCARD
-  runtime::Error verify_method_outputs(const std::string &method_name,
-                                       const size_t testset_idx,
-                                       double rtol = 1e-5, double atol = 1e-8);
+  runtime::Error verify_method_outputs(
+      const std::string& method_name,
+      const size_t testset_idx,
+      double rtol = 1e-5,
+      double atol = 1e-8);
 
-private:
-  const void *bundled_program_ptr_;
+ private:
+  const void* bundled_program_ptr_;
   bool is_loaded_from_file_ = false;
 };
 

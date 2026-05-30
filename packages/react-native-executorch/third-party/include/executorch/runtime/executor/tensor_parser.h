@@ -27,44 +27,47 @@ namespace deserialization {
 /// Data structure to hold key and data buffer for external data used
 /// in a method.
 struct NamedData {
-  const char *key;
+  const char* key;
   FreeableBuffer buffer;
 };
 
-NamedData *get_data_by_key(const char *key, Span<NamedData> entries);
+NamedData* get_data_by_key(const char* key, Span<NamedData> entries);
 
-ET_NODISCARD Result<executorch::aten::Tensor>
-parseTensor(const Program *program, MemoryManager *memory_manager,
-            const executorch_flatbuffer::Tensor *s_tensor,
-            const NamedDataMap *named_data_map = nullptr,
-            Span<NamedData> external_constants = {});
+ET_NODISCARD Result<executorch::aten::Tensor> parseTensor(
+    const Program* program,
+    MemoryManager* memory_manager,
+    const executorch_flatbuffer::Tensor* s_tensor,
+    const NamedDataMap* named_data_map = nullptr,
+    Span<NamedData> external_constants = {});
 
-ET_NODISCARD Result<BoxedEvalueList<executorch::aten::Tensor>>
-parseTensorList(const flatbuffers::Vector<int32_t> *tensor_indices,
-                EValue *values, size_t values_len,
-                MemoryManager *memory_manager);
+ET_NODISCARD Result<BoxedEvalueList<executorch::aten::Tensor>> parseTensorList(
+    const flatbuffers::Vector<int32_t>* tensor_indices,
+    EValue* values,
+    size_t values_len,
+    MemoryManager* memory_manager);
 
 // Checks that the sizes, dim_order and scalar_type match between tensors
 // stored in the PTE and externally.
-ET_NODISCARD Error
-validateTensorLayout(const executorch_flatbuffer::Tensor *s_tensor,
-                     const TensorLayout &expected_layout);
+ET_NODISCARD Error validateTensorLayout(
+    const executorch_flatbuffer::Tensor* s_tensor,
+    const TensorLayout& expected_layout);
 
 // Deserializes a List of optional type. The code here is the same between all
 // list of optionals: list of optional Tensor, list of optional float etc, so we
 // just use a template to avoid boilerplate.
 template <typename T>
-ET_NODISCARD Result<BoxedEvalueList<std::optional<T>>>
-parseListOptionalType(const flatbuffers::Vector<int32_t> *value_indices,
-                      EValue *values, size_t values_len,
-                      MemoryManager *memory_manager) {
-  auto *evalp_list = memory_manager->method_allocator()->allocateList<EValue *>(
+ET_NODISCARD Result<BoxedEvalueList<std::optional<T>>> parseListOptionalType(
+    const flatbuffers::Vector<int32_t>* value_indices,
+    EValue* values,
+    size_t values_len,
+    MemoryManager* memory_manager) {
+  auto* evalp_list = memory_manager->method_allocator()->allocateList<EValue*>(
       value_indices->size());
   if (evalp_list == nullptr) {
     return Error::MemoryAllocationFailed;
   }
 
-  auto *optional_tensor_list =
+  auto* optional_tensor_list =
       memory_manager->method_allocator()->allocateList<std::optional<T>>(
           value_indices->size());
   if (optional_tensor_list == nullptr) {
@@ -90,16 +93,22 @@ parseListOptionalType(const flatbuffers::Vector<int32_t> *value_indices,
       evalp_list[output_idx] = nullptr;
     } else {
       ET_CHECK_OR_RETURN_ERROR(
-          index >= 0 && static_cast<size_t>(index) < values_len, InvalidProgram,
-          "Invalid value index %" PRId32 " for ListOptional", index);
+          index >= 0 && static_cast<size_t>(index) < values_len,
+          InvalidProgram,
+          "Invalid value index %" PRId32 " for ListOptional",
+          index);
+      auto optional_result = values[index].tryToOptional<T>();
+      if (!optional_result.ok()) {
+        return optional_result.error();
+      }
       new (&optional_tensor_list[output_idx])
-          std::optional<T>(values[index].toOptional<T>());
+          std::optional<T>(std::move(optional_result.get()));
       evalp_list[output_idx] = &values[static_cast<size_t>(index)];
     }
     output_idx++;
   }
-  return BoxedEvalueList<std::optional<T>>(evalp_list, optional_tensor_list,
-                                           value_indices->size());
+  return BoxedEvalueList<std::optional<T>>(
+      evalp_list, optional_tensor_list, value_indices->size());
 }
 
 /**
@@ -127,12 +136,13 @@ parseListOptionalType(const flatbuffers::Vector<int32_t> *value_indices,
  * @returns On success, the data pointer to use for the tensor. On failure, a
  *     non-Ok Error.
  */
-ET_NODISCARD Result<void *>
-getTensorDataPtr(const executorch_flatbuffer::Tensor *s_tensor,
-                 const Program *program, size_t nbytes,
-                 HierarchicalAllocator *allocator,
-                 const NamedDataMap *named_data_map = nullptr,
-                 Span<NamedData> external_constants = {});
+ET_NODISCARD Result<void*> getTensorDataPtr(
+    const executorch_flatbuffer::Tensor* s_tensor,
+    const Program* program,
+    size_t nbytes,
+    HierarchicalAllocator* allocator,
+    const NamedDataMap* named_data_map = nullptr,
+    Span<NamedData> external_constants = {});
 
 } // namespace deserialization
 } // namespace ET_RUNTIME_NAMESPACE

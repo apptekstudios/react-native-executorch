@@ -26,11 +26,11 @@ ABSL_NAMESPACE_BEGIN
 namespace base_internal {
 
 class ScopedSetEnv {
-public:
-  ScopedSetEnv(const char *var_name, const char *new_value);
+ public:
+  ScopedSetEnv(const char* var_name, const char* new_value);
   ~ScopedSetEnv();
 
-private:
+ private:
   std::string var_name_;
   std::string old_value_;
 
@@ -38,8 +38,8 @@ private:
   bool was_unset_;
 };
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_SCOPED_SET_ENV_H_
+#endif  // ABSL_BASE_INTERNAL_SCOPED_SET_ENV_H_

@@ -28,17 +28,22 @@ namespace kernel_util_internal {
  *     constexpr size_t num = size<typelist<int, double>>::value;
  *     static_assert(num == 2, "");
  */
-template <class... T> struct false_t : std::false_type {};
+template <class... T>
+struct false_t : std::false_type {};
 
-template <class... Items> struct typelist final {
-public:
+template <class... Items>
+struct typelist final {
+ public:
   typelist() = delete; // not for instantiation
 };
-template <class TypeList> struct size final {
-  static_assert(false_t<TypeList>::value,
-                "In typelist::size<T>, T must be typelist<...>.");
+template <class TypeList>
+struct size final {
+  static_assert(
+      false_t<TypeList>::value,
+      "In typelist::size<T>, T must be typelist<...>.");
 };
-template <class... Types> struct size<typelist<Types...>> final {
+template <class... Types>
+struct size<typelist<Types...>> final {
   static constexpr size_t value = sizeof...(Types);
 };
 
@@ -57,7 +62,8 @@ template <template <class...> class Template, class T>
 using is_instantiation_of_t = typename is_instantiation_of<Template, T>::type;
 
 /// Base template.
-template <size_t Index, class TypeList> struct element final {
+template <size_t Index, class TypeList>
+struct element final {
   static_assert(
       false_t<TypeList>::value,
       "In typelist::element<T>, the T argument must be typelist<...>.");
@@ -70,9 +76,11 @@ struct element<0, typelist<Head, Tail...>> {
 };
 /// Error case, we have an index but ran out of types! It will only be selected
 /// if `Ts...` is actually empty!
-template <size_t Index, class... Ts> struct element<Index, typelist<Ts...>> {
-  static_assert(Index < sizeof...(Ts),
-                "Index is out of bounds in typelist::element");
+template <size_t Index, class... Ts>
+struct element<Index, typelist<Ts...>> {
+  static_assert(
+      Index < sizeof...(Ts),
+      "Index is out of bounds in typelist::element");
 };
 /// Shave off types until we hit the <0, Head, Tail...> or <Index> case.
 template <size_t Index, class Head, class... Tail>
@@ -87,7 +95,8 @@ using element_t = typename element<Index, TypeList>::type;
  * type list is empty. Example: int  ==  head_t<bool, typelist<int, string>>
  *   bool  ==  head_t<bool, typelist<>>
  */
-template <class Default, class TypeList> struct head_with_default final {
+template <class Default, class TypeList>
+struct head_with_default final {
   using type = Default;
 };
 template <class Default, class Head, class... Tail>
@@ -117,14 +126,16 @@ struct take_elements<TypeList, offset, std::index_sequence<Indices...>> final {
  *   typelist<> == drop_if_nonempty_t<typelist<string, bool>, 2>
  *   typelist<> == drop_if_nonempty_t<typelist<int, string, bool>, 3>
  */
-template <class TypeList, size_t num> struct drop_if_nonempty final {
+template <class TypeList, size_t num>
+struct drop_if_nonempty final {
   static_assert(
       is_instantiation_of<typelist, TypeList>::value,
       "In typelist::drop<T, num>, the T argument must be typelist<...>.");
   using type = typename take_elements<
-      TypeList, std::min(num, size<TypeList>::value),
-      std::make_index_sequence<size<TypeList>::value -
-                               std::min(num, size<TypeList>::value)>>::type;
+      TypeList,
+      std::min(num, size<TypeList>::value),
+      std::make_index_sequence<
+          size<TypeList>::value - std::min(num, size<TypeList>::value)>>::type;
 };
 template <class TypeList, size_t num>
 using drop_if_nonempty_t = typename drop_if_nonempty<TypeList, num>::type;

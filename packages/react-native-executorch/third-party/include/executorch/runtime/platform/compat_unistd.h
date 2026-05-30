@@ -13,7 +13,7 @@
 #pragma once
 
 #if defined(_WIN32) && !defined(_WIN64)
-#error                                                                         \
+#error \
     "You're trying to build ExecuTorch with a too old version of Windows. We need Windows 64-bit."
 #endif
 
@@ -37,13 +37,13 @@
 // file_data_loader.cpp.
 #undef max
 
-inline ssize_t pread(int fd, void *buf, size_t nbytes, size_t offset) {
+inline ssize_t pread(int fd, void* buf, size_t nbytes, size_t offset) {
   OVERLAPPED overlapped; /* The offset for ReadFile. */
   memset(&overlapped, 0, sizeof(overlapped));
   overlapped.Offset = offset;
   overlapped.OffsetHigh = offset >> 32;
 
-  BOOL result;      /* The result of ReadFile. */
+  BOOL result; /* The result of ReadFile. */
   DWORD bytes_read; /* The number of bytes read. */
   HANDLE file = (HANDLE)_get_osfhandle(fd);
 
@@ -60,12 +60,12 @@ inline ssize_t pread(int fd, void *buf, size_t nbytes, size_t offset) {
   if (!result) {
     // Translate error into errno.
     switch (error) {
-    case ERROR_HANDLE_EOF:
-      errno = 0;
-      break;
-    default:
-      errno = EIO;
-      break;
+      case ERROR_HANDLE_EOF:
+        errno = 0;
+        break;
+      default:
+        errno = EIO;
+        break;
     }
     return -1;
   }

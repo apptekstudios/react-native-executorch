@@ -24,21 +24,25 @@ namespace testing {
  * to manage than creating the allocators separately.
  */
 class ManagedMemoryManager {
-public:
-  ManagedMemoryManager(size_t planned_memory_bytes,
-                       size_t method_allocator_bytes,
-                       MemoryAllocator *temp_allocator = nullptr)
+ public:
+  ManagedMemoryManager(
+      size_t planned_memory_bytes,
+      size_t method_allocator_bytes,
+      MemoryAllocator* temp_allocator = nullptr)
       : planned_memory_buffer_(new uint8_t[planned_memory_bytes]),
-        planned_memory_span_(planned_memory_buffer_.get(),
-                             planned_memory_bytes),
+        planned_memory_span_(
+            planned_memory_buffer_.get(),
+            planned_memory_bytes),
         planned_memory_({&planned_memory_span_, 1}),
         method_allocator_pool_(new uint8_t[method_allocator_bytes]),
         method_allocator_(method_allocator_bytes, method_allocator_pool_.get()),
         memory_manager_(&method_allocator_, &planned_memory_, temp_allocator) {}
 
-  MemoryManager &get() { return memory_manager_; }
+  MemoryManager& get() {
+    return memory_manager_;
+  }
 
-private:
+ private:
   std::unique_ptr<uint8_t[]> planned_memory_buffer_;
   Span<uint8_t> planned_memory_span_;
   HierarchicalAllocator planned_memory_;

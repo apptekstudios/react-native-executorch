@@ -80,11 +80,11 @@
 #include "absl/base/attributes.h"
 #include "absl/base/config.h"
 #include "absl/base/nullability.h"
-#include "absl/strings/internal/str_format/arg.h"       // IWYU pragma: export
-#include "absl/strings/internal/str_format/bind.h"      // IWYU pragma: export
-#include "absl/strings/internal/str_format/checker.h"   // IWYU pragma: export
-#include "absl/strings/internal/str_format/extension.h" // IWYU pragma: export
-#include "absl/strings/internal/str_format/parser.h"    // IWYU pragma: export
+#include "absl/strings/internal/str_format/arg.h"  // IWYU pragma: export
+#include "absl/strings/internal/str_format/bind.h"  // IWYU pragma: export
+#include "absl/strings/internal/str_format/checker.h"  // IWYU pragma: export
+#include "absl/strings/internal/str_format/extension.h"  // IWYU pragma: export
+#include "absl/strings/internal/str_format/parser.h"  // IWYU pragma: export
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
@@ -103,19 +103,19 @@ ABSL_NAMESPACE_BEGIN
 //   std::string out;
 //   CHECK(absl::FormatUntyped(&out, format, {absl::FormatArg(1)}));
 class UntypedFormatSpec {
-public:
+ public:
   UntypedFormatSpec() = delete;
-  UntypedFormatSpec(const UntypedFormatSpec &) = delete;
-  UntypedFormatSpec &operator=(const UntypedFormatSpec &) = delete;
+  UntypedFormatSpec(const UntypedFormatSpec&) = delete;
+  UntypedFormatSpec& operator=(const UntypedFormatSpec&) = delete;
 
   explicit UntypedFormatSpec(string_view s) : spec_(s) {}
 
-protected:
+ protected:
   explicit UntypedFormatSpec(
-      absl::Nonnull<const str_format_internal::ParsedFormatBase *> pc)
+      absl::Nonnull<const str_format_internal::ParsedFormatBase*> pc)
       : spec_(pc) {}
 
-private:
+ private:
   friend str_format_internal::UntypedFormatSpecImpl;
   str_format_internal::UntypedFormatSpecImpl spec_;
 };
@@ -130,7 +130,7 @@ private:
 //
 //   absl::StrFormat("%s", absl::FormatStreamed(obj));
 template <typename T>
-str_format_internal::StreamedWrapper<T> FormatStreamed(const T &v) {
+str_format_internal::StreamedWrapper<T> FormatStreamed(const T& v) {
   return str_format_internal::StreamedWrapper<T>(v);
 }
 
@@ -151,18 +151,18 @@ str_format_internal::StreamedWrapper<T> FormatStreamed(const T &v) {
 //                       absl::FormatCountCapture(&n));
 //   EXPECT_EQ(8, n);
 class FormatCountCapture {
-public:
-  explicit FormatCountCapture(absl::Nonnull<int *> p) : p_(p) {}
+ public:
+  explicit FormatCountCapture(absl::Nonnull<int*> p) : p_(p) {}
 
-private:
+ private:
   // FormatCountCaptureHelper is used to define FormatConvertImpl() for this
   // class.
   friend struct str_format_internal::FormatCountCaptureHelper;
   // Unused() is here because of the false positive from -Wunused-private-field
   // p_ is used in the templated function of the friend FormatCountCaptureHelper
   // class.
-  absl::Nonnull<int *> Unused() { return p_; }
-  absl::Nonnull<int *> p_;
+  absl::Nonnull<int*> Unused() { return p_; }
+  absl::Nonnull<int*> p_;
 };
 
 // FormatSpec
@@ -334,7 +334,7 @@ using ParsedFormat = absl::str_format_internal::ExtendedParsedFormat<
 template <char... Conv>
 using ParsedFormat = str_format_internal::ExtendedParsedFormat<
     absl::str_format_internal::ToFormatConversionCharSet(Conv)...>;
-#endif // defined(__cpp_nontype_template_parameter_auto)
+#endif  // defined(__cpp_nontype_template_parameter_auto)
 
 // StrFormat()
 //
@@ -359,8 +359,8 @@ using ParsedFormat = str_format_internal::ExtendedParsedFormat<
 //
 // Returns an empty string in case of error.
 template <typename... Args>
-ABSL_MUST_USE_RESULT std::string StrFormat(const FormatSpec<Args...> &format,
-                                           const Args &...args) {
+ABSL_MUST_USE_RESULT std::string StrFormat(const FormatSpec<Args...>& format,
+                                           const Args&... args) {
   return str_format_internal::FormatPack(
       str_format_internal::UntypedFormatSpecImpl::Extract(format),
       {str_format_internal::FormatArgImpl(args)...});
@@ -377,9 +377,9 @@ ABSL_MUST_USE_RESULT std::string StrFormat(const FormatSpec<Args...> &format,
 //   std::string orig("For example PI is approximately ");
 //   std::cout << StrAppendFormat(&orig, "%12.6f", 3.14);
 template <typename... Args>
-std::string &StrAppendFormat(absl::Nonnull<std::string *> dst,
-                             const FormatSpec<Args...> &format,
-                             const Args &...args) {
+std::string& StrAppendFormat(absl::Nonnull<std::string*> dst,
+                             const FormatSpec<Args...>& format,
+                             const Args&... args) {
   return str_format_internal::AppendPack(
       dst, str_format_internal::UntypedFormatSpecImpl::Extract(format),
       {str_format_internal::FormatArgImpl(args)...});
@@ -396,8 +396,8 @@ std::string &StrAppendFormat(absl::Nonnull<std::string *> dst,
 //
 //   std::cout << StreamFormat("%12.6f", 3.14);
 template <typename... Args>
-ABSL_MUST_USE_RESULT str_format_internal::Streamable
-StreamFormat(const FormatSpec<Args...> &format, const Args &...args) {
+ABSL_MUST_USE_RESULT str_format_internal::Streamable StreamFormat(
+    const FormatSpec<Args...>& format, const Args&... args) {
   return str_format_internal::Streamable(
       str_format_internal::UntypedFormatSpecImpl::Extract(format),
       {str_format_internal::FormatArgImpl(args)...});
@@ -417,7 +417,7 @@ StreamFormat(const FormatSpec<Args...> &format, const Args &...args) {
 //   Outputs: "The capital of Mongolia is Ulaanbaatar"
 //
 template <typename... Args>
-int PrintF(const FormatSpec<Args...> &format, const Args &...args) {
+int PrintF(const FormatSpec<Args...>& format, const Args&... args) {
   return str_format_internal::FprintF(
       stdout, str_format_internal::UntypedFormatSpecImpl::Extract(format),
       {str_format_internal::FormatArgImpl(args)...});
@@ -437,8 +437,8 @@ int PrintF(const FormatSpec<Args...> &format, const Args &...args) {
 //   Outputs: "The capital of Mongolia is Ulaanbaatar"
 //
 template <typename... Args>
-int FPrintF(absl::Nonnull<std::FILE *> output,
-            const FormatSpec<Args...> &format, const Args &...args) {
+int FPrintF(absl::Nonnull<std::FILE*> output, const FormatSpec<Args...>& format,
+            const Args&... args) {
   return str_format_internal::FprintF(
       output, str_format_internal::UntypedFormatSpecImpl::Extract(format),
       {str_format_internal::FormatArgImpl(args)...});
@@ -466,8 +466,8 @@ int FPrintF(absl::Nonnull<std::FILE *> output,
 //   Post-condition: output == "The capital of Mongolia is Ulaanbaatar"
 //
 template <typename... Args>
-int SNPrintF(absl::Nonnull<char *> output, std::size_t size,
-             const FormatSpec<Args...> &format, const Args &...args) {
+int SNPrintF(absl::Nonnull<char*> output, std::size_t size,
+             const FormatSpec<Args...>& format, const Args&... args) {
   return str_format_internal::SnprintF(
       output, size, str_format_internal::UntypedFormatSpecImpl::Extract(format),
       {str_format_internal::FormatArgImpl(args)...});
@@ -494,16 +494,16 @@ int SNPrintF(absl::Nonnull<char *> output, std::size_t size,
 // FormatRawSink does not own the passed sink object. The passed object must
 // outlive the FormatRawSink.
 class FormatRawSink {
-public:
+ public:
   // Implicitly convert from any type that provides the hook function as
   // described above.
   template <typename T,
             typename = typename std::enable_if<std::is_constructible<
-                str_format_internal::FormatRawSinkImpl, T *>::value>::type>
-  FormatRawSink(absl::Nonnull<T *> raw) // NOLINT
+                str_format_internal::FormatRawSinkImpl, T*>::value>::type>
+  FormatRawSink(absl::Nonnull<T*> raw)  // NOLINT
       : sink_(raw) {}
 
-private:
+ private:
   friend str_format_internal::FormatRawSinkImpl;
   str_format_internal::FormatRawSinkImpl sink_;
 };
@@ -525,8 +525,8 @@ private:
 // On failure, this function returns `false` and the state of the sink is
 // unspecified.
 template <typename... Args>
-bool Format(FormatRawSink raw_sink, const FormatSpec<Args...> &format,
-            const Args &...args) {
+bool Format(FormatRawSink raw_sink, const FormatSpec<Args...>& format,
+            const Args&... args) {
   return str_format_internal::FormatUntyped(
       str_format_internal::FormatRawSinkImpl::Extract(raw_sink),
       str_format_internal::UntypedFormatSpecImpl::Extract(format),
@@ -582,9 +582,9 @@ using FormatArg = str_format_internal::FormatArgImpl;
 //     return std::move(out);
 //   }
 //
-ABSL_MUST_USE_RESULT inline bool
-FormatUntyped(FormatRawSink raw_sink, const UntypedFormatSpec &format,
-              absl::Span<const FormatArg> args) {
+ABSL_MUST_USE_RESULT inline bool FormatUntyped(
+    FormatRawSink raw_sink, const UntypedFormatSpec& format,
+    absl::Span<const FormatArg> args) {
   return str_format_internal::FormatUntyped(
       str_format_internal::FormatRawSinkImpl::Extract(raw_sink),
       str_format_internal::UntypedFormatSpecImpl::Extract(format), args);
@@ -705,7 +705,7 @@ enum class FormatConversionChar : uint8_t {
 // Specifies modifications to the conversion of the format string, through use
 // of one or more format flags in the source format string.
 class FormatConversionSpec {
-public:
+ public:
   // FormatConversionSpec::is_basic()
   //
   // Indicates that width and precision are not specified, and no additional
@@ -770,7 +770,7 @@ public:
   // If precision is unspecified, it returns a negative value.
   int precision() const { return impl_.precision(); }
 
-private:
+ private:
   explicit FormatConversionSpec(
       str_format_internal::FormatConversionSpecImpl impl)
       : impl_(impl) {}
@@ -836,7 +836,7 @@ enum class FormatConversionCharSet : uint64_t {
 // formatted string.
 //
 class FormatSink {
-public:
+ public:
   // FormatSink::Append()
   //
   // Appends `count` copies of `ch` to the format sink.
@@ -857,16 +857,16 @@ public:
   }
 
   // Support `absl::Format(&sink, format, args...)`.
-  friend void AbslFormatFlush(absl::Nonnull<FormatSink *> sink,
+  friend void AbslFormatFlush(absl::Nonnull<FormatSink*> sink,
                               absl::string_view v) {
     sink->Append(v);
   }
 
-private:
+ private:
   friend str_format_internal::FormatSinkImpl;
-  explicit FormatSink(absl::Nonnull<str_format_internal::FormatSinkImpl *> s)
+  explicit FormatSink(absl::Nonnull<str_format_internal::FormatSinkImpl*> s)
       : sink_(s) {}
-  absl::Nonnull<str_format_internal::FormatSinkImpl *> sink_;
+  absl::Nonnull<str_format_internal::FormatSinkImpl*> sink_;
 };
 
 // FormatConvertResult
@@ -876,11 +876,12 @@ private:
 // ADL but using the return type) of what conversion characters are supported.
 // It is strongly discouraged to return {false}, as this will result in an
 // empty string in StrFormat.
-template <FormatConversionCharSet C> struct FormatConvertResult {
+template <FormatConversionCharSet C>
+struct FormatConvertResult {
   bool value;
 };
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_STR_FORMAT_H_
+#endif  // ABSL_STRINGS_STR_FORMAT_H_

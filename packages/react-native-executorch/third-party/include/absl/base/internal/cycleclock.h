@@ -60,7 +60,7 @@ using CycleClockSourceFunc = int64_t (*)();
 // CycleClock
 // -----------------------------------------------------------------------------
 class CycleClock {
-public:
+ public:
   // CycleClock::Now()
   //
   // Returns the value of a cycle counter that counts at a rate that is
@@ -73,7 +73,7 @@ public:
   // that this value may not necessarily match the core CPU clock frequency.
   static double Frequency();
 
-private:
+ private:
 #if ABSL_USE_UNSCALED_CYCLECLOCK
   static CycleClockSourceFunc LoadCycleClockSource();
 
@@ -81,17 +81,17 @@ private:
   static constexpr double kFrequencyScale = kCycleClockFrequencyScale;
 
   ABSL_CONST_INIT static std::atomic<CycleClockSourceFunc> cycle_clock_source_;
-#endif //  ABSL_USE_UNSCALED_CYCLECLOC
+#endif  //  ABSL_USE_UNSCALED_CYCLECLOC
 
-  CycleClock() = delete; // no instances
-  CycleClock(const CycleClock &) = delete;
-  CycleClock &operator=(const CycleClock &) = delete;
+  CycleClock() = delete;  // no instances
+  CycleClock(const CycleClock&) = delete;
+  CycleClock& operator=(const CycleClock&) = delete;
 
   friend class CycleClockSource;
 };
 
 class CycleClockSource {
-private:
+ private:
   // CycleClockSource::Register()
   //
   // Register a function that provides an alternate source for the unscaled CPU
@@ -111,7 +111,7 @@ inline CycleClockSourceFunc CycleClock::LoadCycleClockSource() {
   if (cycle_clock_source_.load(std::memory_order_relaxed) == nullptr) {
     return nullptr;
   }
-#endif // !defined(__x86_64__)
+#endif  // !defined(__x86_64__)
 
   // This corresponds to the store(std::memory_order_release) in
   // CycleClockSource::Register, and makes sure that any updates made prior to
@@ -135,10 +135,10 @@ inline double CycleClock::Frequency() {
   return kFrequencyScale * base_internal::UnscaledCycleClock::Frequency();
 }
 
-#endif // ABSL_USE_UNSCALED_CYCLECLOCK
+#endif  // ABSL_USE_UNSCALED_CYCLECLOCK
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_CYCLECLOCK_H_
+#endif  // ABSL_BASE_INTERNAL_CYCLECLOCK_H_

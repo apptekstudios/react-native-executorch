@@ -23,8 +23,12 @@ Pod::Spec.new do |s|
       '"$(PODS_TARGET_SRCROOT)/third-party/include/cpuinfo" '+
       '"$(PODS_TARGET_SRCROOT)/third-party/include/pthreadpool"',
 
+    # opencv2 is a static xcframework. CocoaPods auto-adds `-framework` for
+    # dynamic vendored xcframeworks but not static ones, so we list it
+    # explicitly here. Same -F search path (third-party/ios) covers all SDKs.
     "OTHER_LDFLAGS[sdk=iphoneos*]" => [
       '$(inherited)',
+      '-framework opencv2',
       "\"#{pthreadpool_binaries_path}/physical-arm64-release/libpthreadpool.a\"",
       "\"#{cpuinfo_binaries_path}/libcpuinfo.a\"",
 
@@ -32,11 +36,20 @@ Pod::Spec.new do |s|
 
     "OTHER_LDFLAGS[sdk=iphonesimulator*]" => [
       '$(inherited)',
+      '-framework opencv2',
       "\"#{pthreadpool_binaries_path}/simulator-arm64-debug/libpthreadpool.a\"",
       "\"#{cpuinfo_binaries_path}/libcpuinfo.a\"",
     ].join(' '),
 
+    "OTHER_LDFLAGS[sdk=macosx*]" => [
+      '$(inherited)',
+      '-framework opencv2',
+      "\"#{pthreadpool_binaries_path}/maccatalyst-arm64-release/libpthreadpool.a\"",
+      "\"#{cpuinfo_binaries_path}/libcpuinfo.a\"",
+    ].join(' '),
+
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64',
+    'EXCLUDED_ARCHS[sdk=macosx*]' => 'x86_64',
   }
 
   s.pod_target_xcconfig = {
@@ -49,9 +62,17 @@ Pod::Spec.new do |s|
       '"$(PODS_TARGET_SRCROOT)/third-party/include/pthreadpool" '+
       '"$(PODS_TARGET_SRCROOT)/common" ' +
       '"$(PODS_TARGET_SRCROOT)/third-party/common/phonemis/src" ',
-    "GCC_PREPROCESSOR_DEFINITIONS" => '$(inherited) ET_ON=1',
+    # C10_USING_CUSTOM_GENERATED_MACROS tells executorch's vendored portable_type/c10
+    # headers (torch/headeronly/macros/Macros.h, Export.h) not to pull in a
+    # cmake_macros.h that we don't ship. Without it the include chain hits
+    # 'torch/headeronly/macros/cmake_macros.h file not found' the first time
+    # anything dragging in <executorch/extension/module/module.h> is compiled.
+    # Matches the build flag upstream sets in scripts/build_apple_frameworks.sh
+    # for the prebuilt xcframework.
+    "GCC_PREPROCESSOR_DEFINITIONS" => '$(inherited) ET_ON=1 C10_USING_CUSTOM_GENERATED_MACROS=1',
     "CLANG_CXX_LANGUAGE_STANDARD" => "c++20",
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64',
+    'EXCLUDED_ARCHS[sdk=macosx*]' => 'x86_64',
   }
 
   s.source_files = [
@@ -61,7 +82,10 @@ Pod::Spec.new do |s|
   ]
 
   s.libraries = "z"
-  s.ios.vendored_frameworks = "third-party/ios/ExecutorchLib.xcframework"
+  s.ios.vendored_frameworks = [
+    "third-party/ios/ExecutorchLib.xcframework",
+    "third-party/ios/opencv2.xcframework",
+  ]
   # Exclude file with tests to not introduce gtest dependency.
   # Do not include the headers from common/rnexecutorch/jsi/ as source files.
   # Xcode/Cocoapods leaks them to other pods that an app also depends on, so if
@@ -69,16 +93,25 @@ Pod::Spec.new do |s|
   # #include "Header.h" we get a conflict. Here, headers in jsi/ collide with
   # react-native-skia. The headers are preserved by preserve_paths and
   # then made available by HEADER_SEARCH_PATHS.
+  #
+  # Same treatment for phonemis headers: phonemis/utils/strings.h collides
+  # with the POSIX <strings.h> via CocoaPods' header map, which triggers under
+  # Mac Catalyst (Foundation -> CoreServices -> CarbonCore -> MacMemory.h
+  # `#include <strings.h>` resolves to phonemis's strings.h instead of POSIX).
+  # phonemis .cpp files still find their own headers via the -I search path
+  # below in pod_target_xcconfig.
   s.exclude_files = [
     "common/rnexecutorch/tests/**/*",
     "common/rnexecutorch/jsi/*.{h,hpp}",
-    "third-party/common/phonemis/src/phonemis/main.cpp" # Exclude the phonemis runner
+    "third-party/common/phonemis/src/phonemis/main.cpp", # Exclude the phonemis runner
+    "third-party/common/phonemis/src/**/*.{h,hpp}",
   ]
   s.header_mappings_dir = "common/rnexecutorch"
   s.header_dir = "rnexecutorch"
-  s.preserve_paths = "common/rnexecutorch/jsi/*.{h,hpp}"
-
-  s.dependency "opencv-rne", "~> 4.11.0"
+  s.preserve_paths = [
+    "common/rnexecutorch/jsi/*.{h,hpp}",
+    "third-party/common/phonemis/src/**/*.{h,hpp}",
+  ]
 
   install_modules_dependencies(s)
 end

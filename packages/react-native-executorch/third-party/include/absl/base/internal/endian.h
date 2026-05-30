@@ -87,9 +87,10 @@ inline uint32_t ghtonl(uint32_t x) { return x; }
 inline uint64_t ghtonll(uint64_t x) { return x; }
 
 #else
-#error "Unsupported byte order: Either ABSL_IS_BIG_ENDIAN or " \
+#error \
+    "Unsupported byte order: Either ABSL_IS_BIG_ENDIAN or " \
        "ABSL_IS_LITTLE_ENDIAN must be defined"
-#endif // byte order
+#endif  // byte order
 
 inline uint16_t gntohs(uint16_t x) { return ghtons(x); }
 inline uint32_t gntohl(uint32_t x) { return ghtonl(x); }
@@ -184,7 +185,7 @@ inline void Store64(absl::Nonnull<void *> p, uint64_t v) {
   ABSL_INTERNAL_UNALIGNED_STORE64(p, FromHost64(v));
 }
 
-} // namespace little_endian
+}  // namespace little_endian
 
 // Utilities to convert numbers between the current hosts's native byte
 // order and big-endian byte order (same as network byte order)
@@ -262,7 +263,7 @@ inline uint32_t Load32(absl::Nonnull<const void *> p) {
   return ToHost32(ABSL_INTERNAL_UNALIGNED_LOAD32(p));
 }
 
-inline void Store32(absl::Nonnull<void *> p, uint32_t v) {
+inline void Store32(absl::Nonnull<void *>p, uint32_t v) {
   ABSL_INTERNAL_UNALIGNED_STORE32(p, FromHost32(v));
 }
 
@@ -274,9 +275,9 @@ inline void Store64(absl::Nonnull<void *> p, uint64_t v) {
   ABSL_INTERNAL_UNALIGNED_STORE64(p, FromHost64(v));
 }
 
-} // namespace big_endian
+}  // namespace big_endian
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_ENDIAN_H_
+#endif  // ABSL_BASE_INTERNAL_ENDIAN_H_

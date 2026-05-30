@@ -43,18 +43,22 @@
 namespace absl {
 ABSL_NAMESPACE_BEGIN
 
-template <class... Types> class variant;
+template <class... Types>
+class variant;
 
 ABSL_INTERNAL_INLINE_CONSTEXPR(size_t, variant_npos, static_cast<size_t>(-1));
 
-template <class T> struct variant_size;
+template <class T>
+struct variant_size;
 
-template <std::size_t I, class T> struct variant_alternative;
+template <std::size_t I, class T>
+struct variant_alternative;
 
 namespace variant_internal {
 
 // NOTE: See specializations below for details.
-template <std::size_t I, class T> struct VariantAlternativeSfinae {};
+template <std::size_t I, class T>
+struct VariantAlternativeSfinae {};
 
 // Requires: I < variant_size_v<T>.
 //
@@ -73,110 +77,128 @@ template <std::size_t I, class T>
 using VariantAlternativeSfinaeT = typename VariantAlternativeSfinae<I, T>::type;
 
 // NOTE: Requires T to be a reference type.
-template <class T, class U> struct GiveQualsTo;
+template <class T, class U>
+struct GiveQualsTo;
 
-template <class T, class U> struct GiveQualsTo<T &, U> {
-  using type = U &;
+template <class T, class U>
+struct GiveQualsTo<T&, U> {
+  using type = U&;
 };
 
-template <class T, class U> struct GiveQualsTo<T &&, U> {
-  using type = U &&;
+template <class T, class U>
+struct GiveQualsTo<T&&, U> {
+  using type = U&&;
 };
 
-template <class T, class U> struct GiveQualsTo<const T &, U> {
-  using type = const U &;
+template <class T, class U>
+struct GiveQualsTo<const T&, U> {
+  using type = const U&;
 };
 
-template <class T, class U> struct GiveQualsTo<const T &&, U> {
-  using type = const U &&;
+template <class T, class U>
+struct GiveQualsTo<const T&&, U> {
+  using type = const U&&;
 };
 
-template <class T, class U> struct GiveQualsTo<volatile T &, U> {
-  using type = volatile U &;
+template <class T, class U>
+struct GiveQualsTo<volatile T&, U> {
+  using type = volatile U&;
 };
 
-template <class T, class U> struct GiveQualsTo<volatile T &&, U> {
-  using type = volatile U &&;
+template <class T, class U>
+struct GiveQualsTo<volatile T&&, U> {
+  using type = volatile U&&;
 };
 
-template <class T, class U> struct GiveQualsTo<volatile const T &, U> {
-  using type = volatile const U &;
+template <class T, class U>
+struct GiveQualsTo<volatile const T&, U> {
+  using type = volatile const U&;
 };
 
-template <class T, class U> struct GiveQualsTo<volatile const T &&, U> {
-  using type = volatile const U &&;
+template <class T, class U>
+struct GiveQualsTo<volatile const T&&, U> {
+  using type = volatile const U&&;
 };
 
 template <class T, class U>
 using GiveQualsToT = typename GiveQualsTo<T, U>::type;
 
 // Convenience alias, since size_t integral_constant is used a lot in this file.
-template <std::size_t I> using SizeT = std::integral_constant<std::size_t, I>;
+template <std::size_t I>
+using SizeT = std::integral_constant<std::size_t, I>;
 
 using NPos = SizeT<variant_npos>;
 
 template <class Variant, class T, class = void>
 struct IndexOfConstructedType {};
 
-template <std::size_t I, class Variant> struct VariantAccessResultImpl;
+template <std::size_t I, class Variant>
+struct VariantAccessResultImpl;
 
 template <std::size_t I, template <class...> class Variantemplate, class... T>
-struct VariantAccessResultImpl<I, Variantemplate<T...> &> {
-  using type = typename absl::variant_alternative<I, variant<T...>>::type &;
+struct VariantAccessResultImpl<I, Variantemplate<T...>&> {
+  using type = typename absl::variant_alternative<I, variant<T...>>::type&;
 };
 
 template <std::size_t I, template <class...> class Variantemplate, class... T>
-struct VariantAccessResultImpl<I, const Variantemplate<T...> &> {
+struct VariantAccessResultImpl<I, const Variantemplate<T...>&> {
   using type =
-      const typename absl::variant_alternative<I, variant<T...>>::type &;
+      const typename absl::variant_alternative<I, variant<T...>>::type&;
 };
 
 template <std::size_t I, template <class...> class Variantemplate, class... T>
-struct VariantAccessResultImpl<I, Variantemplate<T...> &&> {
-  using type = typename absl::variant_alternative<I, variant<T...>>::type &&;
+struct VariantAccessResultImpl<I, Variantemplate<T...>&&> {
+  using type = typename absl::variant_alternative<I, variant<T...>>::type&&;
 };
 
 template <std::size_t I, template <class...> class Variantemplate, class... T>
-struct VariantAccessResultImpl<I, const Variantemplate<T...> &&> {
+struct VariantAccessResultImpl<I, const Variantemplate<T...>&&> {
   using type =
-      const typename absl::variant_alternative<I, variant<T...>>::type &&;
+      const typename absl::variant_alternative<I, variant<T...>>::type&&;
 };
 
 template <std::size_t I, class Variant>
 using VariantAccessResult =
-    typename VariantAccessResultImpl<I, Variant &&>::type;
+    typename VariantAccessResultImpl<I, Variant&&>::type;
 
 // NOTE: This is used instead of std::array to reduce instantiation overhead.
-template <class T, std::size_t Size> struct SimpleArray {
+template <class T, std::size_t Size>
+struct SimpleArray {
   static_assert(Size != 0, "");
   T value[Size];
 };
 
-template <class T> struct AccessedType {
+template <class T>
+struct AccessedType {
   using type = T;
 };
 
-template <class T> using AccessedTypeT = typename AccessedType<T>::type;
+template <class T>
+using AccessedTypeT = typename AccessedType<T>::type;
 
-template <class T, std::size_t Size> struct AccessedType<SimpleArray<T, Size>> {
+template <class T, std::size_t Size>
+struct AccessedType<SimpleArray<T, Size>> {
   using type = AccessedTypeT<T>;
 };
 
-template <class T> constexpr T AccessSimpleArray(const T &value) {
+template <class T>
+constexpr T AccessSimpleArray(const T& value) {
   return value;
 }
 
 template <class T, std::size_t Size, class... SizeT>
-constexpr AccessedTypeT<T> AccessSimpleArray(const SimpleArray<T, Size> &table,
+constexpr AccessedTypeT<T> AccessSimpleArray(const SimpleArray<T, Size>& table,
                                              std::size_t head_index,
                                              SizeT... tail_indices) {
   return AccessSimpleArray(table.value[head_index], tail_indices...);
 }
 
 // Note: Intentionally is an alias.
-template <class T> using AlwaysZero = SizeT<0>;
+template <class T>
+using AlwaysZero = SizeT<0>;
 
-template <class Op, class... Vs> struct VisitIndicesResultImpl {
+template <class Op, class... Vs>
+struct VisitIndicesResultImpl {
   using type = absl::result_of_t<Op(AlwaysZero<Vs>...)>;
 };
 
@@ -188,7 +210,7 @@ template <class ReturnType, class FunctionObject, class EndIndices,
 struct MakeVisitationMatrix;
 
 template <class ReturnType, class FunctionObject, std::size_t... Indices>
-constexpr ReturnType call_with_indices(FunctionObject &&function) {
+constexpr ReturnType call_with_indices(FunctionObject&& function) {
   static_assert(
       std::is_same<ReturnType, decltype(std::declval<FunctionObject>()(
                                    SizeT<Indices>()...))>::value,
@@ -199,14 +221,15 @@ constexpr ReturnType call_with_indices(FunctionObject &&function) {
 template <class ReturnType, class FunctionObject, std::size_t... BoundIndices>
 struct MakeVisitationMatrix<ReturnType, FunctionObject, index_sequence<>,
                             index_sequence<BoundIndices...>> {
-  using ResultType = ReturnType (*)(FunctionObject &&);
+  using ResultType = ReturnType (*)(FunctionObject&&);
   static constexpr ResultType Run() {
     return &call_with_indices<ReturnType, FunctionObject,
                               (BoundIndices - 1)...>;
   }
 };
 
-template <typename Is, std::size_t J> struct AppendToIndexSequence;
+template <typename Is, std::size_t J>
+struct AppendToIndexSequence;
 
 template <typename Is, std::size_t J>
 using AppendToIndexSequenceT = typename AppendToIndexSequence<Is, J>::type;
@@ -248,14 +271,15 @@ struct MakeVisitationMatrix<ReturnType, FunctionObject,
 
 struct UnreachableSwitchCase {
   template <class Op>
-  [[noreturn]] static VisitIndicesResultT<Op, std::size_t>
-  Run(Op && /*ignored*/) {
+  [[noreturn]] static VisitIndicesResultT<Op, std::size_t> Run(
+      Op&& /*ignored*/) {
     ABSL_UNREACHABLE();
   }
 };
 
-template <class Op, std::size_t I> struct ReachableSwitchCase {
-  static VisitIndicesResultT<Op, std::size_t> Run(Op &&op) {
+template <class Op, std::size_t I>
+struct ReachableSwitchCase {
+  static VisitIndicesResultT<Op, std::size_t> Run(Op&& op) {
     return absl::base_internal::invoke(std::forward<Op>(op), SizeT<I>());
   }
 };
@@ -268,12 +292,16 @@ template <class Op, std::size_t I> struct ReachableSwitchCase {
 ABSL_INTERNAL_INLINE_CONSTEXPR(std::size_t, MaxUnrolledVisitCases, 33);
 
 // Note: The default-definition is for unreachable cases.
-template <bool IsReachable> struct PickCaseImpl {
-  template <class Op, std::size_t I> using Apply = UnreachableSwitchCase;
+template <bool IsReachable>
+struct PickCaseImpl {
+  template <class Op, std::size_t I>
+  using Apply = UnreachableSwitchCase;
 };
 
-template <> struct PickCaseImpl</*IsReachable =*/true> {
-  template <class Op, std::size_t I> using Apply = ReachableSwitchCase<Op, I>;
+template <>
+struct PickCaseImpl</*IsReachable =*/true> {
+  template <class Op, std::size_t I>
+  using Apply = ReachableSwitchCase<Op, I>;
 };
 
 // Note: This form of dance with template aliases is to make sure that we
@@ -292,7 +320,8 @@ template <class ReturnType>
 // Given N variant sizes, determine the number of cases there would need to be
 // in a single switch-statement that would cover every possibility in the
 // corresponding N-ary visit operation.
-template <std::size_t... NumAlternatives> struct NumCasesOfSwitch;
+template <std::size_t... NumAlternatives>
+struct NumCasesOfSwitch;
 
 template <std::size_t HeadNumAlternatives, std::size_t... TailNumAlternatives>
 struct NumCasesOfSwitch<HeadNumAlternatives, TailNumAlternatives...> {
@@ -301,94 +330,97 @@ struct NumCasesOfSwitch<HeadNumAlternatives, TailNumAlternatives...> {
       NumCasesOfSwitch<TailNumAlternatives...>::value;
 };
 
-template <> struct NumCasesOfSwitch<> {
+template <>
+struct NumCasesOfSwitch<> {
   static constexpr std::size_t value = 1;
 };
 
 // A switch statement optimizes better than the table of function pointers.
-template <std::size_t EndIndex> struct VisitIndicesSwitch {
+template <std::size_t EndIndex>
+struct VisitIndicesSwitch {
   static_assert(EndIndex <= MaxUnrolledVisitCases,
                 "Maximum unrolled switch size exceeded.");
 
   template <class Op>
-  static VisitIndicesResultT<Op, std::size_t> Run(Op &&op, std::size_t i) {
+  static VisitIndicesResultT<Op, std::size_t> Run(Op&& op, std::size_t i) {
     switch (i) {
-    case 0:
-      return PickCase<Op, 0, EndIndex>::Run(std::forward<Op>(op));
-    case 1:
-      return PickCase<Op, 1, EndIndex>::Run(std::forward<Op>(op));
-    case 2:
-      return PickCase<Op, 2, EndIndex>::Run(std::forward<Op>(op));
-    case 3:
-      return PickCase<Op, 3, EndIndex>::Run(std::forward<Op>(op));
-    case 4:
-      return PickCase<Op, 4, EndIndex>::Run(std::forward<Op>(op));
-    case 5:
-      return PickCase<Op, 5, EndIndex>::Run(std::forward<Op>(op));
-    case 6:
-      return PickCase<Op, 6, EndIndex>::Run(std::forward<Op>(op));
-    case 7:
-      return PickCase<Op, 7, EndIndex>::Run(std::forward<Op>(op));
-    case 8:
-      return PickCase<Op, 8, EndIndex>::Run(std::forward<Op>(op));
-    case 9:
-      return PickCase<Op, 9, EndIndex>::Run(std::forward<Op>(op));
-    case 10:
-      return PickCase<Op, 10, EndIndex>::Run(std::forward<Op>(op));
-    case 11:
-      return PickCase<Op, 11, EndIndex>::Run(std::forward<Op>(op));
-    case 12:
-      return PickCase<Op, 12, EndIndex>::Run(std::forward<Op>(op));
-    case 13:
-      return PickCase<Op, 13, EndIndex>::Run(std::forward<Op>(op));
-    case 14:
-      return PickCase<Op, 14, EndIndex>::Run(std::forward<Op>(op));
-    case 15:
-      return PickCase<Op, 15, EndIndex>::Run(std::forward<Op>(op));
-    case 16:
-      return PickCase<Op, 16, EndIndex>::Run(std::forward<Op>(op));
-    case 17:
-      return PickCase<Op, 17, EndIndex>::Run(std::forward<Op>(op));
-    case 18:
-      return PickCase<Op, 18, EndIndex>::Run(std::forward<Op>(op));
-    case 19:
-      return PickCase<Op, 19, EndIndex>::Run(std::forward<Op>(op));
-    case 20:
-      return PickCase<Op, 20, EndIndex>::Run(std::forward<Op>(op));
-    case 21:
-      return PickCase<Op, 21, EndIndex>::Run(std::forward<Op>(op));
-    case 22:
-      return PickCase<Op, 22, EndIndex>::Run(std::forward<Op>(op));
-    case 23:
-      return PickCase<Op, 23, EndIndex>::Run(std::forward<Op>(op));
-    case 24:
-      return PickCase<Op, 24, EndIndex>::Run(std::forward<Op>(op));
-    case 25:
-      return PickCase<Op, 25, EndIndex>::Run(std::forward<Op>(op));
-    case 26:
-      return PickCase<Op, 26, EndIndex>::Run(std::forward<Op>(op));
-    case 27:
-      return PickCase<Op, 27, EndIndex>::Run(std::forward<Op>(op));
-    case 28:
-      return PickCase<Op, 28, EndIndex>::Run(std::forward<Op>(op));
-    case 29:
-      return PickCase<Op, 29, EndIndex>::Run(std::forward<Op>(op));
-    case 30:
-      return PickCase<Op, 30, EndIndex>::Run(std::forward<Op>(op));
-    case 31:
-      return PickCase<Op, 31, EndIndex>::Run(std::forward<Op>(op));
-    case 32:
-      return PickCase<Op, 32, EndIndex>::Run(std::forward<Op>(op));
-    default:
-      ABSL_ASSERT(i == variant_npos);
-      return absl::base_internal::invoke(std::forward<Op>(op), NPos());
+      case 0:
+        return PickCase<Op, 0, EndIndex>::Run(std::forward<Op>(op));
+      case 1:
+        return PickCase<Op, 1, EndIndex>::Run(std::forward<Op>(op));
+      case 2:
+        return PickCase<Op, 2, EndIndex>::Run(std::forward<Op>(op));
+      case 3:
+        return PickCase<Op, 3, EndIndex>::Run(std::forward<Op>(op));
+      case 4:
+        return PickCase<Op, 4, EndIndex>::Run(std::forward<Op>(op));
+      case 5:
+        return PickCase<Op, 5, EndIndex>::Run(std::forward<Op>(op));
+      case 6:
+        return PickCase<Op, 6, EndIndex>::Run(std::forward<Op>(op));
+      case 7:
+        return PickCase<Op, 7, EndIndex>::Run(std::forward<Op>(op));
+      case 8:
+        return PickCase<Op, 8, EndIndex>::Run(std::forward<Op>(op));
+      case 9:
+        return PickCase<Op, 9, EndIndex>::Run(std::forward<Op>(op));
+      case 10:
+        return PickCase<Op, 10, EndIndex>::Run(std::forward<Op>(op));
+      case 11:
+        return PickCase<Op, 11, EndIndex>::Run(std::forward<Op>(op));
+      case 12:
+        return PickCase<Op, 12, EndIndex>::Run(std::forward<Op>(op));
+      case 13:
+        return PickCase<Op, 13, EndIndex>::Run(std::forward<Op>(op));
+      case 14:
+        return PickCase<Op, 14, EndIndex>::Run(std::forward<Op>(op));
+      case 15:
+        return PickCase<Op, 15, EndIndex>::Run(std::forward<Op>(op));
+      case 16:
+        return PickCase<Op, 16, EndIndex>::Run(std::forward<Op>(op));
+      case 17:
+        return PickCase<Op, 17, EndIndex>::Run(std::forward<Op>(op));
+      case 18:
+        return PickCase<Op, 18, EndIndex>::Run(std::forward<Op>(op));
+      case 19:
+        return PickCase<Op, 19, EndIndex>::Run(std::forward<Op>(op));
+      case 20:
+        return PickCase<Op, 20, EndIndex>::Run(std::forward<Op>(op));
+      case 21:
+        return PickCase<Op, 21, EndIndex>::Run(std::forward<Op>(op));
+      case 22:
+        return PickCase<Op, 22, EndIndex>::Run(std::forward<Op>(op));
+      case 23:
+        return PickCase<Op, 23, EndIndex>::Run(std::forward<Op>(op));
+      case 24:
+        return PickCase<Op, 24, EndIndex>::Run(std::forward<Op>(op));
+      case 25:
+        return PickCase<Op, 25, EndIndex>::Run(std::forward<Op>(op));
+      case 26:
+        return PickCase<Op, 26, EndIndex>::Run(std::forward<Op>(op));
+      case 27:
+        return PickCase<Op, 27, EndIndex>::Run(std::forward<Op>(op));
+      case 28:
+        return PickCase<Op, 28, EndIndex>::Run(std::forward<Op>(op));
+      case 29:
+        return PickCase<Op, 29, EndIndex>::Run(std::forward<Op>(op));
+      case 30:
+        return PickCase<Op, 30, EndIndex>::Run(std::forward<Op>(op));
+      case 31:
+        return PickCase<Op, 31, EndIndex>::Run(std::forward<Op>(op));
+      case 32:
+        return PickCase<Op, 32, EndIndex>::Run(std::forward<Op>(op));
+      default:
+        ABSL_ASSERT(i == variant_npos);
+        return absl::base_internal::invoke(std::forward<Op>(op), NPos());
     }
   }
 };
 
-template <std::size_t... EndIndices> struct VisitIndicesFallback {
+template <std::size_t... EndIndices>
+struct VisitIndicesFallback {
   template <class Op, class... SizeT>
-  static VisitIndicesResultT<Op, SizeT...> Run(Op &&op, SizeT... indices) {
+  static VisitIndicesResultT<Op, SizeT...> Run(Op&& op, SizeT... indices) {
     return AccessSimpleArray(
         MakeVisitationMatrix<VisitIndicesResultT<Op, SizeT...>, Op,
                              index_sequence<(EndIndices + 1)...>,
@@ -400,7 +432,8 @@ template <std::size_t... EndIndices> struct VisitIndicesFallback {
 // Take an N-dimensional series of indices and convert them into a single index
 // without loss of information. The purpose of this is to be able to convert an
 // N-ary visit operation into a single switch statement.
-template <std::size_t...> struct FlattenIndices;
+template <std::size_t...>
+struct FlattenIndices;
 
 template <std::size_t HeadSize, std::size_t... TailSize>
 struct FlattenIndices<HeadSize, TailSize...> {
@@ -410,7 +443,8 @@ struct FlattenIndices<HeadSize, TailSize...> {
   }
 };
 
-template <> struct FlattenIndices<> {
+template <>
+struct FlattenIndices<> {
   static constexpr std::size_t Run() { return 0; }
 };
 
@@ -437,21 +471,22 @@ struct VisitIndicesVariadicImpl<absl::index_sequence<N...>, EndIndices...> {
   // A type that can take an N-ary function object and converts it to a unary
   // function object that takes a single, flattened index, and "unflattens" it
   // into its individual dimensions when forwarding to the wrapped object.
-  template <class Op> struct FlattenedOp {
+  template <class Op>
+  struct FlattenedOp {
     template <std::size_t I>
-    VisitIndicesResultT<Op, decltype(EndIndices)...>
-    operator()(SizeT<I> /*index*/) && {
+    VisitIndicesResultT<Op, decltype(EndIndices)...> operator()(
+        SizeT<I> /*index*/) && {
       return base_internal::invoke(
           std::forward<Op>(op),
           SizeT<UnflattenIndex<I, N, (EndIndices + 1)...>::value -
                 std::size_t{1}>()...);
     }
 
-    Op &&op;
+    Op&& op;
   };
 
   template <class Op, class... SizeType>
-  static VisitIndicesResultT<Op, decltype(EndIndices)...> Run(Op &&op,
+  static VisitIndicesResultT<Op, decltype(EndIndices)...> Run(Op&& op,
                                                               SizeType... i) {
     return VisitIndicesSwitch<NumCasesOfSwitch<EndIndices...>::value>::Run(
         FlattenedOp<Op>{std::forward<Op>(op)},
@@ -491,22 +526,23 @@ struct VisitIndices<EndIndex>
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4172)
-#endif // _MSC_VER
+#endif  // _MSC_VER
 
 // TODO(calabrese) std::launder
 // TODO(calabrese) constexpr
 // NOTE: DO NOT REMOVE the `inline` keyword as it is necessary to work around a
 // MSVC bug. See https://github.com/abseil/abseil-cpp/issues/129 for details.
 template <class Self, std::size_t I>
-inline VariantAccessResult<I, Self> AccessUnion(Self &&self, SizeT<I> /*i*/) {
+inline VariantAccessResult<I, Self> AccessUnion(Self&& self, SizeT<I> /*i*/) {
   return reinterpret_cast<VariantAccessResult<I, Self>>(self);
 }
 
 #ifdef _MSC_VER
 #pragma warning(pop)
-#endif // _MSC_VER
+#endif  // _MSC_VER
 
-template <class T> void DeducedDestroy(T &self) { // NOLINT
+template <class T>
+void DeducedDestroy(T& self) {  // NOLINT
   self.~T();
 }
 
@@ -516,39 +552,39 @@ template <class T> void DeducedDestroy(T &self) { // NOLINT
 // operations.
 struct VariantCoreAccess {
   template <class VariantType>
-  static typename VariantType::Variant &Derived(VariantType &self) { // NOLINT
-    return static_cast<typename VariantType::Variant &>(self);
+  static typename VariantType::Variant& Derived(VariantType& self) {  // NOLINT
+    return static_cast<typename VariantType::Variant&>(self);
   }
 
   template <class VariantType>
-  static const typename VariantType::Variant &
-  Derived(const VariantType &self) { // NOLINT
-    return static_cast<const typename VariantType::Variant &>(self);
+  static const typename VariantType::Variant& Derived(
+      const VariantType& self) {  // NOLINT
+    return static_cast<const typename VariantType::Variant&>(self);
   }
 
   template <class VariantType>
-  static void Destroy(VariantType &self) { // NOLINT
+  static void Destroy(VariantType& self) {  // NOLINT
     Derived(self).destroy();
     self.index_ = absl::variant_npos;
   }
 
   template <class Variant>
-  static void SetIndex(Variant &self, std::size_t i) { // NOLINT
+  static void SetIndex(Variant& self, std::size_t i) {  // NOLINT
     self.index_ = i;
   }
 
   template <class Variant>
-  static void InitFrom(Variant &self, Variant &&other) { // NOLINT
+  static void InitFrom(Variant& self, Variant&& other) {  // NOLINT
     VisitIndices<absl::variant_size<Variant>::value>::Run(
-        InitFromVisitor<Variant, Variant &&>{&self,
-                                             std::forward<Variant>(other)},
+        InitFromVisitor<Variant, Variant&&>{&self,
+                                            std::forward<Variant>(other)},
         other.index());
     self.index_ = other.index();
   }
 
   // Access a variant alternative, assuming the index is correct.
   template <std::size_t I, class Variant>
-  static VariantAccessResult<I, Variant> Access(Variant &&self) {
+  static VariantAccessResult<I, Variant> Access(Variant&& self) {
     // This cast instead of invocation of AccessUnion with an rvalue is a
     // workaround for msvc. Without this there is a runtime failure when dealing
     // with rvalues.
@@ -559,7 +595,7 @@ struct VariantCoreAccess {
 
   // Access a variant alternative, throwing if the index is incorrect.
   template <std::size_t I, class Variant>
-  static VariantAccessResult<I, Variant> CheckedAccess(Variant &&self) {
+  static VariantAccessResult<I, Variant> CheckedAccess(Variant&& self) {
     if (ABSL_PREDICT_FALSE(self.index_ != I)) {
       TypedThrowBadVariantAccess<VariantAccessResult<I, Variant>>();
     }
@@ -568,7 +604,8 @@ struct VariantCoreAccess {
   }
 
   // The implementation of the move-assignment operation for a variant.
-  template <class VType> struct MoveAssignVisitor {
+  template <class VType>
+  struct MoveAssignVisitor {
     using DerivedType = typename VType::Variant;
     template <std::size_t NewIndex>
     void operator()(SizeT<NewIndex> /*new_i*/) const {
@@ -584,18 +621,19 @@ struct VariantCoreAccess {
       Destroy(*left);
     }
 
-    VType *left;
-    VType *right;
+    VType* left;
+    VType* right;
   };
 
   template <class VType>
-  static MoveAssignVisitor<VType> MakeMoveAssignVisitor(VType *left,
-                                                        VType *other) {
+  static MoveAssignVisitor<VType> MakeMoveAssignVisitor(VType* left,
+                                                        VType* other) {
     return {left, other};
   }
 
   // The implementation of the assignment operation for a variant.
-  template <class VType> struct CopyAssignVisitor {
+  template <class VType>
+  struct CopyAssignVisitor {
     using DerivedType = typename VType::Variant;
     template <std::size_t NewIndex>
     void operator()(SizeT<NewIndex> /*new_i*/) const {
@@ -616,18 +654,19 @@ struct VariantCoreAccess {
       Destroy(*left);
     }
 
-    VType *left;
-    const VType *right;
+    VType* left;
+    const VType* right;
   };
 
   template <class VType>
-  static CopyAssignVisitor<VType> MakeCopyAssignVisitor(VType *left,
-                                                        const VType &other) {
+  static CopyAssignVisitor<VType> MakeCopyAssignVisitor(VType* left,
+                                                        const VType& other) {
     return {left, &other};
   }
 
   // The implementation of conversion-assignment operations for variant.
-  template <class Left, class QualifiedNew> struct ConversionAssignVisitor {
+  template <class Left, class QualifiedNew>
+  struct ConversionAssignVisitor {
     using NewIndex =
         variant_internal::IndexOfConstructedType<Left, QualifiedNew>;
 
@@ -654,24 +693,24 @@ struct VariantCoreAccess {
       }
     }
 
-    Left *left;
-    QualifiedNew &&other;
+    Left* left;
+    QualifiedNew&& other;
   };
 
   template <class Left, class QualifiedNew>
   static ConversionAssignVisitor<Left, QualifiedNew>
-  MakeConversionAssignVisitor(Left *left, QualifiedNew &&qual) {
+  MakeConversionAssignVisitor(Left* left, QualifiedNew&& qual) {
     return {left, std::forward<QualifiedNew>(qual)};
   }
 
   // Backend for operations for `emplace()` which destructs `*self` then
   // construct a new alternative with `Args...`.
   template <std::size_t NewIndex, class Self, class... Args>
-  static typename absl::variant_alternative<NewIndex, Self>::type &
-  Replace(Self *self, Args &&...args) {
+  static typename absl::variant_alternative<NewIndex, Self>::type& Replace(
+      Self* self, Args&&... args) {
     Destroy(*self);
     using New = typename absl::variant_alternative<NewIndex, Self>::type;
-    New *const result = ::new (static_cast<void *>(&self->state_))
+    New* const result = ::new (static_cast<void*>(&self->state_))
         New(std::forward<Args>(args)...);
     self->index_ = NewIndex;
     return *result;
@@ -683,21 +722,23 @@ struct VariantCoreAccess {
     void operator()(SizeT<NewIndex> /*new_i*/) const {
       using Alternative =
           typename variant_alternative<NewIndex, LeftVariant>::type;
-      ::new (static_cast<void *>(&left->state_)) Alternative(
+      ::new (static_cast<void*>(&left->state_)) Alternative(
           Access<NewIndex>(std::forward<QualifiedRightVariant>(right)));
     }
 
     void operator()(SizeT<absl::variant_npos> /*new_i*/) const {
       // This space intentionally left blank.
     }
-    LeftVariant *left;
-    QualifiedRightVariant &&right;
+    LeftVariant* left;
+    QualifiedRightVariant&& right;
   };
 };
 
-template <class Expected, class... T> struct IndexOfImpl;
+template <class Expected, class... T>
+struct IndexOfImpl;
 
-template <class Expected> struct IndexOfImpl<Expected> {
+template <class Expected>
+struct IndexOfImpl<Expected> {
   using IndexFromEnd = SizeT<0>;
   using MatchedIndexFromEnd = IndexFromEnd;
   using MultipleMatches = std::false_type;
@@ -719,7 +760,8 @@ struct IndexOfImpl<Expected, Expected, Tail...>
       bool, IndexOfImpl<Expected, Tail...>::MatchedIndexFromEnd::value != 0>;
 };
 
-template <class Expected, class... Types> struct IndexOfMeta {
+template <class Expected, class... Types>
+struct IndexOfMeta {
   using Results = IndexOfImpl<Expected, Types...>;
   static_assert(!Results::MultipleMatches::value,
                 "Attempted to access a variant by specifying a type that "
@@ -753,7 +795,8 @@ struct UnambiguousIndexOfImpl<variant<Head, Tail...>, Head, CurrIndex>
                 ? CurrIndex
                 : CurrIndex + sizeof...(Tail) + 1> {};
 
-template <class Variant, class T> struct UnambiguousIndexOf;
+template <class Variant, class T>
+struct UnambiguousIndexOf;
 
 struct NoMatch {
   struct type {};
@@ -766,21 +809,25 @@ struct UnambiguousIndexOf<variant<Alts...>, T>
                        UnambiguousIndexOfImpl<variant<Alts...>, T, 0>,
                        NoMatch>::type::type {};
 
-template <class T, std::size_t /*Dummy*/> using UnambiguousTypeOfImpl = T;
+template <class T, std::size_t /*Dummy*/>
+using UnambiguousTypeOfImpl = T;
 
 template <class Variant, class T>
 using UnambiguousTypeOfT =
     UnambiguousTypeOfImpl<T, UnambiguousIndexOf<Variant, T>::value>;
 
-template <class H, class... T> class VariantStateBase;
+template <class H, class... T>
+class VariantStateBase;
 
 // This is an implementation of the "imaginary function" that is described in
 // [variant.ctor]
 // It is used in order to determine which alternative to construct during
 // initialization from some type T.
-template <class Variant, std::size_t I = 0> struct ImaginaryFun;
+template <class Variant, std::size_t I = 0>
+struct ImaginaryFun;
 
-template <std::size_t I> struct ImaginaryFun<variant<>, I> {
+template <std::size_t I>
+struct ImaginaryFun<variant<>, I> {
   static void Run() = delete;
 };
 
@@ -791,8 +838,8 @@ struct ImaginaryFun<variant<H, T...>, I> : ImaginaryFun<variant<T...>, I + 1> {
   // NOTE: const& and && are used instead of by-value due to lack of guaranteed
   // move elision of C++17. This may have other minor differences, but tests
   // pass.
-  static SizeT<I> Run(const H &, SizeT<I>);
-  static SizeT<I> Run(H &&, SizeT<I>);
+  static SizeT<I> Run(const H&, SizeT<I>);
+  static SizeT<I> Run(H&&, SizeT<I>);
 };
 
 // The following metafunctions are used in constructor and assignment
@@ -813,11 +860,11 @@ template <class Variant, class T>
 struct IndexOfConstructedType<
     Variant, T,
     void_t<decltype(ImaginaryFun<Variant>::Run(std::declval<T>(), {}))>>
-    : decltype(ImaginaryFun<Variant>::Run(std::declval<T>(), {})){};
+    : decltype(ImaginaryFun<Variant>::Run(std::declval<T>(), {})) {};
 
 template <std::size_t... Is>
 struct ContainsVariantNPos
-    : absl::negation<std::is_same< // NOLINT
+    : absl::negation<std::is_same<  // NOLINT
           std::integer_sequence<bool, 0 <= Is...>,
           std::integer_sequence<bool, Is != absl::variant_npos...>>> {};
 
@@ -831,7 +878,8 @@ using RawVisitResult =
 // fast to compile.
 // TODO(calabrese) Possibly rewrite in a way that yields better compile errors
 // at the cost of longer compile-times.
-template <class Op, class... QualifiedVariants> struct VisitResultImpl {
+template <class Op, class... QualifiedVariants>
+struct VisitResultImpl {
   using type =
       absl::result_of_t<Op(VariantAccessResult<0, QualifiedVariants>...)>;
 };
@@ -840,7 +888,8 @@ template <class Op, class... QualifiedVariants> struct VisitResultImpl {
 template <class Op, class... QualifiedVariants>
 using VisitResult = typename VisitResultImpl<Op, QualifiedVariants...>::type;
 
-template <class Op, class... QualifiedVariants> struct PerformVisitation {
+template <class Op, class... QualifiedVariants>
+struct PerformVisitation {
   using ReturnType = VisitResult<Op, QualifiedVariants...>;
 
   template <std::size_t... Is>
@@ -871,11 +920,12 @@ template <class Op, class... QualifiedVariants> struct PerformVisitation {
 
   // TODO(calabrese) Avoid using a tuple, which causes lots of instantiations
   // Attempts using lambda variadic captures fail on current GCC.
-  std::tuple<QualifiedVariants &&...> variant_tup;
-  Op &&op;
+  std::tuple<QualifiedVariants&&...> variant_tup;
+  Op&& op;
 };
 
-template <class... T> union Union;
+template <class... T>
+union Union;
 
 // We want to allow for variant<> to be trivial. For that, we need the default
 // constructor to be trivial, which means we can't define it ourselves.
@@ -883,9 +933,11 @@ template <class... T> union Union;
 // that doesn't affect the triviality of the types.
 struct NoopConstructorTag {};
 
-template <std::size_t I> struct EmplaceTag {};
+template <std::size_t I>
+struct EmplaceTag {};
 
-template <> union Union<> {
+template <>
+union Union<> {
   constexpr explicit Union(NoopConstructorTag) noexcept {}
 };
 
@@ -894,20 +946,21 @@ template <> union Union<> {
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4624)
-#endif // _MSC_VER
+#endif  // _MSC_VER
 
-template <class Head, class... Tail> union Union<Head, Tail...> {
+template <class Head, class... Tail>
+union Union<Head, Tail...> {
   using TailUnion = Union<Tail...>;
 
   explicit constexpr Union(NoopConstructorTag /*tag*/) noexcept
       : tail(NoopConstructorTag()) {}
 
   template <class... P>
-  explicit constexpr Union(EmplaceTag<0>, P &&...args)
+  explicit constexpr Union(EmplaceTag<0>, P&&... args)
       : head(std::forward<P>(args)...) {}
 
   template <std::size_t I, class... P>
-  explicit constexpr Union(EmplaceTag<I>, P &&...args)
+  explicit constexpr Union(EmplaceTag<I>, P&&... args)
       : tail(EmplaceTag<I - 1>{}, std::forward<P>(args)...) {}
 
   Head head;
@@ -916,12 +969,14 @@ template <class Head, class... Tail> union Union<Head, Tail...> {
 
 #ifdef _MSC_VER
 #pragma warning(pop)
-#endif // _MSC_VER
+#endif  // _MSC_VER
 
 // TODO(calabrese) Just contain a Union in this union (certain configs fail).
-template <class... T> union DestructibleUnionImpl;
+template <class... T>
+union DestructibleUnionImpl;
 
-template <> union DestructibleUnionImpl<> {
+template <>
+union DestructibleUnionImpl<> {
   constexpr explicit DestructibleUnionImpl(NoopConstructorTag) noexcept {}
 };
 
@@ -933,11 +988,11 @@ union DestructibleUnionImpl<Head, Tail...> {
       : tail(NoopConstructorTag()) {}
 
   template <class... P>
-  explicit constexpr DestructibleUnionImpl(EmplaceTag<0>, P &&...args)
+  explicit constexpr DestructibleUnionImpl(EmplaceTag<0>, P&&... args)
       : head(std::forward<P>(args)...) {}
 
   template <std::size_t I, class... P>
-  explicit constexpr DestructibleUnionImpl(EmplaceTag<I>, P &&...args)
+  explicit constexpr DestructibleUnionImpl(EmplaceTag<I>, P&&... args)
       : tail(EmplaceTag<I - 1>{}, std::forward<P>(args)...) {}
 
   ~DestructibleUnionImpl() {}
@@ -955,8 +1010,9 @@ using DestructibleUnion =
                         DestructibleUnionImpl<T...>>;
 
 // Deepest base, containing the actual union and the discriminator
-template <class H, class... T> class VariantStateBase {
-protected:
+template <class H, class... T>
+class VariantStateBase {
+ protected:
   using Variant = variant<H, T...>;
 
   template <class LazyH = H,
@@ -967,13 +1023,13 @@ protected:
       : state_(EmplaceTag<0>()), index_(0) {}
 
   template <std::size_t I, class... P>
-  explicit constexpr VariantStateBase(EmplaceTag<I> tag, P &&...args)
+  explicit constexpr VariantStateBase(EmplaceTag<I> tag, P&&... args)
       : state_(tag, std::forward<P>(args)...), index_(I) {}
 
   explicit constexpr VariantStateBase(NoopConstructorTag)
       : state_(NoopConstructorTag()), index_(variant_npos) {}
 
-  void destroy() {} // Does nothing (shadowed in child if non-trivial)
+  void destroy() {}  // Does nothing (shadowed in child if non-trivial)
 
   DestructibleUnion<H, T...> state_;
   std::size_t index_;
@@ -988,16 +1044,18 @@ using absl::internal::type_identity;
 //
 // Overload() is not defined, so it can only be called in unevaluated
 // contexts.
-template <typename... Ts> struct OverloadSet;
+template <typename... Ts>
+struct OverloadSet;
 
 template <typename T, typename... Ts>
 struct OverloadSet<T, Ts...> : OverloadSet<Ts...> {
   using Base = OverloadSet<Ts...>;
-  static type_identity<T> Overload(const T &);
+  static type_identity<T> Overload(const T&);
   using Base::Overload;
 };
 
-template <> struct OverloadSet<> {
+template <>
+struct OverloadSet<> {
   // For any case not handled above.
   static void Overload(...);
 };
@@ -1061,9 +1119,11 @@ using RequireAllHaveGreaterThanT =
 // Helper template containing implementations details of variant that can't go
 // in the private section. For convenience, this takes the variant type as a
 // single template parameter.
-template <typename T> struct VariantHelper;
+template <typename T>
+struct VariantHelper;
 
-template <typename... Ts> struct VariantHelper<variant<Ts...>> {
+template <typename... Ts>
+struct VariantHelper<variant<Ts...>> {
   // Type metafunction which returns the element type selected if
   // OverloadSet::Overload() is well-formed when called with argument type U.
   template <typename U>
@@ -1082,7 +1142,8 @@ template <typename... Ts> struct VariantHelper<variant<Ts...>> {
   // variant, and variants's converting constructor from Other will be
   // well-formed. We will use this to remove constructors that would be
   // ill-formed from the overload set.
-  template <typename Other> struct CanConvertFrom;
+  template <typename Other>
+  struct CanConvertFrom;
 
   template <typename... Us>
   struct CanConvertFrom<variant<Us...>>
@@ -1091,7 +1152,7 @@ template <typename... Ts> struct VariantHelper<variant<Ts...>> {
 
 // A type with nontrivial copy ctor and trivial move ctor.
 struct TrivialMoveOnly {
-  TrivialMoveOnly(TrivialMoveOnly &&) = default;
+  TrivialMoveOnly(TrivialMoveOnly&&) = default;
 };
 
 // Trait class to detect whether a type is trivially move constructible.
@@ -1117,15 +1178,20 @@ struct IsTriviallyMoveConstructible
 // whether or not that corresponding special-member-function can be trivial in
 // the resultant variant type.
 
-template <class... T> class VariantStateBaseDestructorNontrivial;
+template <class... T>
+class VariantStateBaseDestructorNontrivial;
 
-template <class... T> class VariantMoveBaseNontrivial;
+template <class... T>
+class VariantMoveBaseNontrivial;
 
-template <class... T> class VariantCopyBaseNontrivial;
+template <class... T>
+class VariantCopyBaseNontrivial;
 
-template <class... T> class VariantMoveAssignBaseNontrivial;
+template <class... T>
+class VariantMoveAssignBaseNontrivial;
 
-template <class... T> class VariantCopyAssignBaseNontrivial;
+template <class... T>
+class VariantCopyAssignBaseNontrivial;
 
 // Base that is dependent on whether or not the destructor can be trivial.
 template <class... T>
@@ -1184,28 +1250,30 @@ using VariantCopyAssignBase = absl::conditional_t<
                                          is_copy_assignable<T>...>>>::value,
     VariantMoveAssignBase<T...>, VariantCopyAssignBaseNontrivial<T...>>;
 
-template <class... T> using VariantBase = VariantCopyAssignBase<T...>;
+template <class... T>
+using VariantBase = VariantCopyAssignBase<T...>;
 
 template <class... T>
 class VariantStateBaseDestructorNontrivial : protected VariantStateBase<T...> {
-private:
+ private:
   using Base = VariantStateBase<T...>;
 
-protected:
+ protected:
   using Base::Base;
 
   VariantStateBaseDestructorNontrivial() = default;
+  VariantStateBaseDestructorNontrivial(VariantStateBaseDestructorNontrivial&&) =
+      default;
   VariantStateBaseDestructorNontrivial(
-      VariantStateBaseDestructorNontrivial &&) = default;
-  VariantStateBaseDestructorNontrivial(
-      const VariantStateBaseDestructorNontrivial &) = default;
-  VariantStateBaseDestructorNontrivial &
-  operator=(VariantStateBaseDestructorNontrivial &&) = default;
-  VariantStateBaseDestructorNontrivial &
-  operator=(const VariantStateBaseDestructorNontrivial &) = default;
+      const VariantStateBaseDestructorNontrivial&) = default;
+  VariantStateBaseDestructorNontrivial& operator=(
+      VariantStateBaseDestructorNontrivial&&) = default;
+  VariantStateBaseDestructorNontrivial& operator=(
+      const VariantStateBaseDestructorNontrivial&) = default;
 
   struct Destroyer {
-    template <std::size_t I> void operator()(SizeT<I> i) const {
+    template <std::size_t I>
+    void operator()(SizeT<I> i) const {
       using Alternative =
           typename absl::variant_alternative<I, variant<T...>>::type;
       variant_internal::AccessUnion(self->state_, i).~Alternative();
@@ -1215,95 +1283,97 @@ protected:
       // This space intentionally left blank
     }
 
-    VariantStateBaseDestructorNontrivial *self;
+    VariantStateBaseDestructorNontrivial* self;
   };
 
   void destroy() { VisitIndices<sizeof...(T)>::Run(Destroyer{this}, index_); }
 
   ~VariantStateBaseDestructorNontrivial() { destroy(); }
 
-protected:
+ protected:
   using Base::index_;
   using Base::state_;
 };
 
 template <class... T>
 class VariantMoveBaseNontrivial : protected VariantStateBaseDestructor<T...> {
-private:
+ private:
   using Base = VariantStateBaseDestructor<T...>;
 
-protected:
+ protected:
   using Base::Base;
 
   struct Construct {
-    template <std::size_t I> void operator()(SizeT<I> i) const {
+    template <std::size_t I>
+    void operator()(SizeT<I> i) const {
       using Alternative =
           typename absl::variant_alternative<I, variant<T...>>::type;
-      ::new (static_cast<void *>(&self->state_)) Alternative(
+      ::new (static_cast<void*>(&self->state_)) Alternative(
           variant_internal::AccessUnion(std::move(other->state_), i));
     }
 
     void operator()(SizeT<absl::variant_npos> /*i*/) const {}
 
-    VariantMoveBaseNontrivial *self;
-    VariantMoveBaseNontrivial *other;
+    VariantMoveBaseNontrivial* self;
+    VariantMoveBaseNontrivial* other;
   };
 
   VariantMoveBaseNontrivial() = default;
-  VariantMoveBaseNontrivial(VariantMoveBaseNontrivial &&other) noexcept(
+  VariantMoveBaseNontrivial(VariantMoveBaseNontrivial&& other) noexcept(
       absl::conjunction<std::is_nothrow_move_constructible<T>...>::value)
       : Base(NoopConstructorTag()) {
     VisitIndices<sizeof...(T)>::Run(Construct{this, &other}, other.index_);
     index_ = other.index_;
   }
 
-  VariantMoveBaseNontrivial(VariantMoveBaseNontrivial const &) = default;
+  VariantMoveBaseNontrivial(VariantMoveBaseNontrivial const&) = default;
 
-  VariantMoveBaseNontrivial &operator=(VariantMoveBaseNontrivial &&) = default;
-  VariantMoveBaseNontrivial &
-  operator=(VariantMoveBaseNontrivial const &) = default;
+  VariantMoveBaseNontrivial& operator=(VariantMoveBaseNontrivial&&) = default;
+  VariantMoveBaseNontrivial& operator=(VariantMoveBaseNontrivial const&) =
+      default;
 
-protected:
+ protected:
   using Base::index_;
   using Base::state_;
 };
 
 template <class... T>
 class VariantCopyBaseNontrivial : protected VariantMoveBase<T...> {
-private:
+ private:
   using Base = VariantMoveBase<T...>;
 
-protected:
+ protected:
   using Base::Base;
 
   VariantCopyBaseNontrivial() = default;
-  VariantCopyBaseNontrivial(VariantCopyBaseNontrivial &&) = default;
+  VariantCopyBaseNontrivial(VariantCopyBaseNontrivial&&) = default;
 
   struct Construct {
-    template <std::size_t I> void operator()(SizeT<I> i) const {
+    template <std::size_t I>
+    void operator()(SizeT<I> i) const {
       using Alternative =
           typename absl::variant_alternative<I, variant<T...>>::type;
-      ::new (static_cast<void *>(&self->state_))
+      ::new (static_cast<void*>(&self->state_))
           Alternative(variant_internal::AccessUnion(other->state_, i));
     }
 
     void operator()(SizeT<absl::variant_npos> /*i*/) const {}
 
-    VariantCopyBaseNontrivial *self;
-    const VariantCopyBaseNontrivial *other;
+    VariantCopyBaseNontrivial* self;
+    const VariantCopyBaseNontrivial* other;
   };
 
-  VariantCopyBaseNontrivial(VariantCopyBaseNontrivial const &other)
+  VariantCopyBaseNontrivial(VariantCopyBaseNontrivial const& other)
       : Base(NoopConstructorTag()) {
     VisitIndices<sizeof...(T)>::Run(Construct{this, &other}, other.index_);
     index_ = other.index_;
   }
 
-  VariantCopyBaseNontrivial &operator=(VariantCopyBaseNontrivial &&) = default;
-  VariantCopyBaseNontrivial &
-  operator=(VariantCopyBaseNontrivial const &) = default;
+  VariantCopyBaseNontrivial& operator=(VariantCopyBaseNontrivial&&) = default;
+  VariantCopyBaseNontrivial& operator=(VariantCopyBaseNontrivial const&) =
+      default;
 
-protected:
+ protected:
   using Base::index_;
   using Base::state_;
 };
@@ -1312,21 +1382,21 @@ template <class... T>
 class VariantMoveAssignBaseNontrivial : protected VariantCopyBase<T...> {
   friend struct VariantCoreAccess;
 
-private:
+ private:
   using Base = VariantCopyBase<T...>;
 
-protected:
+ protected:
   using Base::Base;
 
   VariantMoveAssignBaseNontrivial() = default;
-  VariantMoveAssignBaseNontrivial(VariantMoveAssignBaseNontrivial &&) = default;
-  VariantMoveAssignBaseNontrivial(const VariantMoveAssignBaseNontrivial &) =
+  VariantMoveAssignBaseNontrivial(VariantMoveAssignBaseNontrivial&&) = default;
+  VariantMoveAssignBaseNontrivial(const VariantMoveAssignBaseNontrivial&) =
       default;
-  VariantMoveAssignBaseNontrivial &
-  operator=(VariantMoveAssignBaseNontrivial const &) = default;
+  VariantMoveAssignBaseNontrivial& operator=(
+      VariantMoveAssignBaseNontrivial const&) = default;
 
-  VariantMoveAssignBaseNontrivial &
-  operator=(VariantMoveAssignBaseNontrivial &&other) noexcept(
+  VariantMoveAssignBaseNontrivial&
+  operator=(VariantMoveAssignBaseNontrivial&& other) noexcept(
       absl::conjunction<std::is_nothrow_move_constructible<T>...,
                         std::is_nothrow_move_assignable<T>...>::value) {
     VisitIndices<sizeof...(T)>::Run(
@@ -1334,7 +1404,7 @@ protected:
     return *this;
   }
 
-protected:
+ protected:
   using Base::index_;
   using Base::state_;
 };
@@ -1343,27 +1413,27 @@ template <class... T>
 class VariantCopyAssignBaseNontrivial : protected VariantMoveAssignBase<T...> {
   friend struct VariantCoreAccess;
 
-private:
+ private:
   using Base = VariantMoveAssignBase<T...>;
 
-protected:
+ protected:
   using Base::Base;
 
   VariantCopyAssignBaseNontrivial() = default;
-  VariantCopyAssignBaseNontrivial(VariantCopyAssignBaseNontrivial &&) = default;
-  VariantCopyAssignBaseNontrivial(const VariantCopyAssignBaseNontrivial &) =
+  VariantCopyAssignBaseNontrivial(VariantCopyAssignBaseNontrivial&&) = default;
+  VariantCopyAssignBaseNontrivial(const VariantCopyAssignBaseNontrivial&) =
       default;
-  VariantCopyAssignBaseNontrivial &
-  operator=(VariantCopyAssignBaseNontrivial &&) = default;
+  VariantCopyAssignBaseNontrivial& operator=(
+      VariantCopyAssignBaseNontrivial&&) = default;
 
-  VariantCopyAssignBaseNontrivial &
-  operator=(const VariantCopyAssignBaseNontrivial &other) {
+  VariantCopyAssignBaseNontrivial& operator=(
+      const VariantCopyAssignBaseNontrivial& other) {
     VisitIndices<sizeof...(T)>::Run(
         VariantCoreAccess::MakeCopyAssignVisitor(this, other), other.index_);
     return *this;
   }
 
-protected:
+ protected:
   using Base::index_;
   using Base::state_;
 };
@@ -1372,89 +1442,103 @@ protected:
 // Visitors for Comparison Operations //
 ////////////////////////////////////////
 
-template <class... Types> struct EqualsOp {
-  const variant<Types...> *v;
-  const variant<Types...> *w;
+template <class... Types>
+struct EqualsOp {
+  const variant<Types...>* v;
+  const variant<Types...>* w;
 
   constexpr bool operator()(SizeT<absl::variant_npos> /*v_i*/) const {
     return true;
   }
 
-  template <std::size_t I> constexpr bool operator()(SizeT<I> /*v_i*/) const {
+  template <std::size_t I>
+  constexpr bool operator()(SizeT<I> /*v_i*/) const {
     return VariantCoreAccess::Access<I>(*v) == VariantCoreAccess::Access<I>(*w);
   }
 };
 
-template <class... Types> struct NotEqualsOp {
-  const variant<Types...> *v;
-  const variant<Types...> *w;
+template <class... Types>
+struct NotEqualsOp {
+  const variant<Types...>* v;
+  const variant<Types...>* w;
 
   constexpr bool operator()(SizeT<absl::variant_npos> /*v_i*/) const {
     return false;
   }
 
-  template <std::size_t I> constexpr bool operator()(SizeT<I> /*v_i*/) const {
+  template <std::size_t I>
+  constexpr bool operator()(SizeT<I> /*v_i*/) const {
     return VariantCoreAccess::Access<I>(*v) != VariantCoreAccess::Access<I>(*w);
   }
 };
 
-template <class... Types> struct LessThanOp {
-  const variant<Types...> *v;
-  const variant<Types...> *w;
+template <class... Types>
+struct LessThanOp {
+  const variant<Types...>* v;
+  const variant<Types...>* w;
 
   constexpr bool operator()(SizeT<absl::variant_npos> /*v_i*/) const {
     return false;
   }
 
-  template <std::size_t I> constexpr bool operator()(SizeT<I> /*v_i*/) const {
+  template <std::size_t I>
+  constexpr bool operator()(SizeT<I> /*v_i*/) const {
     return VariantCoreAccess::Access<I>(*v) < VariantCoreAccess::Access<I>(*w);
   }
 };
 
-template <class... Types> struct GreaterThanOp {
-  const variant<Types...> *v;
-  const variant<Types...> *w;
+template <class... Types>
+struct GreaterThanOp {
+  const variant<Types...>* v;
+  const variant<Types...>* w;
 
   constexpr bool operator()(SizeT<absl::variant_npos> /*v_i*/) const {
     return false;
   }
 
-  template <std::size_t I> constexpr bool operator()(SizeT<I> /*v_i*/) const {
+  template <std::size_t I>
+  constexpr bool operator()(SizeT<I> /*v_i*/) const {
     return VariantCoreAccess::Access<I>(*v) > VariantCoreAccess::Access<I>(*w);
   }
 };
 
-template <class... Types> struct LessThanOrEqualsOp {
-  const variant<Types...> *v;
-  const variant<Types...> *w;
+template <class... Types>
+struct LessThanOrEqualsOp {
+  const variant<Types...>* v;
+  const variant<Types...>* w;
 
   constexpr bool operator()(SizeT<absl::variant_npos> /*v_i*/) const {
     return true;
   }
 
-  template <std::size_t I> constexpr bool operator()(SizeT<I> /*v_i*/) const {
+  template <std::size_t I>
+  constexpr bool operator()(SizeT<I> /*v_i*/) const {
     return VariantCoreAccess::Access<I>(*v) <= VariantCoreAccess::Access<I>(*w);
   }
 };
 
-template <class... Types> struct GreaterThanOrEqualsOp {
-  const variant<Types...> *v;
-  const variant<Types...> *w;
+template <class... Types>
+struct GreaterThanOrEqualsOp {
+  const variant<Types...>* v;
+  const variant<Types...>* w;
 
   constexpr bool operator()(SizeT<absl::variant_npos> /*v_i*/) const {
     return true;
   }
 
-  template <std::size_t I> constexpr bool operator()(SizeT<I> /*v_i*/) const {
+  template <std::size_t I>
+  constexpr bool operator()(SizeT<I> /*v_i*/) const {
     return VariantCoreAccess::Access<I>(*v) >= VariantCoreAccess::Access<I>(*w);
   }
 };
 
 // Precondition: v.index() == w.index();
-template <class... Types> struct SwapSameIndex {
-  variant<Types...> *v;
-  variant<Types...> *w;
-  template <std::size_t I> void operator()(SizeT<I>) const {
+template <class... Types>
+struct SwapSameIndex {
+  variant<Types...>* v;
+  variant<Types...>* w;
+  template <std::size_t I>
+  void operator()(SizeT<I>) const {
     type_traits_internal::Swap(VariantCoreAccess::Access<I>(*v),
                                VariantCoreAccess::Access<I>(*w));
   }
@@ -1463,9 +1547,10 @@ template <class... Types> struct SwapSameIndex {
 };
 
 // TODO(calabrese) do this from a different namespace for proper adl usage
-template <class... Types> struct Swap {
-  variant<Types...> *v;
-  variant<Types...> *w;
+template <class... Types>
+struct Swap {
+  variant<Types...>* v;
+  variant<Types...>* w;
 
   void generic_swap() const {
     variant<Types...> tmp(std::move(*w));
@@ -1481,7 +1566,8 @@ template <class... Types> struct Swap {
     }
   }
 
-  template <std::size_t Wi> void operator()(SizeT<Wi> /*w_i*/) {
+  template <std::size_t Wi>
+  void operator()(SizeT<Wi> /*w_i*/) {
     if (v->index() == Wi) {
       VisitIndices<sizeof...(Types)>::Run(SwapSameIndex<Types...>{v, w}, Wi);
     } else {
@@ -1493,14 +1579,15 @@ template <class... Types> struct Swap {
 template <typename Variant, typename = void, typename... Ts>
 struct VariantHashBase {
   VariantHashBase() = delete;
-  VariantHashBase(const VariantHashBase &) = delete;
-  VariantHashBase(VariantHashBase &&) = delete;
-  VariantHashBase &operator=(const VariantHashBase &) = delete;
-  VariantHashBase &operator=(VariantHashBase &&) = delete;
+  VariantHashBase(const VariantHashBase&) = delete;
+  VariantHashBase(VariantHashBase&&) = delete;
+  VariantHashBase& operator=(const VariantHashBase&) = delete;
+  VariantHashBase& operator=(VariantHashBase&&) = delete;
 };
 
 struct VariantHashVisitor {
-  template <typename T> size_t operator()(const T &t) {
+  template <typename T>
+  size_t operator()(const T& t) {
     return std::hash<T>{}(t);
   }
 };
@@ -1512,13 +1599,13 @@ struct VariantHashBase<Variant,
                        Ts...> {
   using argument_type = Variant;
   using result_type = size_t;
-  size_t operator()(const Variant &var) const {
+  size_t operator()(const Variant& var) const {
     type_traits_internal::AssertHashEnabled<Ts...>();
     if (var.valueless_by_exception()) {
       return 239799884;
     }
     size_t result = VisitIndices<variant_size<Variant>::value>::Run(
-        PerformVisitation<VariantHashVisitor, const Variant &>{
+        PerformVisitation<VariantHashVisitor, const Variant&>{
             std::forward_as_tuple(var), VariantHashVisitor{}},
         var.index());
     // Combine the index and the hash result in order to distinguish
@@ -1527,9 +1614,9 @@ struct VariantHashBase<Variant,
   }
 };
 
-} // namespace variant_internal
+}  // namespace variant_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // !defined(ABSL_USES_STD_VARIANT)
-#endif // ABSL_TYPES_INTERNAL_VARIANT_H_
+#endif  // !defined(ABSL_USES_STD_VARIANT)
+#endif  // ABSL_TYPES_INTERNAL_VARIANT_H_

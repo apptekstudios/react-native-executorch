@@ -33,9 +33,9 @@ namespace absl {
 ABSL_NAMESPACE_BEGIN
 using std::bad_variant_access;
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#else // ABSL_USES_STD_VARIANT
+#else  // ABSL_USES_STD_VARIANT
 
 namespace absl {
 ABSL_NAMESPACE_BEGIN
@@ -62,10 +62,10 @@ ABSL_NAMESPACE_BEGIN
 //     std::cout << "Bad variant access: " << e.what() << '\n';
 //   }
 class bad_variant_access : public std::exception {
-public:
+ public:
   bad_variant_access() noexcept = default;
   ~bad_variant_access() override;
-  const char *what() const noexcept override;
+  const char* what() const noexcept override;
 };
 
 namespace variant_internal {
@@ -73,10 +73,10 @@ namespace variant_internal {
 [[noreturn]] ABSL_DLL void ThrowBadVariantAccess();
 [[noreturn]] ABSL_DLL void Rethrow();
 
-} // namespace variant_internal
+}  // namespace variant_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_USES_STD_VARIANT
+#endif  // ABSL_USES_STD_VARIANT
 
-#endif // ABSL_TYPES_BAD_VARIANT_ACCESS_H_
+#endif  // ABSL_TYPES_BAD_VARIANT_ACCESS_H_

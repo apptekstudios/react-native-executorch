@@ -31,6 +31,7 @@
 //
 // See below for complete details.
 
+
 #ifndef ABSL_BASE_NO_DESTRUCTOR_H_
 #define ABSL_BASE_NO_DESTRUCTOR_H_
 
@@ -100,8 +101,7 @@ ABSL_NAMESPACE_BEGIN
 // objects still need to worry about initialization order, so such use is not
 // recommended, strongly discouraged by the Google C++ Style Guide, and outright
 // banned in Chromium.
-// See
-// https://google.github.io/styleguide/cppguide.html#Static_and_Global_Variables
+// See https://google.github.io/styleguide/cppguide.html#Static_and_Global_Variables
 //
 //    // Global or namespace scope.
 //    absl::NoDestructor<MyRegistry> reg{"foo", "bar", 8008};
@@ -109,62 +109,65 @@ ABSL_NAMESPACE_BEGIN
 // Note that if your object already has a trivial destructor, you don't need to
 // use NoDestructor<T>.
 //
-template <typename T> class NoDestructor {
-public:
+template <typename T>
+class NoDestructor {
+ public:
   // Forwards arguments to the T's constructor: calls T(args...).
   template <typename... Ts,
             // Disable this overload when it might collide with copy/move.
-            typename std::enable_if<!std::is_same<void(std::decay_t<Ts> &...),
-                                                  void(NoDestructor &)>::value,
+            typename std::enable_if<!std::is_same<void(std::decay_t<Ts>&...),
+                                                  void(NoDestructor&)>::value,
                                     int>::type = 0>
-  explicit constexpr NoDestructor(Ts &&...args)
+  explicit constexpr NoDestructor(Ts&&... args)
       : impl_(std::forward<Ts>(args)...) {}
 
   // Forwards copy and move construction for T. Enables usage like this:
   //   static NoDestructor<std::array<string, 3>> x{{{"1", "2", "3"}}};
   //   static NoDestructor<std::vector<int>> x{{1, 2, 3}};
-  explicit constexpr NoDestructor(const T &x) : impl_(x) {}
-  explicit constexpr NoDestructor(T &&x) : impl_(std::move(x)) {}
+  explicit constexpr NoDestructor(const T& x) : impl_(x) {}
+  explicit constexpr NoDestructor(T&& x)
+      : impl_(std::move(x)) {}
 
   // No copying.
-  NoDestructor(const NoDestructor &) = delete;
-  NoDestructor &operator=(const NoDestructor &) = delete;
+  NoDestructor(const NoDestructor&) = delete;
+  NoDestructor& operator=(const NoDestructor&) = delete;
 
   // Pretend to be a smart pointer to T with deep constness.
   // Never returns a null pointer.
-  T &operator*() { return *get(); }
-  absl::Nonnull<T *> operator->() { return get(); }
-  absl::Nonnull<T *> get() { return impl_.get(); }
-  const T &operator*() const { return *get(); }
-  absl::Nonnull<const T *> operator->() const { return get(); }
-  absl::Nonnull<const T *> get() const { return impl_.get(); }
+  T& operator*() { return *get(); }
+  absl::Nonnull<T*> operator->() { return get(); }
+  absl::Nonnull<T*> get() { return impl_.get(); }
+  const T& operator*() const { return *get(); }
+  absl::Nonnull<const T*> operator->() const { return get(); }
+  absl::Nonnull<const T*> get() const { return impl_.get(); }
 
-private:
+ private:
   class DirectImpl {
-  public:
+   public:
     template <typename... Args>
-    explicit constexpr DirectImpl(Args &&...args)
+    explicit constexpr DirectImpl(Args&&... args)
         : value_(std::forward<Args>(args)...) {}
-    absl::Nonnull<const T *> get() const { return &value_; }
-    absl::Nonnull<T *> get() { return &value_; }
+    absl::Nonnull<const T*> get() const { return &value_; }
+    absl::Nonnull<T*> get() { return &value_; }
 
-  private:
+   private:
     T value_;
   };
 
   class PlacementImpl {
-  public:
-    template <typename... Args> explicit PlacementImpl(Args &&...args) {
+   public:
+    template <typename... Args>
+    explicit PlacementImpl(Args&&... args) {
       new (&space_) T(std::forward<Args>(args)...);
     }
-    absl::Nonnull<const T *> get() const {
-      return Launder(reinterpret_cast<const T *>(&space_));
+    absl::Nonnull<const T*> get() const {
+      return Launder(reinterpret_cast<const T*>(&space_));
     }
-    absl::Nonnull<T *> get() { return Launder(reinterpret_cast<T *>(&space_)); }
+    absl::Nonnull<T*> get() { return Launder(reinterpret_cast<T*>(&space_)); }
 
-  private:
+   private:
     template <typename P>
-    static absl::Nonnull<P *> Launder(absl::Nonnull<P *> p) {
+    static absl::Nonnull<P*> Launder(absl::Nonnull<P*> p) {
 #if defined(__cpp_lib_launder) && __cpp_lib_launder >= 201606L
       return std::launder(p);
 #elif ABSL_HAVE_BUILTIN(__builtin_launder)
@@ -199,10 +202,11 @@ private:
 #ifdef ABSL_HAVE_CLASS_TEMPLATE_ARGUMENT_DEDUCTION
 // Provide 'Class Template Argument Deduction': the type of NoDestructor's T
 // will be the same type as the argument passed to NoDestructor's constructor.
-template <typename T> NoDestructor(T) -> NoDestructor<T>;
-#endif // ABSL_HAVE_CLASS_TEMPLATE_ARGUMENT_DEDUCTION
+template <typename T>
+NoDestructor(T) -> NoDestructor<T>;
+#endif  // ABSL_HAVE_CLASS_TEMPLATE_ARGUMENT_DEDUCTION
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_NO_DESTRUCTOR_H_
+#endif  // ABSL_BASE_NO_DESTRUCTOR_H_

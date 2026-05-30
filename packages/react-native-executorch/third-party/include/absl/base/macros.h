@@ -42,7 +42,7 @@
 // Returns the number of elements in an array as a compile-time constant, which
 // can be used in defining new arrays. If you use this macro on a pointer by
 // mistake, you will get a compile-time error.
-#define ABSL_ARRAYSIZE(array)                                                  \
+#define ABSL_ARRAYSIZE(array) \
   (sizeof(::absl::macros_internal::ArraySizeHelper(array)))
 
 namespace absl {
@@ -52,9 +52,9 @@ namespace macros_internal {
 // The function doesn't need a definition, as we only use its type.
 template <typename T, size_t N>
 auto ArraySizeHelper(const T (&array)[N]) -> char (&)[N];
-} // namespace macros_internal
+}  // namespace macros_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
 // ABSL_BAD_CALL_IF()
 //
@@ -75,7 +75,7 @@ ABSL_NAMESPACE_END
 //                       "'c' must have the value of an unsigned char or EOF");
 //   #endif // ABSL_BAD_CALL_IF
 #if ABSL_HAVE_ATTRIBUTE(enable_if)
-#define ABSL_BAD_CALL_IF(expr, msg)                                            \
+#define ABSL_BAD_CALL_IF(expr, msg) \
   __attribute__((enable_if(expr, "Bad call trap"), unavailable(msg)))
 #endif
 
@@ -106,19 +106,19 @@ ABSL_NAMESPACE_END
 #define ABSL_ASSERT(expr) (false ? ((expr) ? void() : void()) : void())
 #endif
 #else
-#define ABSL_ASSERT(expr)                                                      \
-  (ABSL_PREDICT_TRUE((expr)) ? static_cast<void>(0)                            \
-                             : [] { assert(false && #expr); }()) // NOLINT
+#define ABSL_ASSERT(expr)                           \
+  (ABSL_PREDICT_TRUE((expr)) ? static_cast<void>(0) \
+                             : [] { assert(false && #expr); }())  // NOLINT
 #endif
 
 // `ABSL_INTERNAL_HARDENING_ABORT()` controls how `ABSL_HARDENING_ASSERT()`
 // aborts the program in release mode (when NDEBUG is defined). The
 // implementation should abort the program as quickly as possible and ideally it
 // should not be possible to ignore the abort request.
-#define ABSL_INTERNAL_HARDENING_ABORT()                                        \
-  do {                                                                         \
-    ABSL_INTERNAL_IMMEDIATE_ABORT_IMPL();                                      \
-    ABSL_INTERNAL_UNREACHABLE_IMPL();                                          \
+#define ABSL_INTERNAL_HARDENING_ABORT()   \
+  do {                                    \
+    ABSL_INTERNAL_IMMEDIATE_ABORT_IMPL(); \
+    ABSL_INTERNAL_UNREACHABLE_IMPL();     \
   } while (false)
 
 // ABSL_HARDENING_ASSERT()
@@ -133,8 +133,8 @@ ABSL_NAMESPACE_END
 // See `ABSL_OPTION_HARDENED` in `absl/base/options.h` for more information on
 // hardened mode.
 #if (ABSL_OPTION_HARDENED == 1 || ABSL_OPTION_HARDENED == 2) && defined(NDEBUG)
-#define ABSL_HARDENING_ASSERT(expr)                                            \
-  (ABSL_PREDICT_TRUE((expr)) ? static_cast<void>(0)                            \
+#define ABSL_HARDENING_ASSERT(expr)                 \
+  (ABSL_PREDICT_TRUE((expr)) ? static_cast<void>(0) \
                              : [] { ABSL_INTERNAL_HARDENING_ABORT(); }())
 #else
 #define ABSL_HARDENING_ASSERT(expr) ABSL_ASSERT(expr)
@@ -152,8 +152,8 @@ ABSL_NAMESPACE_END
 // See `ABSL_OPTION_HARDENED` in `absl/base/options.h` for more information on
 // hardened mode.
 #if ABSL_OPTION_HARDENED == 1 && defined(NDEBUG)
-#define ABSL_HARDENING_ASSERT_SLOW(expr)                                       \
-  (ABSL_PREDICT_TRUE((expr)) ? static_cast<void>(0)                            \
+#define ABSL_HARDENING_ASSERT_SLOW(expr)            \
+  (ABSL_PREDICT_TRUE((expr)) ? static_cast<void>(0) \
                              : [] { ABSL_INTERNAL_HARDENING_ABORT(); }())
 #else
 #define ABSL_HARDENING_ASSERT_SLOW(expr) ABSL_ASSERT(expr)
@@ -162,17 +162,12 @@ ABSL_NAMESPACE_END
 #ifdef ABSL_HAVE_EXCEPTIONS
 #define ABSL_INTERNAL_TRY try
 #define ABSL_INTERNAL_CATCH_ANY catch (...)
-#define ABSL_INTERNAL_RETHROW                                                  \
-  do {                                                                         \
-    throw;                                                                     \
-  } while (false)
-#else // ABSL_HAVE_EXCEPTIONS
+#define ABSL_INTERNAL_RETHROW do { throw; } while (false)
+#else  // ABSL_HAVE_EXCEPTIONS
 #define ABSL_INTERNAL_TRY if (true)
 #define ABSL_INTERNAL_CATCH_ANY else if (false)
-#define ABSL_INTERNAL_RETHROW                                                  \
-  do {                                                                         \
-  } while (false)
-#endif // ABSL_HAVE_EXCEPTIONS
+#define ABSL_INTERNAL_RETHROW do {} while (false)
+#endif  // ABSL_HAVE_EXCEPTIONS
 
 // ABSL_DEPRECATE_AND_INLINE()
 //
@@ -201,7 +196,7 @@ ABSL_NAMESPACE_END
 // Note: go/cpp-inliner is Google-internal service for automated refactoring.
 // While open-source users do not have access to this service, the macro is
 // provided for compatibility, and so that users receive deprecation warnings.
-#if ABSL_HAVE_CPP_ATTRIBUTE(deprecated) &&                                     \
+#if ABSL_HAVE_CPP_ATTRIBUTE(deprecated) && \
     ABSL_HAVE_CPP_ATTRIBUTE(clang::annotate)
 #define ABSL_DEPRECATE_AND_INLINE() [[deprecated, clang::annotate("inline-me")]]
 #elif ABSL_HAVE_CPP_ATTRIBUTE(deprecated)
@@ -213,13 +208,13 @@ ABSL_NAMESPACE_END
 // Requires the compiler to prove that the size of the given object is at least
 // the expected amount.
 #if ABSL_HAVE_ATTRIBUTE(diagnose_if) && ABSL_HAVE_BUILTIN(__builtin_object_size)
-#define ABSL_INTERNAL_NEED_MIN_SIZE(Obj, N)                                    \
-  __attribute__((diagnose_if(__builtin_object_size(Obj, 0) < N,                \
-                             "object size provably too small "                 \
-                             "(this would corrupt memory)",                    \
+#define ABSL_INTERNAL_NEED_MIN_SIZE(Obj, N)                     \
+  __attribute__((diagnose_if(__builtin_object_size(Obj, 0) < N, \
+                             "object size provably too small "  \
+                             "(this would corrupt memory)",     \
                              "error")))
 #else
 #define ABSL_INTERNAL_NEED_MIN_SIZE(Obj, N)
 #endif
 
-#endif // ABSL_BASE_MACROS_H_
+#endif  // ABSL_BASE_MACROS_H_

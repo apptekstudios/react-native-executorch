@@ -65,11 +65,12 @@ namespace strings_internal {
 struct AlphaNumFormatterImpl {
   // This template is needed in order to support passing in a dereferenced
   // vector<bool>::iterator
-  template <typename T> void operator()(std::string *out, const T &t) const {
+  template <typename T>
+  void operator()(std::string* out, const T& t) const {
     StrAppend(out, AlphaNum(t));
   }
 
-  void operator()(std::string *out, const AlphaNum &t) const {
+  void operator()(std::string* out, const AlphaNum& t) const {
     StrAppend(out, t);
   }
 };
@@ -82,14 +83,15 @@ struct NoFormatter : public AlphaNumFormatterImpl {};
 
 // Formats types to strings using the << operator.
 class StreamFormatterImpl {
-public:
+ public:
   // The method isn't const because it mutates state. Making it const will
   // render StreamFormatterImpl thread-hostile.
-  template <typename T> void operator()(std::string *out, const T &t) {
+  template <typename T>
+  void operator()(std::string* out, const T& t) {
     // The stream is created lazily to avoid paying the relatively high cost
     // of its construction when joining an empty range.
     if (strm_) {
-      strm_->clear(); // clear the bad, fail and eof bits in case they were set
+      strm_->clear();  // clear the bad, fail and eof bits in case they were set
       strm_->str(out);
     } else {
       strm_.reset(new strings_internal::OStringStream(out));
@@ -97,30 +99,33 @@ public:
     *strm_ << t;
   }
 
-private:
+ private:
   std::unique_ptr<strings_internal::OStringStream> strm_;
 };
 
 // Formats a std::pair<>. The 'first' member is formatted using f1_ and the
 // 'second' member is formatted using f2_. sep_ is the separator.
-template <typename F1, typename F2> class PairFormatterImpl {
-public:
+template <typename F1, typename F2>
+class PairFormatterImpl {
+ public:
   PairFormatterImpl(F1 f1, absl::string_view sep, F2 f2)
       : f1_(std::move(f1)), sep_(sep), f2_(std::move(f2)) {}
 
-  template <typename T> void operator()(std::string *out, const T &p) {
+  template <typename T>
+  void operator()(std::string* out, const T& p) {
     f1_(out, p.first);
     out->append(sep_);
     f2_(out, p.second);
   }
 
-  template <typename T> void operator()(std::string *out, const T &p) const {
+  template <typename T>
+  void operator()(std::string* out, const T& p) const {
     f1_(out, p.first);
     out->append(sep_);
     f2_(out, p.second);
   }
 
-private:
+ private:
   F1 f1_;
   std::string sep_;
   F2 f2_;
@@ -129,21 +134,24 @@ private:
 // Wraps another formatter and dereferences the argument to operator() then
 // passes the dereferenced argument to the wrapped formatter. This can be
 // useful, for example, to join a std::vector<int*>.
-template <typename Formatter> class DereferenceFormatterImpl {
-public:
+template <typename Formatter>
+class DereferenceFormatterImpl {
+ public:
   DereferenceFormatterImpl() : f_() {}
-  explicit DereferenceFormatterImpl(Formatter &&f)
+  explicit DereferenceFormatterImpl(Formatter&& f)
       : f_(std::forward<Formatter>(f)) {}
 
-  template <typename T> void operator()(std::string *out, const T &t) {
+  template <typename T>
+  void operator()(std::string* out, const T& t) {
     f_(out, *t);
   }
 
-  template <typename T> void operator()(std::string *out, const T &t) const {
+  template <typename T>
+  void operator()(std::string* out, const T& t) const {
     f_(out, *t);
   }
 
-private:
+ private:
   Formatter f_;
 };
 
@@ -154,29 +162,35 @@ private:
 //
 // AlphaNumFormatterImpl is the default in the base template, followed by
 // specializations for other types.
-template <typename ValueType> struct DefaultFormatter {
+template <typename ValueType>
+struct DefaultFormatter {
   typedef AlphaNumFormatterImpl Type;
 };
-template <> struct DefaultFormatter<const char *> {
+template <>
+struct DefaultFormatter<const char*> {
   typedef AlphaNumFormatterImpl Type;
 };
-template <> struct DefaultFormatter<char *> {
+template <>
+struct DefaultFormatter<char*> {
   typedef AlphaNumFormatterImpl Type;
 };
-template <> struct DefaultFormatter<std::string> {
+template <>
+struct DefaultFormatter<std::string> {
   typedef NoFormatter Type;
 };
-template <> struct DefaultFormatter<absl::string_view> {
+template <>
+struct DefaultFormatter<absl::string_view> {
   typedef NoFormatter Type;
 };
-template <typename ValueType> struct DefaultFormatter<ValueType *> {
+template <typename ValueType>
+struct DefaultFormatter<ValueType*> {
   typedef DereferenceFormatterImpl<typename DefaultFormatter<ValueType>::Type>
       Type;
 };
 
 template <typename ValueType>
 struct DefaultFormatter<std::unique_ptr<ValueType>>
-    : public DefaultFormatter<ValueType *> {};
+    : public DefaultFormatter<ValueType*> {};
 
 //
 // JoinAlgorithm() functions
@@ -187,7 +201,7 @@ struct DefaultFormatter<std::unique_ptr<ValueType>>
 // and formats each element using the provided Formatter object.
 template <typename Iterator, typename Formatter>
 std::string JoinAlgorithm(Iterator start, Iterator end, absl::string_view s,
-                          Formatter &&f) {
+                          Formatter&& f) {
   std::string result;
   absl::string_view sep("");
   for (Iterator it = start; it != end; ++it) {
@@ -222,7 +236,7 @@ std::string JoinAlgorithm(Iterator start, Iterator end, absl::string_view s,
   std::string result;
   if (start != end) {
     // Sums size
-    auto &&start_value = *start;
+    auto&& start_value = *start;
     // Use uint64_t to prevent size_t overflow. We assume it is not possible for
     // in memory strings to overflow a uint64_t.
     uint64_t result_size = start_value.size();
@@ -238,14 +252,14 @@ std::string JoinAlgorithm(Iterator start, Iterator end, absl::string_view s,
       STLStringResizeUninitialized(&result, static_cast<size_t>(result_size));
 
       // Joins strings
-      char *result_buf = &*result.begin();
+      char* result_buf = &*result.begin();
 
       memcpy(result_buf, start_value.data(), start_value.size());
       result_buf += start_value.size();
       for (Iterator it = start; ++it != end;) {
         memcpy(result_buf, s.data(), s.size());
         result_buf += s.size();
-        auto &&value = *it;
+        auto&& value = *it;
         memcpy(result_buf, value.data(), value.size());
         result_buf += value.size();
       }
@@ -260,25 +274,25 @@ std::string JoinAlgorithm(Iterator start, Iterator end, absl::string_view s,
 // continues the iteration after appending a separator (for nonzero indices)
 // and formatting an element of the tuple. The specialization for the I=N case
 // matches the end-of-tuple, and terminates the iteration.
-template <size_t I, size_t N> struct JoinTupleLoop {
+template <size_t I, size_t N>
+struct JoinTupleLoop {
   template <typename Tup, typename Formatter>
-  void operator()(std::string *out, const Tup &tup, absl::string_view sep,
-                  Formatter &&fmt) {
-    if (I > 0)
-      out->append(sep.data(), sep.size());
+  void operator()(std::string* out, const Tup& tup, absl::string_view sep,
+                  Formatter&& fmt) {
+    if (I > 0) out->append(sep.data(), sep.size());
     fmt(out, std::get<I>(tup));
     JoinTupleLoop<I + 1, N>()(out, tup, sep, fmt);
   }
 };
-template <size_t N> struct JoinTupleLoop<N, N> {
+template <size_t N>
+struct JoinTupleLoop<N, N> {
   template <typename Tup, typename Formatter>
-  void operator()(std::string *, const Tup &, absl::string_view, Formatter &&) {
-  }
+  void operator()(std::string*, const Tup&, absl::string_view, Formatter&&) {}
 };
 
 template <typename... T, typename Formatter>
-std::string JoinAlgorithm(const std::tuple<T...> &tup, absl::string_view sep,
-                          Formatter &&fmt) {
+std::string JoinAlgorithm(const std::tuple<T...>& tup, absl::string_view sep,
+                          Formatter&& fmt) {
   std::string result;
   JoinTupleLoop<0, sizeof...(T)>()(&result, tup, sep, fmt);
   return result;
@@ -294,31 +308,31 @@ std::string JoinRange(Iterator first, Iterator last,
 }
 
 template <typename Range, typename Formatter>
-std::string JoinRange(const Range &range, absl::string_view separator,
-                      Formatter &&fmt) {
+std::string JoinRange(const Range& range, absl::string_view separator,
+                      Formatter&& fmt) {
   using std::begin;
   using std::end;
   return JoinAlgorithm(begin(range), end(range), separator, fmt);
 }
 
 template <typename Range>
-std::string JoinRange(const Range &range, absl::string_view separator) {
+std::string JoinRange(const Range& range, absl::string_view separator) {
   using std::begin;
   using std::end;
   return JoinRange(begin(range), end(range), separator);
 }
 
 template <typename Tuple, std::size_t... I>
-std::string JoinTuple(const Tuple &value, absl::string_view separator,
+std::string JoinTuple(const Tuple& value, absl::string_view separator,
                       std::index_sequence<I...>) {
   return JoinRange(
       std::initializer_list<absl::string_view>{
-          static_cast<const AlphaNum &>(std::get<I>(value)).Piece()...},
+          static_cast<const AlphaNum&>(std::get<I>(value)).Piece()...},
       separator);
 }
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_STR_JOIN_INTERNAL_H_
+#endif  // ABSL_STRINGS_INTERNAL_STR_JOIN_INTERNAL_H_

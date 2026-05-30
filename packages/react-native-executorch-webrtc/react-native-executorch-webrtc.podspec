@@ -30,7 +30,6 @@ Pod::Spec.new do |s|
 
   s.dependency "React-Core"
   s.dependency "react-native-executorch"
-  s.dependency "opencv-rne", "~> 4.11.0"
   s.dependency 'FishjamReactNativeWebrtc'
 
   install_modules_dependencies(s)

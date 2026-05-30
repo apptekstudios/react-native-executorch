@@ -30,16 +30,16 @@ namespace strings_internal {
 // `HasAbslStringify` can reference a universal class rather than needing to be
 // copied for each new sink.
 class UnimplementedSink {
-public:
+ public:
   void Append(size_t count, char ch);
 
   void Append(string_view v);
 
   // Support `absl::Format(&sink, format, args...)`.
-  friend void AbslFormatFlush(UnimplementedSink *sink, absl::string_view v);
+  friend void AbslFormatFlush(UnimplementedSink* sink, absl::string_view v);
 };
 
-} // namespace strings_internal
+}  // namespace strings_internal
 
 // `HasAbslStringify<T>` detects if type `T` supports the `AbslStringify()`
 // customization point (see
@@ -55,10 +55,10 @@ struct HasAbslStringify : std::false_type {};
 template <typename T>
 struct HasAbslStringify<
     T, std::enable_if_t<std::is_void<decltype(AbslStringify(
-           std::declval<strings_internal::UnimplementedSink &>(),
-           std::declval<const T &>()))>::value>> : std::true_type {};
+           std::declval<strings_internal::UnimplementedSink&>(),
+           std::declval<const T&>()))>::value>> : std::true_type {};
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_HAS_ABSL_STRINGIFY_H_
+#endif  // ABSL_STRINGS_HAS_ABSL_STRINGIFY_H_

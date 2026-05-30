@@ -9,11 +9,11 @@
 #pragma once
 
 #include <c10/util/safe_numerics.h>
-#include <cstring>
 #include <executorch/runtime/core/data_loader.h>
 #include <executorch/runtime/core/error.h>
 #include <executorch/runtime/core/result.h>
 #include <executorch/runtime/platform/log.h>
+#include <cstring>
 
 namespace executorch {
 namespace extension {
@@ -26,33 +26,41 @@ namespace extension {
  * image, or to wrap data that was allocated elsewhere.
  */
 class BufferDataLoader final : public executorch::runtime::DataLoader {
-public:
-  BufferDataLoader(const void *data, size_t size)
-      : data_(reinterpret_cast<const uint8_t *>(data)), size_(size) {}
+ public:
+  BufferDataLoader(const void* data, size_t size)
+      : data_(reinterpret_cast<const uint8_t*>(data)), size_(size) {}
 
   ET_NODISCARD
-  executorch::runtime::Result<executorch::runtime::FreeableBuffer>
-  load(size_t offset, size_t size,
-       ET_UNUSED const DataLoader::SegmentInfo &segment_info) const override {
+  executorch::runtime::Result<executorch::runtime::FreeableBuffer> load(
+      size_t offset,
+      size_t size,
+      ET_UNUSED const DataLoader::SegmentInfo& segment_info) const override {
     size_t total_size;
     bool overflow = c10::add_overflows(offset, size, &total_size);
-    ET_CHECK_OR_RETURN_ERROR(!overflow && total_size <= size_, InvalidArgument,
-                             "offset %zu + size %zu > size_ %zu", offset, size,
-                             size_);
-    return executorch::runtime::FreeableBuffer(data_ + offset, size,
-                                               /*free_fn=*/nullptr);
+    ET_CHECK_OR_RETURN_ERROR(
+        !overflow && total_size <= size_,
+        InvalidArgument,
+        "offset %zu + size %zu > size_ %zu, or overflow detected",
+        offset,
+        size,
+        size_);
+    return executorch::runtime::FreeableBuffer(
+        data_ + offset, size, /*free_fn=*/nullptr);
   }
 
   ET_NODISCARD executorch::runtime::Result<size_t> size() const override {
     return size_;
   }
 
-  ET_NODISCARD executorch::runtime::Error
-  load_into(size_t offset, size_t size,
-            ET_UNUSED const SegmentInfo &segment_info,
-            void *buffer) const override {
-    ET_CHECK_OR_RETURN_ERROR(buffer != nullptr, InvalidArgument,
-                             "Destination buffer cannot be null");
+  ET_NODISCARD executorch::runtime::Error load_into(
+      size_t offset,
+      size_t size,
+      ET_UNUSED const SegmentInfo& segment_info,
+      void* buffer) const override {
+    ET_CHECK_OR_RETURN_ERROR(
+        buffer != nullptr,
+        InvalidArgument,
+        "Destination buffer cannot be null");
 
     auto result = load(offset, size, segment_info);
     if (!result.ok()) {
@@ -62,8 +70,8 @@ public:
     return executorch::runtime::Error::Ok;
   }
 
-private:
-  const uint8_t *const data_; // uint8 is easier to index into.
+ private:
+  const uint8_t* const data_; // uint8 is easier to index into.
   const size_t size_;
 };
 

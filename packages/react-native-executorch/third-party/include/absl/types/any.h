@@ -59,7 +59,7 @@
 
 #ifdef ABSL_USES_STD_ANY
 
-#include <any> // IWYU pragma: export
+#include <any>  // IWYU pragma: export
 
 namespace absl {
 ABSL_NAMESPACE_BEGIN
@@ -68,9 +68,9 @@ using std::any_cast;
 using std::bad_any_cast;
 using std::make_any;
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#else // ABSL_USES_STD_ANY
+#else  // ABSL_USES_STD_ANY
 
 #include <algorithm>
 #include <cstddef>
@@ -94,17 +94,18 @@ class any;
 //
 // Swaps two `absl::any` values. Equivalent to `x.swap(y) where `x` and `y` are
 // `absl::any` types.
-void swap(any &x, any &y) noexcept;
+void swap(any& x, any& y) noexcept;
 
 // make_any()
 //
 // Constructs an `absl::any` of type `T` with the given arguments.
-template <typename T, typename... Args> any make_any(Args &&...args);
+template <typename T, typename... Args>
+any make_any(Args&&... args);
 
 // Overload of `absl::make_any()` for constructing an `absl::any` type from an
 // initializer list.
 template <typename T, typename U, typename... Args>
-any make_any(std::initializer_list<U> il, Args &&...args);
+any make_any(std::initializer_list<U> il, Args&&... args);
 
 // any_cast()
 //
@@ -119,30 +120,33 @@ any make_any(std::initializer_list<U> il, Args &&...args);
 //
 //   absl::any my_any = std::vector<int>();
 //   absl::any_cast<std::vector<int>&>(my_any).push_back(42);
-template <typename ValueType> ValueType any_cast(const any &operand);
+template <typename ValueType>
+ValueType any_cast(const any& operand);
 
 // Overload of `any_cast()` to statically cast the value of a non-const
 // `absl::any` type to the given type. This function will throw
 // `absl::bad_any_cast` if the stored value type of the `absl::any` does not
 // match the cast.
 template <typename ValueType>
-ValueType any_cast(any &operand); // NOLINT(runtime/references)
+ValueType any_cast(any& operand);  // NOLINT(runtime/references)
 
 // Overload of `any_cast()` to statically cast the rvalue of an `absl::any`
 // type. This function will throw `absl::bad_any_cast` if the stored value type
 // of the `absl::any` does not match the cast.
-template <typename ValueType> ValueType any_cast(any &&operand);
+template <typename ValueType>
+ValueType any_cast(any&& operand);
 
 // Overload of `any_cast()` to statically cast the value of a const pointer
 // `absl::any` type to the given pointer type, or `nullptr` if the stored value
 // type of the `absl::any` does not match the cast.
 template <typename ValueType>
-const ValueType *any_cast(const any *operand) noexcept;
+const ValueType* any_cast(const any* operand) noexcept;
 
 // Overload of `any_cast()` to statically cast the value of a pointer
 // `absl::any` type to the given pointer type, or `nullptr` if the stored value
 // type of the `absl::any` does not match the cast.
-template <typename ValueType> ValueType *any_cast(any *operand) noexcept;
+template <typename ValueType>
+ValueType* any_cast(any* operand) noexcept;
 
 // -----------------------------------------------------------------------------
 // absl::any
@@ -184,10 +188,11 @@ template <typename ValueType> ValueType *any_cast(any *operand) noexcept;
 // `absl::any` is a C++11 compatible version of the C++17 `std::any` abstraction
 // and is designed to be a drop-in replacement for code compliant with C++17.
 class any {
-private:
-  template <typename T> struct IsInPlaceType;
+ private:
+  template <typename T>
+  struct IsInPlaceType;
 
-public:
+ public:
   // Constructors
 
   // Constructs an empty `absl::any` object (`any::has_value()` will return
@@ -197,14 +202,14 @@ public:
   // Copy constructs an `absl::any` object with a "contained object" of the
   // passed type of `other` (or an empty `absl::any` if `other.has_value()` is
   // `false`.
-  any(const any &other)
+  any(const any& other)
       : obj_(other.has_value() ? other.obj_->Clone()
                                : std::unique_ptr<ObjInterface>()) {}
 
   // Move constructs an `absl::any` object with a "contained object" of the
   // passed type of `other` (or an empty `absl::any` if `other.has_value()` is
   // `false`).
-  any(any &&other) noexcept = default;
+  any(any&& other) noexcept = default;
 
   // Constructs an `absl::any` object with a "contained object" of the decayed
   // type of `T`, which is initialized via `std::forward<T>(value)`.
@@ -215,44 +220,44 @@ public:
       typename T, typename VT = absl::decay_t<T>,
       absl::enable_if_t<!absl::disjunction<
           std::is_same<any, VT>, IsInPlaceType<VT>,
-          absl::negation<std::is_copy_constructible<VT>>>::value> * = nullptr>
-  any(T &&value) : obj_(new Obj<VT>(in_place, std::forward<T>(value))) {}
+          absl::negation<std::is_copy_constructible<VT> > >::value>* = nullptr>
+  any(T&& value) : obj_(new Obj<VT>(in_place, std::forward<T>(value))) {}
 
   // Constructs an `absl::any` object with a "contained object" of the decayed
   // type of `T`, which is initialized via `std::forward<T>(value)`.
   template <typename T, typename... Args, typename VT = absl::decay_t<T>,
             absl::enable_if_t<absl::conjunction<
                 std::is_copy_constructible<VT>,
-                std::is_constructible<VT, Args...>>::value> * = nullptr>
-  explicit any(in_place_type_t<T> /*tag*/, Args &&...args)
+                std::is_constructible<VT, Args...>>::value>* = nullptr>
+  explicit any(in_place_type_t<T> /*tag*/, Args&&... args)
       : obj_(new Obj<VT>(in_place, std::forward<Args>(args)...)) {}
 
   // Constructs an `absl::any` object with a "contained object" of the passed
   // type `VT` as a decayed type of `T`. `VT` is initialized as if
   // direct-non-list-initializing an object of type `VT` with the arguments
   // `initializer_list, std::forward<Args>(args)...`.
-  template <typename T, typename U, typename... Args,
-            typename VT = absl::decay_t<T>,
-            absl::enable_if_t<absl::conjunction<
-                std::is_copy_constructible<VT>,
-                std::is_constructible<VT, std::initializer_list<U> &,
-                                      Args...>>::value> * = nullptr>
+  template <
+      typename T, typename U, typename... Args, typename VT = absl::decay_t<T>,
+      absl::enable_if_t<
+          absl::conjunction<std::is_copy_constructible<VT>,
+                            std::is_constructible<VT, std::initializer_list<U>&,
+                                                  Args...>>::value>* = nullptr>
   explicit any(in_place_type_t<T> /*tag*/, std::initializer_list<U> ilist,
-               Args &&...args)
+               Args&&... args)
       : obj_(new Obj<VT>(in_place, ilist, std::forward<Args>(args)...)) {}
 
   // Assignment operators
 
   // Copy assigns an `absl::any` object with a "contained object" of the
   // passed type.
-  any &operator=(const any &rhs) {
+  any& operator=(const any& rhs) {
     any(rhs).swap(*this);
     return *this;
   }
 
   // Move assigns an `absl::any` object with a "contained object" of the
   // passed type. `rhs` is left in a valid but otherwise unspecified state.
-  any &operator=(any &&rhs) noexcept {
+  any& operator=(any&& rhs) noexcept {
     any(std::move(rhs)).swap(*this);
     return *this;
   }
@@ -261,8 +266,8 @@ public:
   template <typename T, typename VT = absl::decay_t<T>,
             absl::enable_if_t<absl::conjunction<
                 absl::negation<std::is_same<VT, any>>,
-                std::is_copy_constructible<VT>>::value> * = nullptr>
-  any &operator=(T &&rhs) {
+                std::is_copy_constructible<VT>>::value>* = nullptr>
+  any& operator=(T&& rhs) {
     any tmp(in_place_type_t<VT>(), std::forward<T>(rhs));
     tmp.swap(*this);
     return *this;
@@ -283,10 +288,10 @@ public:
   template <
       typename T, typename... Args, typename VT = absl::decay_t<T>,
       absl::enable_if_t<std::is_copy_constructible<VT>::value &&
-                        std::is_constructible<VT, Args...>::value> * = nullptr>
-  VT &emplace(Args &&...args) ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    reset(); // NOTE: reset() is required here even in the world of exceptions.
-    Obj<VT> *const object_ptr =
+                        std::is_constructible<VT, Args...>::value>* = nullptr>
+  VT& emplace(Args&&... args) ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    reset();  // NOTE: reset() is required here even in the world of exceptions.
+    Obj<VT>* const object_ptr =
         new Obj<VT>(in_place, std::forward<Args>(args)...);
     obj_ = std::unique_ptr<ObjInterface>(object_ptr);
     return object_ptr->value;
@@ -306,12 +311,12 @@ public:
   template <
       typename T, typename U, typename... Args, typename VT = absl::decay_t<T>,
       absl::enable_if_t<std::is_copy_constructible<VT>::value &&
-                        std::is_constructible<VT, std::initializer_list<U> &,
-                                              Args...>::value> * = nullptr>
-  VT &emplace(std::initializer_list<U> ilist,
-              Args &&...args) ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    reset(); // NOTE: reset() is required here even in the world of exceptions.
-    Obj<VT> *const object_ptr =
+                        std::is_constructible<VT, std::initializer_list<U>&,
+                                              Args...>::value>* = nullptr>
+  VT& emplace(std::initializer_list<U> ilist,
+              Args&&... args) ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    reset();  // NOTE: reset() is required here even in the world of exceptions.
+    Obj<VT>* const object_ptr =
         new Obj<VT>(in_place, ilist, std::forward<Args>(args)...);
     obj_ = std::unique_ptr<ObjInterface>(object_ptr);
     return object_ptr->value;
@@ -326,7 +331,7 @@ public:
   // any::swap()
   //
   // Swaps the passed value and the value of this `absl::any` object.
-  void swap(any &other) noexcept { obj_.swap(other.obj_); }
+  void swap(any& other) noexcept { obj_.swap(other.obj_); }
 
   // Observers
 
@@ -339,54 +344,55 @@ public:
 #ifdef ABSL_INTERNAL_HAS_RTTI
   // Returns: typeid(T) if *this has a contained object of type T, otherwise
   // typeid(void).
-  const std::type_info &type() const noexcept {
+  const std::type_info& type() const noexcept {
     if (has_value()) {
       return obj_->Type();
     }
 
     return typeid(void);
   }
-#endif // ABSL_INTERNAL_HAS_RTTI
+#endif  // ABSL_INTERNAL_HAS_RTTI
 
-private:
+ private:
   // Tagged type-erased abstraction for holding a cloneable object.
   class ObjInterface {
-  public:
+   public:
     virtual ~ObjInterface() = default;
     virtual std::unique_ptr<ObjInterface> Clone() const = 0;
-    virtual const void *ObjTypeId() const noexcept = 0;
+    virtual const void* ObjTypeId() const noexcept = 0;
 #ifdef ABSL_INTERNAL_HAS_RTTI
-    virtual const std::type_info &Type() const noexcept = 0;
-#endif // ABSL_INTERNAL_HAS_RTTI
+    virtual const std::type_info& Type() const noexcept = 0;
+#endif  // ABSL_INTERNAL_HAS_RTTI
   };
 
   // Hold a value of some queryable type, with an ability to Clone it.
-  template <typename T> class Obj : public ObjInterface {
-  public:
+  template <typename T>
+  class Obj : public ObjInterface {
+   public:
     template <typename... Args>
-    explicit Obj(in_place_t /*tag*/, Args &&...args)
+    explicit Obj(in_place_t /*tag*/, Args&&... args)
         : value(std::forward<Args>(args)...) {}
 
     std::unique_ptr<ObjInterface> Clone() const final {
       return std::unique_ptr<ObjInterface>(new Obj(in_place, value));
     }
 
-    const void *ObjTypeId() const noexcept final { return IdForType<T>(); }
+    const void* ObjTypeId() const noexcept final { return IdForType<T>(); }
 
 #ifdef ABSL_INTERNAL_HAS_RTTI
-    const std::type_info &Type() const noexcept final { return typeid(T); }
-#endif // ABSL_INTERNAL_HAS_RTTI
+    const std::type_info& Type() const noexcept final { return typeid(T); }
+#endif  // ABSL_INTERNAL_HAS_RTTI
 
     T value;
   };
 
   std::unique_ptr<ObjInterface> CloneObj() const {
-    if (!obj_)
-      return nullptr;
+    if (!obj_) return nullptr;
     return obj_->Clone();
   }
 
-  template <typename T> constexpr static const void *IdForType() {
+  template <typename T>
+  constexpr static const void* IdForType() {
     // Note: This type dance is to make the behavior consistent with typeid.
     using NormalizedType =
         typename std::remove_cv<typename std::remove_reference<T>::type>::type;
@@ -394,24 +400,27 @@ private:
     return base_internal::FastTypeId<NormalizedType>();
   }
 
-  const void *GetObjTypeId() const {
+  const void* GetObjTypeId() const {
     return obj_ ? obj_->ObjTypeId() : base_internal::FastTypeId<void>();
   }
 
   // `absl::any` nonmember functions //
 
   // Description at the declaration site (top of file).
-  template <typename ValueType> friend ValueType any_cast(const any &operand);
+  template <typename ValueType>
+  friend ValueType any_cast(const any& operand);
 
   // Description at the declaration site (top of file).
   template <typename ValueType>
-  friend ValueType any_cast(any &operand); // NOLINT(runtime/references)
+  friend ValueType any_cast(any& operand);  // NOLINT(runtime/references)
 
   // Description at the declaration site (top of file).
-  template <typename T> friend const T *any_cast(const any *operand) noexcept;
+  template <typename T>
+  friend const T* any_cast(const any* operand) noexcept;
 
   // Description at the declaration site (top of file).
-  template <typename T> friend T *any_cast(any *operand) noexcept;
+  template <typename T>
+  friend T* any_cast(any* operand) noexcept;
 
   std::unique_ptr<ObjInterface> obj_;
 };
@@ -422,31 +431,34 @@ private:
 
 constexpr any::any() noexcept = default;
 
-template <typename T> struct any::IsInPlaceType : std::false_type {};
+template <typename T>
+struct any::IsInPlaceType : std::false_type {};
 
 template <typename T>
 struct any::IsInPlaceType<in_place_type_t<T>> : std::true_type {};
 
-inline void swap(any &x, any &y) noexcept { x.swap(y); }
+inline void swap(any& x, any& y) noexcept { x.swap(y); }
 
 // Description at the declaration site (top of file).
-template <typename T, typename... Args> any make_any(Args &&...args) {
+template <typename T, typename... Args>
+any make_any(Args&&... args) {
   return any(in_place_type_t<T>(), std::forward<Args>(args)...);
 }
 
 // Description at the declaration site (top of file).
 template <typename T, typename U, typename... Args>
-any make_any(std::initializer_list<U> il, Args &&...args) {
+any make_any(std::initializer_list<U> il, Args&&... args) {
   return any(in_place_type_t<T>(), il, std::forward<Args>(args)...);
 }
 
 // Description at the declaration site (top of file).
-template <typename ValueType> ValueType any_cast(const any &operand) {
+template <typename ValueType>
+ValueType any_cast(const any& operand) {
   using U = typename std::remove_cv<
       typename std::remove_reference<ValueType>::type>::type;
-  static_assert(std::is_constructible<ValueType, const U &>::value,
+  static_assert(std::is_constructible<ValueType, const U&>::value,
                 "Invalid ValueType");
-  auto *const result = (any_cast<U>)(&operand);
+  auto* const result = (any_cast<U>)(&operand);
   if (result == nullptr) {
     any_internal::ThrowBadAnyCast();
   }
@@ -455,12 +467,12 @@ template <typename ValueType> ValueType any_cast(const any &operand) {
 
 // Description at the declaration site (top of file).
 template <typename ValueType>
-ValueType any_cast(any &operand) { // NOLINT(runtime/references)
+ValueType any_cast(any& operand) {  // NOLINT(runtime/references)
   using U = typename std::remove_cv<
       typename std::remove_reference<ValueType>::type>::type;
-  static_assert(std::is_constructible<ValueType, U &>::value,
+  static_assert(std::is_constructible<ValueType, U&>::value,
                 "Invalid ValueType");
-  auto *result = (any_cast<U>)(&operand);
+  auto* result = (any_cast<U>)(&operand);
   if (result == nullptr) {
     any_internal::ThrowBadAnyCast();
   }
@@ -468,37 +480,40 @@ ValueType any_cast(any &operand) { // NOLINT(runtime/references)
 }
 
 // Description at the declaration site (top of file).
-template <typename ValueType> ValueType any_cast(any &&operand) {
+template <typename ValueType>
+ValueType any_cast(any&& operand) {
   using U = typename std::remove_cv<
       typename std::remove_reference<ValueType>::type>::type;
   static_assert(std::is_constructible<ValueType, U>::value,
                 "Invalid ValueType");
-  return static_cast<ValueType>(std::move((any_cast<U &>)(operand)));
+  return static_cast<ValueType>(std::move((any_cast<U&>)(operand)));
 }
 
 // Description at the declaration site (top of file).
-template <typename T> const T *any_cast(const any *operand) noexcept {
+template <typename T>
+const T* any_cast(const any* operand) noexcept {
   using U =
       typename std::remove_cv<typename std::remove_reference<T>::type>::type;
   return operand && operand->GetObjTypeId() == any::IdForType<U>()
              ? std::addressof(
-                   static_cast<const any::Obj<U> *>(operand->obj_.get())->value)
+                   static_cast<const any::Obj<U>*>(operand->obj_.get())->value)
              : nullptr;
 }
 
 // Description at the declaration site (top of file).
-template <typename T> T *any_cast(any *operand) noexcept {
+template <typename T>
+T* any_cast(any* operand) noexcept {
   using U =
       typename std::remove_cv<typename std::remove_reference<T>::type>::type;
   return operand && operand->GetObjTypeId() == any::IdForType<U>()
              ? std::addressof(
-                   static_cast<any::Obj<U> *>(operand->obj_.get())->value)
+                   static_cast<any::Obj<U>*>(operand->obj_.get())->value)
              : nullptr;
 }
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_USES_STD_ANY
+#endif  // ABSL_USES_STD_ANY
 
-#endif // ABSL_TYPES_ANY_H_
+#endif  // ABSL_TYPES_ANY_H_

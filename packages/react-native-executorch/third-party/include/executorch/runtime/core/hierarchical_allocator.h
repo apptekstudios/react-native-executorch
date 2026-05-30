@@ -9,6 +9,7 @@
 #pragma once
 
 #include <c10/util/irange.h>
+#include <c10/util/safe_numerics.h>
 
 #include <executorch/runtime/core/memory_allocator.h>
 #include <executorch/runtime/core/result.h>
@@ -21,7 +22,7 @@ namespace runtime {
  * A group of buffers that can be used to represent a device's memory hierarchy.
  */
 class HierarchicalAllocator final {
-public:
+ public:
   /**
    * Constructs a new hierarchical allocator with the given array of buffers.
    *
@@ -36,8 +37,9 @@ public:
   /**
    * DEPRECATED: Use spans instead.
    */
-  ET_DEPRECATED HierarchicalAllocator(uint32_t n_allocators,
-                                      MemoryAllocator *allocators)
+  ET_DEPRECATED HierarchicalAllocator(
+      uint32_t n_allocators,
+      MemoryAllocator* allocators)
       : buffers_(to_spans(n_allocators, allocators)) {}
 
   /**
@@ -52,29 +54,41 @@ public:
    * @returns On success, the address of the requested byte offset into the
    *     specified buffer. On failure, a non-Ok Error.
    */
-  ET_NODISCARD Result<void *> get_offset_address(uint32_t memory_id,
-                                                 size_t offset_bytes,
-                                                 size_t size_bytes) {
+  ET_NODISCARD Result<void*> get_offset_address(
+      uint32_t memory_id,
+      size_t offset_bytes,
+      size_t size_bytes) {
     // Check for integer overflow in offset_bytes + size_bytes.
-    ET_CHECK_OR_RETURN_ERROR(size_bytes <= SIZE_MAX - offset_bytes,
-                             InvalidArgument,
-                             "Integer overflow in offset_bytes (%" ET_PRIsize_t
-                             ") + size_bytes (%" ET_PRIsize_t ")",
-                             offset_bytes, size_bytes);
-    ET_CHECK_OR_RETURN_ERROR(memory_id < buffers_.size(), InvalidArgument,
-                             "id %" PRIu32 " >= %" ET_PRIsize_t, memory_id,
-                             buffers_.size());
+    size_t end_bytes = 0;
+    ET_CHECK_OR_RETURN_ERROR(
+        !c10::add_overflows(offset_bytes, size_bytes, &end_bytes),
+        InvalidArgument,
+        "Integer overflow in offset_bytes (%" ET_PRIsize_t
+        ") + size_bytes (%" ET_PRIsize_t ")",
+        offset_bytes,
+        size_bytes);
+    ET_CHECK_OR_RETURN_ERROR(
+        memory_id < buffers_.size(),
+        InvalidArgument,
+        "id %" PRIu32 " >= %" ET_PRIsize_t,
+        memory_id,
+        buffers_.size());
     Span<uint8_t> buffer = buffers_[memory_id];
     ET_CHECK_OR_RETURN_ERROR(
-        offset_bytes + size_bytes <= buffer.size(), MemoryAllocationFailed,
+        end_bytes <= buffer.size(),
+        MemoryAllocationFailed,
         "offset_bytes (%" ET_PRIsize_t ") + size_bytes (%" ET_PRIsize_t
-        ") >= allocator size (%" ET_PRIsize_t ") "
+        ") >= allocator size (%" ET_PRIsize_t
+        ") "
         "for memory_id %" PRIu32,
-        offset_bytes, size_bytes, buffer.size(), memory_id);
+        offset_bytes,
+        size_bytes,
+        buffer.size(),
+        memory_id);
     return buffer.data() + offset_bytes;
   }
 
-private:
+ private:
   // TODO(T162089316): Remove the span array and to_spans once all users move to
   // spans. This array is necessary to hold the pointers and sizes that were
   // originally provided as MemoryAllocator instances.
@@ -82,11 +96,14 @@ private:
   // NOTE: span_array_ must be declared before buffers_ so that it isn't
   // re-initialized to zeros after initializing buffers_.
   Span<uint8_t> span_array_[kSpanArraySize];
-  Span<Span<uint8_t>> to_spans(uint32_t n_allocators,
-                               MemoryAllocator *allocators) {
-    ET_CHECK_MSG(n_allocators <= kSpanArraySize,
-                 "n_allocators %" PRIu32 " > %zu", n_allocators,
-                 kSpanArraySize);
+  Span<Span<uint8_t>> to_spans(
+      uint32_t n_allocators,
+      MemoryAllocator* allocators) {
+    ET_CHECK_MSG(
+        n_allocators <= kSpanArraySize,
+        "n_allocators %" PRIu32 " > %zu",
+        n_allocators,
+        kSpanArraySize);
     for (const auto i : c10::irange(n_allocators)) {
       span_array_[i] =
           Span<uint8_t>(allocators[i].base_address(), allocators[i].size());

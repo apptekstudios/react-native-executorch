@@ -89,41 +89,41 @@ struct alignas(1) Float8_e4m3fnuz {
  * @param _ A macro that takes two parameters: the name of a C type, and the
  *     name of the corresponding ScalarType enumerator.
  */
-#define ET_FORALL_SCALAR_TYPES(_)                                              \
-  _(uint8_t, Byte)                              /* 0 */                        \
-  _(int8_t, Char)                               /* 1 */                        \
-  _(int16_t, Short)                             /* 2 */                        \
-  _(int32_t, Int)                               /* 3 */                        \
-  _(int64_t, Long)                              /* 4 */                        \
-  _(::executorch::runtime::etensor::Half, Half) /* 5 */                        \
-  _(float, Float)                               /* 6 */                        \
-  _(double, Double)                             /* 7 */                        \
-  _(::executorch::runtime::etensor::complex<::torch::executor::Half>,          \
-    ComplexHalf)                                                    /* 8 */    \
-  _(::executorch::runtime::etensor::complex<float>, ComplexFloat)   /* 9 */    \
-  _(::executorch::runtime::etensor::complex<double>, ComplexDouble) /* 10 */   \
-  _(bool, Bool)                                                     /* 11 */   \
-  _(::executorch::runtime::etensor::qint8, QInt8)                   /* 12 */   \
-  _(::executorch::runtime::etensor::quint8, QUInt8)                 /* 13 */   \
-  _(::executorch::runtime::etensor::qint32, QInt32)                 /* 14 */   \
-  _(::executorch::runtime::etensor::BFloat16, BFloat16)             /* 15 */   \
-  _(::executorch::runtime::etensor::quint4x2, QUInt4x2)             /* 16 */   \
-  _(::executorch::runtime::etensor::quint2x4, QUInt2x4)             /* 17 */   \
-  _(::executorch::runtime::etensor::bits1x8, Bits1x8)               /* 18 */   \
-  _(::executorch::runtime::etensor::bits2x4, Bits2x4)               /* 19 */   \
-  _(::executorch::runtime::etensor::bits4x2, Bits4x2)               /* 20 */   \
-  _(::executorch::runtime::etensor::bits8, Bits8)                   /* 21 */   \
-  _(::executorch::runtime::etensor::bits16, Bits16)                 /* 22 */   \
-  _(::executorch::runtime::etensor::unused_dtype::Float8_e5m2,                 \
-    Float8_e5m2) /* 23 */                                                      \
-  _(::executorch::runtime::etensor::unused_dtype::Float8_e4m3fn,               \
-    Float8_e4m3fn) /* 24 */                                                    \
-  _(::executorch::runtime::etensor::unused_dtype::Float8_e5m2fnuz,             \
-    Float8_e5m2fnuz) /* 25 */                                                  \
-  _(::executorch::runtime::etensor::unused_dtype::Float8_e4m3fnuz,             \
-    Float8_e4m3fnuz)  /* 26 */                                                 \
-  _(uint16_t, UInt16) /* 27 */                                                 \
-  _(uint32_t, UInt32) /* 28 */                                                 \
+#define ET_FORALL_SCALAR_TYPES(_)                                            \
+  _(uint8_t, Byte) /* 0 */                                                   \
+  _(int8_t, Char) /* 1 */                                                    \
+  _(int16_t, Short) /* 2 */                                                  \
+  _(int32_t, Int) /* 3 */                                                    \
+  _(int64_t, Long) /* 4 */                                                   \
+  _(::executorch::runtime::etensor::Half, Half) /* 5 */                      \
+  _(float, Float) /* 6 */                                                    \
+  _(double, Double) /* 7 */                                                  \
+  _(::executorch::runtime::etensor::complex<::torch::executor::Half>,        \
+    ComplexHalf) /* 8 */                                                     \
+  _(::executorch::runtime::etensor::complex<float>, ComplexFloat) /* 9 */    \
+  _(::executorch::runtime::etensor::complex<double>, ComplexDouble) /* 10 */ \
+  _(bool, Bool) /* 11 */                                                     \
+  _(::executorch::runtime::etensor::qint8, QInt8) /* 12 */                   \
+  _(::executorch::runtime::etensor::quint8, QUInt8) /* 13 */                 \
+  _(::executorch::runtime::etensor::qint32, QInt32) /* 14 */                 \
+  _(::executorch::runtime::etensor::BFloat16, BFloat16) /* 15 */             \
+  _(::executorch::runtime::etensor::quint4x2, QUInt4x2) /* 16 */             \
+  _(::executorch::runtime::etensor::quint2x4, QUInt2x4) /* 17 */             \
+  _(::executorch::runtime::etensor::bits1x8, Bits1x8) /* 18 */               \
+  _(::executorch::runtime::etensor::bits2x4, Bits2x4) /* 19 */               \
+  _(::executorch::runtime::etensor::bits4x2, Bits4x2) /* 20 */               \
+  _(::executorch::runtime::etensor::bits8, Bits8) /* 21 */                   \
+  _(::executorch::runtime::etensor::bits16, Bits16) /* 22 */                 \
+  _(::executorch::runtime::etensor::unused_dtype::Float8_e5m2,               \
+    Float8_e5m2) /* 23 */                                                    \
+  _(::executorch::runtime::etensor::unused_dtype::Float8_e4m3fn,             \
+    Float8_e4m3fn) /* 24 */                                                  \
+  _(::executorch::runtime::etensor::unused_dtype::Float8_e5m2fnuz,           \
+    Float8_e5m2fnuz) /* 25 */                                                \
+  _(::executorch::runtime::etensor::unused_dtype::Float8_e4m3fnuz,           \
+    Float8_e4m3fnuz) /* 26 */                                                \
+  _(uint16_t, UInt16) /* 27 */                                               \
+  _(uint32_t, UInt32) /* 28 */                                               \
   _(uint64_t, UInt64) /* 29 */
 
 /**

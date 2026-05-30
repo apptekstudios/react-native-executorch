@@ -33,8 +33,8 @@ namespace strings_internal {
 // being exactly halfway between.)
 double Pow10(int exp);
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_POW10_HELPER_H_
+#endif  // ABSL_STRINGS_INTERNAL_POW10_HELPER_H_

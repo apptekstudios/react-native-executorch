@@ -34,7 +34,8 @@ constexpr int kMaxSmallPowerOfFive = 13;
 // The largest power that 10 that can be raised to, and still fit in a uint32_t.
 constexpr int kMaxSmallPowerOfTen = 9;
 
-ABSL_DLL extern const uint32_t kFiveToNth[kMaxSmallPowerOfFive + 1];
+ABSL_DLL extern const uint32_t
+    kFiveToNth[kMaxSmallPowerOfFive + 1];
 ABSL_DLL extern const uint32_t kTenToNth[kMaxSmallPowerOfTen + 1];
 
 // Large, fixed-width unsigned integer.
@@ -52,16 +53,15 @@ ABSL_DLL extern const uint32_t kTenToNth[kMaxSmallPowerOfTen + 1];
 //
 // This is an internal class.  Some methods live in the .cc file, and are
 // instantiated only for the values of max_words we need.
-template <int max_words> class BigUnsigned {
-public:
+template <int max_words>
+class BigUnsigned {
+ public:
   static_assert(max_words == 4 || max_words == 84,
                 "unsupported max_words value");
 
   BigUnsigned() : size_(0), words_{} {}
   explicit constexpr BigUnsigned(uint64_t v)
-      : size_((v >> 32) ? 2
-              : v       ? 1
-                        : 0),
+      : size_((v >> 32) ? 2 : v ? 1 : 0),
         words_{static_cast<uint32_t>(v & 0xffffffffu),
                static_cast<uint32_t>(v >> 32)} {}
 
@@ -86,7 +86,7 @@ public:
   //
   // Returns the associated decimal exponent.  The value of the parsed float is
   // exactly *this * 10**exponent.
-  int ReadFloatMantissa(const ParsedFloat &fp, int significant_digits);
+  int ReadFloatMantissa(const ParsedFloat& fp, int significant_digits);
 
   // Returns the number of decimal digits of precision this type provides.  All
   // numbers with this many decimal digits or fewer are representable by this
@@ -134,6 +134,7 @@ public:
       std::fill_n(words_, word_shift, 0u);
     }
   }
+
 
   // Multiplies by v in-place.
   void MultiplyBy(uint32_t v) {
@@ -200,7 +201,8 @@ public:
   static BigUnsigned FiveToTheNth(int n);
 
   // Multiplies by another BigUnsigned, in-place.
-  template <int M> void MultiplyBy(const BigUnsigned<M> &other) {
+  template <int M>
+  void MultiplyBy(const BigUnsigned<M>& other) {
     MultiplyBy(other.size(), other.words());
   }
 
@@ -223,9 +225,9 @@ public:
   std::string ToString() const;
 
   int size() const { return size_; }
-  const uint32_t *words() const { return words_; }
+  const uint32_t* words() const { return words_; }
 
-private:
+ private:
   // Reads the number between [begin, end), possibly containing a decimal point,
   // into this BigUnsigned.
   //
@@ -242,7 +244,7 @@ private:
   // account for the decimal point and for dropped significant digits.  After
   // this function returns,
   //   actual_value_of_parsed_string ~= *this * 10**exponent_adjustment.
-  int ReadDigits(const char *begin, const char *end, int significant_digits);
+  int ReadDigits(const char* begin, const char* end, int significant_digits);
 
   // Performs a step of big integer multiplication.  This computes the full
   // (64-bit-wide) values that should be added at the given index (step), and
@@ -272,10 +274,10 @@ private:
   // `original_size` is the size_ of *this before the first call to
   // MultiplyStep().  `other_words` and `other_size` are the contents of our
   // operand.  `step` is the step to perform, as described above.
-  void MultiplyStep(int original_size, const uint32_t *other_words,
+  void MultiplyStep(int original_size, const uint32_t* other_words,
                     int other_size, int step);
 
-  void MultiplyBy(int other_size, const uint32_t *other_words) {
+  void MultiplyBy(int other_size, const uint32_t* other_words) {
     const int original_size = size_;
     const int first_step =
         (std::min)(original_size + other_size - 2, max_words - 1);
@@ -327,7 +329,8 @@ private:
 
   // Divide this in place by a constant divisor.  Returns the remainder of the
   // division.
-  template <uint32_t divisor> uint32_t DivMod() {
+  template <uint32_t divisor>
+  uint32_t DivMod() {
     uint64_t accumulator = 0;
     for (int i = size_ - 1; i >= 0; --i) {
       accumulator <<= 32;
@@ -357,7 +360,7 @@ private:
 //
 // Returns -1 if lhs < rhs, 0 if lhs == rhs, and 1 if lhs > rhs.
 template <int N, int M>
-int Compare(const BigUnsigned<N> &lhs, const BigUnsigned<M> &rhs) {
+int Compare(const BigUnsigned<N>& lhs, const BigUnsigned<M>& rhs) {
   int limit = (std::max)(lhs.size(), rhs.size());
   for (int i = limit - 1; i >= 0; --i) {
     const uint32_t lhs_word = lhs.GetWord(i);
@@ -372,7 +375,7 @@ int Compare(const BigUnsigned<N> &lhs, const BigUnsigned<M> &rhs) {
 }
 
 template <int N, int M>
-bool operator==(const BigUnsigned<N> &lhs, const BigUnsigned<M> &rhs) {
+bool operator==(const BigUnsigned<N>& lhs, const BigUnsigned<M>& rhs) {
   int limit = (std::max)(lhs.size(), rhs.size());
   for (int i = 0; i < limit; ++i) {
     if (lhs.GetWord(i) != rhs.GetWord(i)) {
@@ -383,31 +386,31 @@ bool operator==(const BigUnsigned<N> &lhs, const BigUnsigned<M> &rhs) {
 }
 
 template <int N, int M>
-bool operator!=(const BigUnsigned<N> &lhs, const BigUnsigned<M> &rhs) {
+bool operator!=(const BigUnsigned<N>& lhs, const BigUnsigned<M>& rhs) {
   return !(lhs == rhs);
 }
 
 template <int N, int M>
-bool operator<(const BigUnsigned<N> &lhs, const BigUnsigned<M> &rhs) {
+bool operator<(const BigUnsigned<N>& lhs, const BigUnsigned<M>& rhs) {
   return Compare(lhs, rhs) == -1;
 }
 
 template <int N, int M>
-bool operator>(const BigUnsigned<N> &lhs, const BigUnsigned<M> &rhs) {
+bool operator>(const BigUnsigned<N>& lhs, const BigUnsigned<M>& rhs) {
   return rhs < lhs;
 }
 template <int N, int M>
-bool operator<=(const BigUnsigned<N> &lhs, const BigUnsigned<M> &rhs) {
+bool operator<=(const BigUnsigned<N>& lhs, const BigUnsigned<M>& rhs) {
   return !(rhs < lhs);
 }
 template <int N, int M>
-bool operator>=(const BigUnsigned<N> &lhs, const BigUnsigned<M> &rhs) {
+bool operator>=(const BigUnsigned<N>& lhs, const BigUnsigned<M>& rhs) {
   return !(lhs < rhs);
 }
 
 // Output operator for BigUnsigned, for testing purposes only.
 template <int N>
-std::ostream &operator<<(std::ostream &os, const BigUnsigned<N> &num) {
+std::ostream& operator<<(std::ostream& os, const BigUnsigned<N>& num) {
   return os << num.ToString();
 }
 
@@ -423,8 +426,8 @@ std::ostream &operator<<(std::ostream &os, const BigUnsigned<N> &num) {
 extern template class BigUnsigned<4>;
 extern template class BigUnsigned<84>;
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_STRINGS_INTERNAL_CHARCONV_BIGINT_H_
+#endif  // ABSL_STRINGS_INTERNAL_CHARCONV_BIGINT_H_

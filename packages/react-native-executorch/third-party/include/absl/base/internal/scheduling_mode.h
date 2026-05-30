@@ -47,12 +47,12 @@ namespace base_internal {
 // This means that it is invalid to to acquire a SCHEDULE_COOPERATIVE_AND_KERNEL
 // resource if a SCHEDULE_KERNEL_ONLY resource is already held.
 enum SchedulingMode {
-  SCHEDULE_KERNEL_ONLY = 0,        // Allow scheduling only the host OS.
-  SCHEDULE_COOPERATIVE_AND_KERNEL, // Also allow cooperative scheduling.
+  SCHEDULE_KERNEL_ONLY = 0,         // Allow scheduling only the host OS.
+  SCHEDULE_COOPERATIVE_AND_KERNEL,  // Also allow cooperative scheduling.
 };
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_INTERNAL_SCHEDULING_MODE_H_
+#endif  // ABSL_BASE_INTERNAL_SCHEDULING_MODE_H_

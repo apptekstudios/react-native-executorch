@@ -25,20 +25,20 @@ using ::executorch::ET_RUNTIME_NAMESPACE::TensorInfo;
  * RAII helper that frees a set of buffers when destroyed. Movable.
  */
 class BufferCleanup final {
-public:
+ public:
   /**
    * Takes ownership of `buffers.data()` and the elements of `buffers`, which
    * each will be passed to `free()` when the object is destroyed.
    */
-  explicit BufferCleanup(executorch::runtime::Span<void *> buffers)
+  explicit BufferCleanup(executorch::runtime::Span<void*> buffers)
       : buffers_(buffers) {}
 
   /**
    * Move ctor. Takes ownership of the data previously owned by `rhs`, leaving
    * `rhs` with an empty list of buffers.
    */
-  BufferCleanup(BufferCleanup &&rhs) noexcept : buffers_(rhs.buffers_) {
-    rhs.buffers_ = executorch::runtime::Span<void *>();
+  BufferCleanup(BufferCleanup&& rhs) noexcept : buffers_(rhs.buffers_) {
+    rhs.buffers_ = executorch::runtime::Span<void*>();
   }
 
   ~BufferCleanup() {
@@ -48,13 +48,13 @@ public:
     free(buffers_.data());
   }
 
-private:
+ private:
   // Delete other rule-of-five methods.
-  BufferCleanup(const BufferCleanup &) = delete;
-  BufferCleanup &operator=(const BufferCleanup &) = delete;
-  BufferCleanup &operator=(BufferCleanup &&) noexcept = delete;
+  BufferCleanup(const BufferCleanup&) = delete;
+  BufferCleanup& operator=(const BufferCleanup&) = delete;
+  BufferCleanup& operator=(BufferCleanup&&) noexcept = delete;
 
-  executorch::runtime::Span<void *> buffers_;
+  executorch::runtime::Span<void*> buffers_;
 };
 
 /// Defines options for `prepare_input_tensors()`.
@@ -86,17 +86,21 @@ struct PrepareInputTensorsOptions {
  * @returns An error on failure.
  */
 executorch::runtime::Result<BufferCleanup> prepare_input_tensors(
-    Method &method, PrepareInputTensorsOptions options = {},
-    const std::vector<std::pair<char *, size_t>> &input_buffers = {});
+    Method& method,
+    PrepareInputTensorsOptions options = {},
+    const std::vector<std::pair<char*, size_t>>& input_buffers = {});
 
 namespace internal {
 /**
  * INTERNAL-ONLY: Creates a Tensor using the provided shape and buffer,
  * fills it with ones by default, and sets the input at `input_index`.
  */
-executorch::runtime::Error
-fill_and_set_input(Method &method, TensorInfo &tensor_meta, size_t input_index,
-                   void *data_ptr, bool fill_tensor = true);
+executorch::runtime::Error fill_and_set_input(
+    Method& method,
+    TensorInfo& tensor_meta,
+    size_t input_index,
+    void* data_ptr,
+    bool fill_tensor = true);
 } // namespace internal
 
 } // namespace extension

@@ -1,3 +1,15 @@
 *.pbxproj -text
 # specific for windows script files
 *.bat text eol=crlf
+
+# Vendored native binaries are committed inline (not Git LFS). GitHub's
+# public-fork policy blocks LFS object uploads, so the static archives and
+# xcframework Mach-O binaries that ship in third-party/ios/ have to live in
+# the git pack directly. `!filter !merge !diff` explicitly clears the LFS
+# attributes — without that, an inherited or accidentally re-added
+# `filter=lfs` would re-engage the smudge/clean filters and break future
+# checkouts.
+*.a              !text !filter !merge !diff
+*.so             !text !filter !merge !diff
+**/ExecutorchLib !text !filter !merge !diff
+**/opencv2       !text !filter !merge !diff

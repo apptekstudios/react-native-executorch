@@ -86,9 +86,9 @@
 // have an implicit 'this' argument, the arguments of such methods
 // should be counted from two, not one."
 #if ABSL_HAVE_ATTRIBUTE(format) || (defined(__GNUC__) && !defined(__clang__))
-#define ABSL_PRINTF_ATTRIBUTE(string_index, first_to_check)                    \
+#define ABSL_PRINTF_ATTRIBUTE(string_index, first_to_check) \
   __attribute__((__format__(__printf__, string_index, first_to_check)))
-#define ABSL_SCANF_ATTRIBUTE(string_index, first_to_check)                     \
+#define ABSL_SCANF_ATTRIBUTE(string_index, first_to_check) \
   __attribute__((__format__(__scanf__, string_index, first_to_check)))
 #else
 #define ABSL_PRINTF_ATTRIBUTE(string_index, first_to_check)
@@ -99,7 +99,7 @@
 // ABSL_ATTRIBUTE_NOINLINE
 //
 // Forces functions to either inline or not inline. Introduced in gcc 3.1.
-#if ABSL_HAVE_ATTRIBUTE(always_inline) ||                                      \
+#if ABSL_HAVE_ATTRIBUTE(always_inline) || \
     (defined(__GNUC__) && !defined(__clang__))
 #define ABSL_ATTRIBUTE_ALWAYS_INLINE __attribute__((always_inline))
 #define ABSL_HAVE_ATTRIBUTE_ALWAYS_INLINE 1
@@ -123,7 +123,7 @@
 #define ABSL_ATTRIBUTE_NO_TAIL_CALL __attribute__((disable_tail_calls))
 #elif defined(__GNUC__) && !defined(__clang__) && !defined(__e2k__)
 #define ABSL_HAVE_ATTRIBUTE_NO_TAIL_CALL 1
-#define ABSL_ATTRIBUTE_NO_TAIL_CALL                                            \
+#define ABSL_ATTRIBUTE_NO_TAIL_CALL \
   __attribute__((optimize("no-optimize-sibling-calls")))
 #else
 #define ABSL_ATTRIBUTE_NO_TAIL_CALL
@@ -138,11 +138,11 @@
 // for further information. Weak attributes do not work across DLL boundary.
 // The MinGW compiler doesn't complain about the weak attribute until the link
 // step, presumably because Windows doesn't use ELF binaries.
-#if (ABSL_HAVE_ATTRIBUTE(weak) ||                                              \
-     (defined(__GNUC__) && !defined(__clang__))) &&                            \
-    (!defined(_WIN32) ||                                                       \
-     (defined(__clang__) && __clang_major__ >= 9 &&                            \
-      !defined(ABSL_BUILD_DLL) && !defined(ABSL_CONSUME_DLL))) &&              \
+#if (ABSL_HAVE_ATTRIBUTE(weak) ||                                 \
+     (defined(__GNUC__) && !defined(__clang__))) &&               \
+    (!defined(_WIN32) ||                                          \
+     (defined(__clang__) && __clang_major__ >= 9 &&               \
+      !defined(ABSL_BUILD_DLL) && !defined(ABSL_CONSUME_DLL))) && \
     !defined(__MINGW32__)
 #undef ABSL_ATTRIBUTE_WEAK
 #define ABSL_ATTRIBUTE_WEAK __attribute__((weak))
@@ -218,10 +218,10 @@
 // out of bounds or does other scary things with memory.
 // NOTE: GCC supports AddressSanitizer(asan) since 4.8.
 // https://gcc.gnu.org/gcc-4.8/changes.html
-#if defined(ABSL_HAVE_ADDRESS_SANITIZER) &&                                    \
+#if defined(ABSL_HAVE_ADDRESS_SANITIZER) && \
     ABSL_HAVE_ATTRIBUTE(no_sanitize_address)
 #define ABSL_ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
-#elif defined(ABSL_HAVE_ADDRESS_SANITIZER) && defined(_MSC_VER) &&             \
+#elif defined(ABSL_HAVE_ADDRESS_SANITIZER) && defined(_MSC_VER) && \
     _MSC_VER >= 1928
 // https://docs.microsoft.com/en-us/cpp/cpp/no-sanitize-address
 #define ABSL_ATTRIBUTE_NO_SANITIZE_ADDRESS __declspec(no_sanitize_address)
@@ -230,7 +230,7 @@
 // features to detect similar bugs with less CPU and memory overhead.
 // NOTE: GCC supports HWAddressSanitizer(hwasan) since 11.
 // https://gcc.gnu.org/gcc-11/changes.html
-#define ABSL_ATTRIBUTE_NO_SANITIZE_ADDRESS                                     \
+#define ABSL_ATTRIBUTE_NO_SANITIZE_ADDRESS \
   __attribute__((no_sanitize("hwaddress")))
 #else
 #define ABSL_ATTRIBUTE_NO_SANITIZE_ADDRESS
@@ -268,10 +268,10 @@
 // NOTE: GCC supports UndefinedBehaviorSanitizer(ubsan) since 4.9.
 // https://gcc.gnu.org/gcc-4.9/changes.html
 #if ABSL_HAVE_ATTRIBUTE(no_sanitize_undefined)
-#define ABSL_ATTRIBUTE_NO_SANITIZE_UNDEFINED                                   \
+#define ABSL_ATTRIBUTE_NO_SANITIZE_UNDEFINED \
   __attribute__((no_sanitize_undefined))
 #elif ABSL_HAVE_ATTRIBUTE(no_sanitize)
-#define ABSL_ATTRIBUTE_NO_SANITIZE_UNDEFINED                                   \
+#define ABSL_ATTRIBUTE_NO_SANITIZE_UNDEFINED \
   __attribute__((no_sanitize("undefined")))
 #else
 #define ABSL_ATTRIBUTE_NO_SANITIZE_UNDEFINED
@@ -292,7 +292,7 @@
 // Tells the SafeStack to not instrument a given function.
 // See https://clang.llvm.org/docs/SafeStack.html for details.
 #if ABSL_HAVE_ATTRIBUTE(no_sanitize)
-#define ABSL_ATTRIBUTE_NO_SANITIZE_SAFESTACK                                   \
+#define ABSL_ATTRIBUTE_NO_SANITIZE_SAFESTACK \
   __attribute__((no_sanitize("safe-stack")))
 #else
 #define ABSL_ATTRIBUTE_NO_SANITIZE_SAFESTACK
@@ -313,8 +313,8 @@
 // a prerequisite. Labeled sections are not supported on Darwin/iOS.
 #ifdef ABSL_HAVE_ATTRIBUTE_SECTION
 #error ABSL_HAVE_ATTRIBUTE_SECTION cannot be directly set
-#elif (ABSL_HAVE_ATTRIBUTE(section) ||                                         \
-       (defined(__GNUC__) && !defined(__clang__))) &&                          \
+#elif (ABSL_HAVE_ATTRIBUTE(section) ||                \
+       (defined(__GNUC__) && !defined(__clang__))) && \
     !defined(__APPLE__) && ABSL_HAVE_ATTRIBUTE_WEAK
 #define ABSL_HAVE_ATTRIBUTE_SECTION 1
 
@@ -327,7 +327,7 @@
 // whatever section its caller is placed into.
 //
 #ifndef ABSL_ATTRIBUTE_SECTION
-#define ABSL_ATTRIBUTE_SECTION(name)                                           \
+#define ABSL_ATTRIBUTE_SECTION(name) \
   __attribute__((section(#name))) __attribute__((noinline))
 #endif
 
@@ -357,8 +357,8 @@
 // a no-op on ELF but not on Mach-O.
 //
 #ifndef ABSL_DECLARE_ATTRIBUTE_SECTION_VARS
-#define ABSL_DECLARE_ATTRIBUTE_SECTION_VARS(name)                              \
-  extern char __start_##name[] ABSL_ATTRIBUTE_WEAK;                            \
+#define ABSL_DECLARE_ATTRIBUTE_SECTION_VARS(name)   \
+  extern char __start_##name[] ABSL_ATTRIBUTE_WEAK; \
   extern char __stop_##name[] ABSL_ATTRIBUTE_WEAK
 #endif
 #ifndef ABSL_DEFINE_ATTRIBUTE_SECTION_VARS
@@ -374,12 +374,12 @@
 // One must ABSL_DECLARE_ATTRIBUTE_SECTION_VARS(name) for this to compile and
 // link.
 //
-#define ABSL_ATTRIBUTE_SECTION_START(name)                                     \
+#define ABSL_ATTRIBUTE_SECTION_START(name) \
   (reinterpret_cast<void *>(__start_##name))
-#define ABSL_ATTRIBUTE_SECTION_STOP(name)                                      \
+#define ABSL_ATTRIBUTE_SECTION_STOP(name) \
   (reinterpret_cast<void *>(__stop_##name))
 
-#else // !ABSL_HAVE_ATTRIBUTE_SECTION
+#else  // !ABSL_HAVE_ATTRIBUTE_SECTION
 
 #define ABSL_HAVE_ATTRIBUTE_SECTION 0
 
@@ -392,24 +392,24 @@
 #define ABSL_ATTRIBUTE_SECTION_START(name) (reinterpret_cast<void *>(0))
 #define ABSL_ATTRIBUTE_SECTION_STOP(name) (reinterpret_cast<void *>(0))
 
-#endif // ABSL_ATTRIBUTE_SECTION
+#endif  // ABSL_ATTRIBUTE_SECTION
 
 // ABSL_ATTRIBUTE_STACK_ALIGN_FOR_OLD_LIBC
 //
 // Support for aligning the stack on 32-bit x86.
-#if ABSL_HAVE_ATTRIBUTE(force_align_arg_pointer) ||                            \
+#if ABSL_HAVE_ATTRIBUTE(force_align_arg_pointer) || \
     (defined(__GNUC__) && !defined(__clang__))
 #if defined(__i386__)
-#define ABSL_ATTRIBUTE_STACK_ALIGN_FOR_OLD_LIBC                                \
+#define ABSL_ATTRIBUTE_STACK_ALIGN_FOR_OLD_LIBC \
   __attribute__((force_align_arg_pointer))
 #define ABSL_REQUIRE_STACK_ALIGN_TRAMPOLINE (0)
 #elif defined(__x86_64__)
 #define ABSL_REQUIRE_STACK_ALIGN_TRAMPOLINE (1)
 #define ABSL_ATTRIBUTE_STACK_ALIGN_FOR_OLD_LIBC
-#else // !__i386__ && !__x86_64
+#else  // !__i386__ && !__x86_64
 #define ABSL_REQUIRE_STACK_ALIGN_TRAMPOLINE (0)
 #define ABSL_ATTRIBUTE_STACK_ALIGN_FOR_OLD_LIBC
-#endif // __i386__
+#endif  // __i386__
 #else
 #define ABSL_ATTRIBUTE_STACK_ALIGN_FOR_OLD_LIBC
 #define ABSL_REQUIRE_STACK_ALIGN_TRAMPOLINE (0)
@@ -515,12 +515,12 @@
 //
 // XRay isn't currently supported on Android:
 // https://github.com/android/ndk/issues/368
-#if ABSL_HAVE_CPP_ATTRIBUTE(clang::xray_always_instrument) &&                  \
+#if ABSL_HAVE_CPP_ATTRIBUTE(clang::xray_always_instrument) && \
     !defined(ABSL_NO_XRAY_ATTRIBUTES) && !defined(__ANDROID__)
 #define ABSL_XRAY_ALWAYS_INSTRUMENT [[clang::xray_always_instrument]]
 #define ABSL_XRAY_NEVER_INSTRUMENT [[clang::xray_never_instrument]]
 #if ABSL_HAVE_CPP_ATTRIBUTE(clang::xray_log_args)
-#define ABSL_XRAY_LOG_ARGS(N)                                                  \
+#define ABSL_XRAY_LOG_ARGS(N) \
   [[clang::xray_always_instrument, clang::xray_log_args(N)]]
 #else
 #define ABSL_XRAY_LOG_ARGS(N) [[clang::xray_always_instrument]]
@@ -654,8 +654,8 @@
 #elif ABSL_HAVE_CPP_ATTRIBUTE(gnu::fallthrough)
 #define ABSL_FALLTHROUGH_INTENDED [[gnu::fallthrough]]
 #else
-#define ABSL_FALLTHROUGH_INTENDED                                              \
-  do {                                                                         \
+#define ABSL_FALLTHROUGH_INTENDED \
+  do {                            \
   } while (0)
 #endif
 
@@ -704,20 +704,20 @@
 // ABSL_INTERNAL_RESTORE_DEPRECATED_DECLARATION_WARNING
 #if defined(__GNUC__) || defined(__clang__)
 // Clang also supports these GCC pragmas.
-#define ABSL_INTERNAL_DISABLE_DEPRECATED_DECLARATION_WARNING                   \
-  _Pragma("GCC diagnostic push")                                               \
-      _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
-#define ABSL_INTERNAL_RESTORE_DEPRECATED_DECLARATION_WARNING                   \
+#define ABSL_INTERNAL_DISABLE_DEPRECATED_DECLARATION_WARNING \
+  _Pragma("GCC diagnostic push")             \
+  _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
+#define ABSL_INTERNAL_RESTORE_DEPRECATED_DECLARATION_WARNING \
   _Pragma("GCC diagnostic pop")
 #elif defined(_MSC_VER)
-#define ABSL_INTERNAL_DISABLE_DEPRECATED_DECLARATION_WARNING                   \
+#define ABSL_INTERNAL_DISABLE_DEPRECATED_DECLARATION_WARNING \
   _Pragma("warning(push)") _Pragma("warning(disable: 4996)")
-#define ABSL_INTERNAL_RESTORE_DEPRECATED_DECLARATION_WARNING                   \
+#define ABSL_INTERNAL_RESTORE_DEPRECATED_DECLARATION_WARNING \
   _Pragma("warning(pop)")
 #else
 #define ABSL_INTERNAL_DISABLE_DEPRECATED_DECLARATION_WARNING
 #define ABSL_INTERNAL_RESTORE_DEPRECATED_DECLARATION_WARNING
-#endif // defined(__GNUC__) || defined(__clang__)
+#endif  // defined(__GNUC__) || defined(__clang__)
 
 // ABSL_CONST_INIT
 //
@@ -854,7 +854,7 @@
 // See the following links for details:
 // https://reviews.llvm.org/D64448
 // https://lists.llvm.org/pipermail/cfe-dev/2018-November/060355.html
-#if ABSL_HAVE_CPP_ATTRIBUTE(gsl::Pointer) &&                                   \
+#if ABSL_HAVE_CPP_ATTRIBUTE(gsl::Pointer) && \
     (!defined(__clang_major__) || __clang_major__ >= 13)
 #define ABSL_ATTRIBUTE_VIEW [[gsl::Pointer]]
 #else
@@ -885,7 +885,7 @@
 // See the following links for details:
 // https://reviews.llvm.org/D64448
 // https://lists.llvm.org/pipermail/cfe-dev/2018-November/060355.html
-#if ABSL_HAVE_CPP_ATTRIBUTE(gsl::Owner) &&                                     \
+#if ABSL_HAVE_CPP_ATTRIBUTE(gsl::Owner) && \
     (!defined(__clang_major__) || __clang_major__ >= 13)
 #define ABSL_ATTRIBUTE_OWNER [[gsl::Owner]]
 #else
@@ -955,8 +955,7 @@
 // overriding the compiler flag.
 //
 // See https://clang.llvm.org/docs/AttributeReference.html#uninitialized
-// and
-// https://gcc.gnu.org/onlinedocs/gcc/Common-Variable-Attributes.html#index-uninitialized-variable-attribute
+// and https://gcc.gnu.org/onlinedocs/gcc/Common-Variable-Attributes.html#index-uninitialized-variable-attribute
 #if ABSL_HAVE_CPP_ATTRIBUTE(clang::uninitialized)
 #define ABSL_ATTRIBUTE_UNINITIALIZED [[clang::uninitialized]]
 #elif ABSL_HAVE_CPP_ATTRIBUTE(gnu::uninitialized)
@@ -995,4 +994,4 @@
 #define ABSL_ATTRIBUTE_WARN_UNUSED
 #endif
 
-#endif // ABSL_BASE_ATTRIBUTES_H_
+#endif  // ABSL_BASE_ATTRIBUTES_H_

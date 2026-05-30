@@ -51,11 +51,11 @@ using std::invoke;
 using std::invoke_result_t;
 using std::is_invocable_r;
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#else // ABSL_INTERNAL_CPLUSPLUS_LANG >= 201703L
+#else  // ABSL_INTERNAL_CPLUSPLUS_LANG >= 201703L
 
 #include <algorithm>
 #include <type_traits>
@@ -78,7 +78,8 @@ namespace base_internal {
 // By separating the clause selection logic from invocation we make sure that
 // Invoke() does exactly what the standard says.
 
-template <typename Derived> struct StrippedAccept {
+template <typename Derived>
+struct StrippedAccept {
   template <typename... Args>
   struct Accept : Derived::template AcceptImpl<typename std::remove_cv<
                       typename std::remove_reference<Args>::type>::type...> {};
@@ -88,7 +89,8 @@ template <typename Derived> struct StrippedAccept {
 // and t1 is an object of type T or a reference to an object of type T or a
 // reference to an object of a type derived from T.
 struct MemFunAndRef : StrippedAccept<MemFunAndRef> {
-  template <typename... Args> struct AcceptImpl : std::false_type {};
+  template <typename... Args>
+  struct AcceptImpl : std::false_type {};
 
   template <typename MemFunType, typename C, typename Obj, typename... Args>
   struct AcceptImpl<MemFunType C::*, Obj, Args...>
@@ -99,7 +101,7 @@ struct MemFunAndRef : StrippedAccept<MemFunAndRef> {
   template <typename MemFun, typename Obj, typename... Args>
   static decltype((std::declval<Obj>().*
                    std::declval<MemFun>())(std::declval<Args>()...))
-  Invoke(MemFun &&mem_fun, Obj &&obj, Args &&...args) {
+  Invoke(MemFun&& mem_fun, Obj&& obj, Args&&... args) {
 // Ignore bogus GCC warnings on this line.
 // See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101436 for similar example.
 #if ABSL_INTERNAL_HAVE_MIN_GNUC_VERSION(11, 0)
@@ -118,7 +120,8 @@ struct MemFunAndRef : StrippedAccept<MemFunAndRef> {
 // ((*t1).*f)(t2, ..., tN) when f is a pointer to a member function of a
 // class T and t1 is not one of the types described in the previous item.
 struct MemFunAndPtr : StrippedAccept<MemFunAndPtr> {
-  template <typename... Args> struct AcceptImpl : std::false_type {};
+  template <typename... Args>
+  struct AcceptImpl : std::false_type {};
 
   template <typename MemFunType, typename C, typename Ptr, typename... Args>
   struct AcceptImpl<MemFunType C::*, Ptr, Args...>
@@ -129,7 +132,7 @@ struct MemFunAndPtr : StrippedAccept<MemFunAndPtr> {
   template <typename MemFun, typename Ptr, typename... Args>
   static decltype(((*std::declval<Ptr>()).*
                    std::declval<MemFun>())(std::declval<Args>()...))
-  Invoke(MemFun &&mem_fun, Ptr &&ptr, Args &&...args) {
+  Invoke(MemFun&& mem_fun, Ptr&& ptr, Args&&... args) {
     return ((*std::forward<Ptr>(ptr)).*
             std::forward<MemFun>(mem_fun))(std::forward<Args>(args)...);
   }
@@ -139,7 +142,8 @@ struct MemFunAndPtr : StrippedAccept<MemFunAndPtr> {
 // an object of type T or a reference to an object of type T or a reference
 // to an object of a type derived from T.
 struct DataMemAndRef : StrippedAccept<DataMemAndRef> {
-  template <typename... Args> struct AcceptImpl : std::false_type {};
+  template <typename... Args>
+  struct AcceptImpl : std::false_type {};
 
   template <typename R, typename C, typename Obj>
   struct AcceptImpl<R C::*, Obj>
@@ -147,8 +151,8 @@ struct DataMemAndRef : StrippedAccept<DataMemAndRef> {
                                          !absl::is_function<R>::value> {};
 
   template <typename DataMem, typename Ref>
-  static decltype(std::declval<Ref>().*std::declval<DataMem>())
-  Invoke(DataMem &&data_mem, Ref &&ref) {
+  static decltype(std::declval<Ref>().*std::declval<DataMem>()) Invoke(
+      DataMem&& data_mem, Ref&& ref) {
     return std::forward<Ref>(ref).*std::forward<DataMem>(data_mem);
   }
 };
@@ -156,7 +160,8 @@ struct DataMemAndRef : StrippedAccept<DataMemAndRef> {
 // (*t1).*f when N == 1 and f is a pointer to member data of a class T and t1
 // is not one of the types described in the previous item.
 struct DataMemAndPtr : StrippedAccept<DataMemAndPtr> {
-  template <typename... Args> struct AcceptImpl : std::false_type {};
+  template <typename... Args>
+  struct AcceptImpl : std::false_type {};
 
   template <typename R, typename C, typename Ptr>
   struct AcceptImpl<R C::*, Ptr>
@@ -164,8 +169,8 @@ struct DataMemAndPtr : StrippedAccept<DataMemAndPtr> {
                                          !absl::is_function<R>::value> {};
 
   template <typename DataMem, typename Ptr>
-  static decltype((*std::declval<Ptr>()).*std::declval<DataMem>())
-  Invoke(DataMem &&data_mem, Ptr &&ptr) {
+  static decltype((*std::declval<Ptr>()).*std::declval<DataMem>()) Invoke(
+      DataMem&& data_mem, Ptr&& ptr) {
     return (*std::forward<Ptr>(ptr)).*std::forward<DataMem>(data_mem);
   }
 };
@@ -175,14 +180,15 @@ struct Callable {
   // Callable doesn't have Accept because it's the last clause that gets picked
   // when none of the previous clauses are applicable.
   template <typename F, typename... Args>
-  static decltype(std::declval<F>()(std::declval<Args>()...))
-  Invoke(F &&f, Args &&...args) {
+  static decltype(std::declval<F>()(std::declval<Args>()...)) Invoke(
+      F&& f, Args&&... args) {
     return std::forward<F>(f)(std::forward<Args>(args)...);
   }
 };
 
 // Resolves to the first matching clause.
-template <typename... Args> struct Invoker {
+template <typename... Args>
+struct Invoker {
   typedef typename std::conditional<
       MemFunAndRef::Accept<Args...>::value, MemFunAndRef,
       typename std::conditional<
@@ -202,7 +208,7 @@ using invoke_result_t = decltype(Invoker<F, Args...>::type::Invoke(
 // Invoke(f, args...) is an implementation of INVOKE(f, args...) from section
 // [func.require] of the C++ standard.
 template <typename F, typename... Args>
-invoke_result_t<F, Args...> invoke(F &&f, Args &&...args) {
+invoke_result_t<F, Args...> invoke(F&& f, Args&&... args) {
   return Invoker<F, Args...>::type::Invoke(std::forward<F>(f),
                                            std::forward<Args>(args)...);
 }
@@ -212,7 +218,7 @@ struct IsInvocableRImpl : std::false_type {};
 
 template <typename R, typename F, typename... Args>
 struct IsInvocableRImpl<
-    absl::void_t<absl::base_internal::invoke_result_t<F, Args...>>, R, F,
+    absl::void_t<absl::base_internal::invoke_result_t<F, Args...> >, R, F,
     Args...>
     : std::integral_constant<
           bool,
@@ -226,10 +232,10 @@ struct IsInvocableRImpl<
 template <typename R, typename F, typename... Args>
 using is_invocable_r = IsInvocableRImpl<void, R, F, Args...>;
 
-} // namespace base_internal
+}  // namespace base_internal
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_INTERNAL_CPLUSPLUS_LANG >= 201703L
+#endif  // ABSL_INTERNAL_CPLUSPLUS_LANG >= 201703L
 
-#endif // ABSL_BASE_INTERNAL_INVOKE_H_
+#endif  // ABSL_BASE_INTERNAL_INVOKE_H_

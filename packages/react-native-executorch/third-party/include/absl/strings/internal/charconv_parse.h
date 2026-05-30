@@ -66,12 +66,12 @@ struct ParsedFloat {
   // floating point match.
   // If type == kNan and this is set, the range marks the contents of a
   // matched parenthesized character region after the NaN.
-  const char *subrange_begin = nullptr;
-  const char *subrange_end = nullptr;
+  const char* subrange_begin = nullptr;
+  const char* subrange_end = nullptr;
 
   // One-past-the-end of the successfully parsed region, or nullptr if no
   // matching pattern was found.
-  const char *end = nullptr;
+  const char* end = nullptr;
 };
 
 // Read the floating point number in the provided range, and populate
@@ -85,15 +85,15 @@ struct ParsedFloat {
 // Template parameter `base` must be either 10 or 16.  For base 16, a "0x" is
 // *not* consumed.  The `hex` bit from format_flags is ignored by ParseFloat.
 template <int base>
-ParsedFloat ParseFloat(const char *begin, const char *end,
+ParsedFloat ParseFloat(const char* begin, const char* end,
                        absl::chars_format format_flags);
 
-extern template ParsedFloat ParseFloat<10>(const char *begin, const char *end,
+extern template ParsedFloat ParseFloat<10>(const char* begin, const char* end,
                                            absl::chars_format format_flags);
-extern template ParsedFloat ParseFloat<16>(const char *begin, const char *end,
+extern template ParsedFloat ParseFloat<16>(const char* begin, const char* end,
                                            absl::chars_format format_flags);
 
-} // namespace strings_internal
+}  // namespace strings_internal
 ABSL_NAMESPACE_END
-} // namespace absl
-#endif // ABSL_STRINGS_INTERNAL_CHARCONV_PARSE_H_
+}  // namespace absl
+#endif  // ABSL_STRINGS_INTERNAL_CHARCONV_PARSE_H_

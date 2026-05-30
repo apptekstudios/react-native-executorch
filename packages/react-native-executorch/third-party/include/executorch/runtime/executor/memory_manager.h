@@ -28,7 +28,7 @@ namespace runtime {
  * and kernels use these provided allocators whenever possible.
  */
 class MemoryManager final {
-public:
+ public:
   /**
    * Constructs a new MemoryManager.
    *
@@ -49,13 +49,16 @@ public:
    *     delegates that allocate temporary data. This allocator will be reset
    *     after every kernel or delegate call during execution.
    */
-  explicit MemoryManager(MemoryAllocator *method_allocator,
-                         HierarchicalAllocator *planned_memory = nullptr,
-                         MemoryAllocator *temp_allocator = nullptr)
-      : method_allocator_(method_allocator), planned_memory_(planned_memory),
+  explicit MemoryManager(
+      MemoryAllocator* method_allocator,
+      HierarchicalAllocator* planned_memory = nullptr,
+      MemoryAllocator* temp_allocator = nullptr)
+      : method_allocator_(method_allocator),
+        planned_memory_(planned_memory),
         temp_allocator_(temp_allocator) {
-    ET_CHECK_MSG(method_allocator != temp_allocator,
-                 "method allocator cannot be the same as temp allocator");
+    ET_CHECK_MSG(
+        method_allocator != temp_allocator,
+        "method allocator cannot be the same as temp allocator");
   }
 
   /**
@@ -63,10 +66,11 @@ public:
    *
    * TODO(T162089316): Remove this once all users migrate to the new ctor.
    */
-  ET_DEPRECATED MemoryManager(MemoryAllocator *constant_allocator,
-                              HierarchicalAllocator *non_constant_allocator,
-                              MemoryAllocator *runtime_allocator,
-                              MemoryAllocator *temporary_allocator)
+  ET_DEPRECATED MemoryManager(
+      MemoryAllocator* constant_allocator,
+      HierarchicalAllocator* non_constant_allocator,
+      MemoryAllocator* runtime_allocator,
+      MemoryAllocator* temporary_allocator)
       : MemoryManager(
             /*method_allocator=*/runtime_allocator,
             /*planned_memory=*/non_constant_allocator,
@@ -79,12 +83,16 @@ public:
    * structures while loading a Method. Must not be used after its associated
    * Method has been loaded.
    */
-  MemoryAllocator *method_allocator() const { return method_allocator_; }
+  MemoryAllocator* method_allocator() const {
+    return method_allocator_;
+  }
 
   /**
    * Returns the memory-planned buffers to use for mutable tensor data.
    */
-  HierarchicalAllocator *planned_memory() const { return planned_memory_; }
+  HierarchicalAllocator* planned_memory() const {
+    return planned_memory_;
+  }
 
   /**
    * Returns the allocator to use for allocating temporary data during kernel or
@@ -93,12 +101,14 @@ public:
    * This allocator will be reset after every kernel or delegate call during
    * execution.
    */
-  MemoryAllocator *temp_allocator() const { return temp_allocator_; }
+  MemoryAllocator* temp_allocator() const {
+    return temp_allocator_;
+  }
 
-private:
-  MemoryAllocator *method_allocator_;
-  HierarchicalAllocator *planned_memory_;
-  MemoryAllocator *temp_allocator_;
+ private:
+  MemoryAllocator* method_allocator_;
+  HierarchicalAllocator* planned_memory_;
+  MemoryAllocator* temp_allocator_;
 };
 
 } // namespace runtime

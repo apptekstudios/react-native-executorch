@@ -71,6 +71,6 @@ enum ConstInitType {
 };
 
 ABSL_NAMESPACE_END
-} // namespace absl
+}  // namespace absl
 
-#endif // ABSL_BASE_CONST_INIT_H_
+#endif  // ABSL_BASE_CONST_INIT_H_

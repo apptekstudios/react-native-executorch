@@ -32,13 +32,13 @@
 #include "absl/strings/string_view.h"
 
 // We can only add poisoning if we can detect consteval executions.
-#if defined(ABSL_HAVE_CONSTANT_EVALUATED) &&                                   \
-    (defined(ABSL_HAVE_ADDRESS_SANITIZER) ||                                   \
+#if defined(ABSL_HAVE_CONSTANT_EVALUATED) && \
+    (defined(ABSL_HAVE_ADDRESS_SANITIZER) || \
      defined(ABSL_HAVE_MEMORY_SANITIZER))
 #define ABSL_INTERNAL_CORD_HAVE_SANITIZER 1
 #endif
 
-#define ABSL_CORD_INTERNAL_NO_SANITIZE                                         \
+#define ABSL_CORD_INTERNAL_NO_SANITIZE \
   ABSL_ATTRIBUTE_NO_SANITIZE_ADDRESS ABSL_ATTRIBUTE_NO_SANITIZE_MEMORY
 
 namespace absl {
@@ -85,13 +85,13 @@ enum Constants {
 };
 
 // Emits a fatal error "Unexpected node type: xyz" and aborts the program.
-[[noreturn]] void LogFatalNodeType(CordRep *rep);
+[[noreturn]] void LogFatalNodeType(CordRep* rep);
 
 // Fast implementation of memmove for up to 15 bytes. This implementation is
 // safe for overlapping regions. If nullify_tail is true, the destination is
 // padded with '\0' up to 15 bytes.
 template <bool nullify_tail = false>
-inline void SmallMemmove(char *dst, const char *src, size_t n) {
+inline void SmallMemmove(char* dst, const char* src, size_t n) {
   if (n >= 8) {
     assert(n <= 15);
     uint64_t buf1;
@@ -138,7 +138,7 @@ inline void SmallMemmove(char *dst, const char *src, size_t n) {
 // Compact class for tracking the reference count and state flags for CordRep
 // instances.  Data is stored in an atomic int32_t for compactness and speed.
 class RefcountAndFlags {
-public:
+ public:
   constexpr RefcountAndFlags() : count_{kRefIncrement} {}
   struct Immortal {};
   explicit constexpr RefcountAndFlags(Immortal) : count_(kImmortalFlag) {}
@@ -193,7 +193,7 @@ public:
     return (count_.load(std::memory_order_relaxed) & kImmortalFlag) != 0;
   }
 
-private:
+ private:
   // We reserve the bottom bit for flag.
   // kImmortalBit indicates that this entity should never be collected; it is
   // used for the StringConstant constructor to avoid collecting immutable
@@ -246,8 +246,8 @@ struct CordRep {
   // the tree, or the (possibly new / smaller) remaining tree with the extracted
   // data edge removed.
   struct ExtractResult {
-    CordRep *tree;
-    CordRep *extracted;
+    CordRep* tree;
+    CordRep* extracted;
   };
 
   CordRep() = default;
@@ -284,41 +284,41 @@ struct CordRep {
   constexpr bool IsFlat() const { return tag >= FLAT; }
   constexpr bool IsBtree() const { return tag == BTREE; }
 
-  inline CordRepSubstring *substring();
-  inline const CordRepSubstring *substring() const;
-  inline CordRepCrc *crc();
-  inline const CordRepCrc *crc() const;
-  inline CordRepExternal *external();
-  inline const CordRepExternal *external() const;
-  inline CordRepFlat *flat();
-  inline const CordRepFlat *flat() const;
-  inline CordRepBtree *btree();
-  inline const CordRepBtree *btree() const;
+  inline CordRepSubstring* substring();
+  inline const CordRepSubstring* substring() const;
+  inline CordRepCrc* crc();
+  inline const CordRepCrc* crc() const;
+  inline CordRepExternal* external();
+  inline const CordRepExternal* external() const;
+  inline CordRepFlat* flat();
+  inline const CordRepFlat* flat() const;
+  inline CordRepBtree* btree();
+  inline const CordRepBtree* btree() const;
 
   // --------------------------------------------------------------------
   // Memory management
 
   // Destroys the provided `rep`.
-  static void Destroy(CordRep *rep);
+  static void Destroy(CordRep* rep);
 
   // Increments the reference count of `rep`.
   // Requires `rep` to be a non-null pointer value.
-  static inline CordRep *Ref(CordRep *rep);
+  static inline CordRep* Ref(CordRep* rep);
 
   // Decrements the reference count of `rep`. Destroys rep if count reaches
   // zero. Requires `rep` to be a non-null pointer value.
-  static inline void Unref(CordRep *rep);
+  static inline void Unref(CordRep* rep);
 };
 
 struct CordRepSubstring : public CordRep {
-  size_t start; // Starting offset of substring in child
-  CordRep *child;
+  size_t start;  // Starting offset of substring in child
+  CordRep* child;
 
   // Creates a substring on `child`, adopting a reference on `child`.
   // Requires `child` to be either a flat or external node, and `pos` and `n` to
   // form a non-empty partial sub range of `'child`, i.e.:
   // `n > 0 && n < length && n + pos <= length`
-  static inline CordRepSubstring *Create(CordRep *child, size_t pos, size_t n);
+  static inline CordRepSubstring* Create(CordRep* child, size_t pos, size_t n);
 
   // Creates a substring of `rep`. Does not adopt a reference on `rep`.
   // Requires `IsDataEdge(rep) && n > 0 && pos + n <= rep->length`.
@@ -326,29 +326,30 @@ struct CordRepSubstring : public CordRep {
   // If `rep` is a substring of a flat or external node, then this method will
   // return a new substring of that flat or external node with `pos` adjusted
   // with the original `start` position.
-  static inline CordRep *Substring(CordRep *rep, size_t pos, size_t n);
+  static inline CordRep* Substring(CordRep* rep, size_t pos, size_t n);
 };
 
 // Type for function pointer that will invoke the releaser function and also
 // delete the `CordRepExternalImpl` corresponding to the passed in
 // `CordRepExternal`.
-using ExternalReleaserInvoker = void (*)(CordRepExternal *);
+using ExternalReleaserInvoker = void (*)(CordRepExternal*);
 
 // External CordReps are allocated together with a type erased releaser. The
 // releaser is stored in the memory directly following the CordRepExternal.
 struct CordRepExternal : public CordRep {
   CordRepExternal() = default;
   explicit constexpr CordRepExternal(absl::string_view str)
-      : CordRep(RefcountAndFlags::Immortal{}, str.size()), base(str.data()),
+      : CordRep(RefcountAndFlags::Immortal{}, str.size()),
+        base(str.data()),
         releaser_invoker(nullptr) {}
 
-  const char *base;
+  const char* base;
   // Pointer to function that knows how to call and destroy the releaser.
   ExternalReleaserInvoker releaser_invoker;
 
   // Deletes (releases) the external rep.
   // Requires rep != nullptr and rep->IsExternal()
-  static void Delete(CordRep *rep);
+  static void Delete(CordRep* rep);
 };
 
 // Use go/ranked-overloads for dispatching.
@@ -357,13 +358,13 @@ struct Rank1 : Rank0 {};
 
 template <typename Releaser, typename = ::absl::base_internal::invoke_result_t<
                                  Releaser, absl::string_view>>
-void InvokeReleaser(Rank1, Releaser &&releaser, absl::string_view data) {
+void InvokeReleaser(Rank1, Releaser&& releaser, absl::string_view data) {
   ::absl::base_internal::invoke(std::forward<Releaser>(releaser), data);
 }
 
 template <typename Releaser,
           typename = ::absl::base_internal::invoke_result_t<Releaser>>
-void InvokeReleaser(Rank0, Releaser &&releaser, absl::string_view) {
+void InvokeReleaser(Rank0, Releaser&& releaser, absl::string_view) {
   ::absl::base_internal::invoke(std::forward<Releaser>(releaser));
 }
 
@@ -375,7 +376,7 @@ struct CordRepExternalImpl
   // The extra int arg is so that we can avoid interfering with copy/move
   // constructors while still benefitting from perfect forwarding.
   template <typename T>
-  CordRepExternalImpl(T &&releaser, int)
+  CordRepExternalImpl(T&& releaser, int)
       : CordRepExternalImpl::CompressedTuple(std::forward<T>(releaser)) {
     this->releaser_invoker = &Release;
   }
@@ -385,12 +386,12 @@ struct CordRepExternalImpl
                    absl::string_view(base, length));
   }
 
-  static void Release(CordRepExternal *rep) {
-    delete static_cast<CordRepExternalImpl *>(rep);
+  static void Release(CordRepExternal* rep) {
+    delete static_cast<CordRepExternalImpl*>(rep);
   }
 };
 
-inline CordRepSubstring *CordRepSubstring::Create(CordRep *child, size_t pos,
+inline CordRepSubstring* CordRepSubstring::Create(CordRep* child, size_t pos,
                                                   size_t n) {
   assert(child != nullptr);
   assert(n > 0);
@@ -403,7 +404,7 @@ inline CordRepSubstring *CordRepSubstring::Create(CordRep *child, size_t pos,
     LogFatalNodeType(child);
   }
 
-  CordRepSubstring *rep = new CordRepSubstring();
+  CordRepSubstring* rep = new CordRepSubstring();
   rep->length = n;
   rep->tag = SUBSTRING;
   rep->start = pos;
@@ -411,19 +412,18 @@ inline CordRepSubstring *CordRepSubstring::Create(CordRep *child, size_t pos,
   return rep;
 }
 
-inline CordRep *CordRepSubstring::Substring(CordRep *rep, size_t pos,
+inline CordRep* CordRepSubstring::Substring(CordRep* rep, size_t pos,
                                             size_t n) {
   assert(rep != nullptr);
   assert(n != 0);
   assert(pos < rep->length);
   assert(n <= rep->length - pos);
-  if (n == rep->length)
-    return CordRep::Ref(rep);
+  if (n == rep->length) return CordRep::Ref(rep);
   if (rep->IsSubstring()) {
     pos += rep->substring()->start;
     rep = rep->substring()->child;
   }
-  CordRepSubstring *substr = new CordRepSubstring();
+  CordRepSubstring* substr = new CordRepSubstring();
   substr->length = n;
   substr->tag = SUBSTRING;
   substr->start = pos;
@@ -431,20 +431,21 @@ inline CordRep *CordRepSubstring::Substring(CordRep *rep, size_t pos,
   return substr;
 }
 
-inline void CordRepExternal::Delete(CordRep *rep) {
+inline void CordRepExternal::Delete(CordRep* rep) {
   assert(rep != nullptr && rep->IsExternal());
-  auto *rep_external = static_cast<CordRepExternal *>(rep);
+  auto* rep_external = static_cast<CordRepExternal*>(rep);
   assert(rep_external->releaser_invoker != nullptr);
   rep_external->releaser_invoker(rep_external);
 }
 
-template <typename Str> struct ConstInitExternalStorage {
+template <typename Str>
+struct ConstInitExternalStorage {
   ABSL_CONST_INIT static CordRepExternal value;
 };
 
 template <typename Str>
-ABSL_CONST_INIT
-    CordRepExternal ConstInitExternalStorage<Str>::value(Str::value);
+ABSL_CONST_INIT CordRepExternal
+    ConstInitExternalStorage<Str>::value(Str::value);
 
 enum {
   kMaxInline = 15,
@@ -477,7 +478,7 @@ static constexpr cordz_info_t LittleEndianByte(unsigned char value) {
 }
 
 class InlineData {
-public:
+ public:
   // DefaultInitType forces the use of the default initialization constructor.
   enum DefaultInitType { kDefaultInit };
 
@@ -505,23 +506,23 @@ public:
     poison_this();
   }
 
-  explicit InlineData(CordRep *rep) noexcept : rep_(rep) {
+  explicit InlineData(CordRep* rep) noexcept : rep_(rep) {
     ABSL_ASSERT(rep != nullptr);
   }
 
   // Explicit constexpr constructor to create a constexpr InlineData
   // value. Creates an inlined SSO value if `rep` is null, otherwise
   // creates a tree instance value.
-  constexpr InlineData(absl::string_view sv, CordRep *rep) noexcept
+  constexpr InlineData(absl::string_view sv, CordRep* rep) noexcept
       : rep_(rep ? Rep(rep) : Rep(sv)) {
     poison();
   }
 
-  constexpr InlineData(const InlineData &rhs) noexcept;
-  InlineData &operator=(const InlineData &rhs) noexcept;
-  friend void swap(InlineData &lhs, InlineData &rhs) noexcept;
+  constexpr InlineData(const InlineData& rhs) noexcept;
+  InlineData& operator=(const InlineData& rhs) noexcept;
+  friend void swap(InlineData& lhs, InlineData& rhs) noexcept;
 
-  friend bool operator==(const InlineData &lhs, const InlineData &rhs) {
+  friend bool operator==(const InlineData& lhs, const InlineData& rhs) {
 #ifdef ABSL_INTERNAL_CORD_HAVE_SANITIZER
     const Rep l = lhs.rep_.SanitizerSafeCopy();
     const Rep r = rhs.rep_.SanitizerSafeCopy();
@@ -530,7 +531,7 @@ public:
     return memcmp(&lhs, &rhs, sizeof(lhs)) == 0;
 #endif
   }
-  friend bool operator!=(const InlineData &lhs, const InlineData &rhs) {
+  friend bool operator!=(const InlineData& lhs, const InlineData& rhs) {
     return !operator==(lhs, rhs);
   }
 
@@ -561,8 +562,8 @@ public:
   // Returns true if either of the provided instances hold a cordz_info value.
   // This method is more efficient than the equivalent `data1.is_profiled() ||
   // data2.is_profiled()`. Requires both arguments to hold a tree.
-  static bool is_either_profiled(const InlineData &data1,
-                                 const InlineData &data2) {
+  static bool is_either_profiled(const InlineData& data1,
+                                 const InlineData& data2) {
     assert(data1.is_tree() && data2.is_tree());
     return (data1.rep_.cordz_info() | data2.rep_.cordz_info()) !=
            kNullCordzInfo;
@@ -571,18 +572,18 @@ public:
   // Returns the cordz_info sampling instance for this instance, or nullptr
   // if the current instance is not sampled and does not have CordzInfo data.
   // Requires the current instance to hold a tree value.
-  CordzInfo *cordz_info() const {
+  CordzInfo* cordz_info() const {
     assert(is_tree());
     intptr_t info = static_cast<intptr_t>(absl::little_endian::ToHost64(
         static_cast<uint64_t>(rep_.cordz_info())));
     assert(info & 1);
-    return reinterpret_cast<CordzInfo *>(info - 1);
+    return reinterpret_cast<CordzInfo*>(info - 1);
   }
 
   // Sets the current cordz_info sampling instance for this instance, or nullptr
   // if the current instance is not sampled and does not have CordzInfo data.
   // Requires the current instance to hold a tree value.
-  void set_cordz_info(CordzInfo *cordz_info) {
+  void set_cordz_info(CordzInfo* cordz_info) {
     assert(is_tree());
     uintptr_t info = reinterpret_cast<uintptr_t>(cordz_info) | 1;
     rep_.set_cordz_info(
@@ -597,7 +598,7 @@ public:
 
   // Returns a read only pointer to the character data inside this instance.
   // Requires the current instance to hold inline data.
-  const char *as_chars() const {
+  const char* as_chars() const {
     assert(!is_tree());
     return rep_.as_chars();
   }
@@ -617,16 +618,16 @@ public:
   //
   // It's an error to read from the returned pointer without a preceding write
   // if the current instance does not hold inline data, i.e.: is_tree() == true.
-  char *as_chars() { return rep_.as_chars(); }
+  char* as_chars() { return rep_.as_chars(); }
 
   // Returns the tree value of this value.
   // Requires the current instance to hold a tree value.
-  CordRep *as_tree() const {
+  CordRep* as_tree() const {
     assert(is_tree());
     return rep_.tree();
   }
 
-  void set_inline_data(const char *data, size_t n) {
+  void set_inline_data(const char* data, size_t n) {
     ABSL_ASSERT(n <= kMaxInline);
     unpoison();
     rep_.set_tag(static_cast<int8_t>(n << 1));
@@ -634,14 +635,14 @@ public:
     poison();
   }
 
-  void copy_max_inline_to(char *dst) const {
+  void copy_max_inline_to(char* dst) const {
     assert(!is_tree());
     memcpy(dst, rep_.SanitizerSafeCopy().as_chars(), kMaxInline);
   }
 
   // Initialize this instance to holding the tree value `rep`,
   // initializing the cordz_info to null, i.e.: 'not profiled'.
-  void make_tree(CordRep *rep) {
+  void make_tree(CordRep* rep) {
     unpoison();
     rep_.make_tree(rep);
   }
@@ -649,7 +650,7 @@ public:
   // Set the tree value of this instance to 'rep`.
   // Requires the current instance to already hold a tree value.
   // Does not affect the value of cordz_info.
-  void set_tree(CordRep *rep) {
+  void set_tree(CordRep* rep) {
     assert(is_tree());
     rep_.set_tree(rep);
   }
@@ -673,26 +674,26 @@ public:
   //   -1  'this' InlineData instance is smaller
   //    0  the InlineData instances are equal
   //    1  'this' InlineData instance larger
-  int Compare(const InlineData &rhs) const {
+  int Compare(const InlineData& rhs) const {
     return Compare(rep_.SanitizerSafeCopy(), rhs.rep_.SanitizerSafeCopy());
   }
 
-private:
+ private:
   struct Rep {
     // See cordz_info_t for forced alignment and size of `cordz_info` details.
     struct AsTree {
-      explicit constexpr AsTree(absl::cord_internal::CordRep *tree)
+      explicit constexpr AsTree(absl::cord_internal::CordRep* tree)
           : rep(tree) {}
       cordz_info_t cordz_info = kNullCordzInfo;
-      absl::cord_internal::CordRep *rep;
+      absl::cord_internal::CordRep* rep;
     };
 
     explicit Rep(DefaultInitType) {}
     constexpr Rep() : data{0} {}
-    constexpr Rep(const Rep &) = default;
-    constexpr Rep &operator=(const Rep &) = default;
+    constexpr Rep(const Rep&) = default;
+    constexpr Rep& operator=(const Rep&) = default;
 
-    explicit constexpr Rep(CordRep *rep) : as_tree(rep) {}
+    explicit constexpr Rep(CordRep* rep) : as_tree(rep) {}
 
     explicit constexpr Rep(absl::string_view chars)
         : data{static_cast<char>((chars.size() << 1)),
@@ -717,26 +718,26 @@ private:
     // stack. Compiler assumes that the the variable is fully accessible
     // regardless of our poisoning.
     // Missing report: https://github.com/llvm/llvm-project/issues/100640
-    const Rep *self() const {
-      const Rep *volatile ptr = this;
+    const Rep* self() const {
+      const Rep* volatile ptr = this;
       return ptr;
     }
-    Rep *self() {
-      Rep *volatile ptr = this;
+    Rep* self() {
+      Rep* volatile ptr = this;
       return ptr;
     }
 #else
-    constexpr const Rep *self() const { return this; }
-    constexpr Rep *self() { return this; }
+    constexpr const Rep* self() const { return this; }
+    constexpr Rep* self() { return this; }
 #endif
 
     // Disable sanitizer as we must always be able to read `tag`.
     ABSL_CORD_INTERNAL_NO_SANITIZE
-    int8_t tag() const { return reinterpret_cast<const int8_t *>(this)[0]; }
-    void set_tag(int8_t rhs) { reinterpret_cast<int8_t *>(self())[0] = rhs; }
+    int8_t tag() const { return reinterpret_cast<const int8_t*>(this)[0]; }
+    void set_tag(int8_t rhs) { reinterpret_cast<int8_t*>(self())[0] = rhs; }
 
-    char *as_chars() { return self()->data + 1; }
-    const char *as_chars() const { return self()->data + 1; }
+    char* as_chars() { return self()->data + 1; }
+    const char* as_chars() const { return self()->data + 1; }
 
     bool is_tree() const { return (self()->tag() & 1) != 0; }
 
@@ -750,13 +751,13 @@ private:
       self()->set_tag(static_cast<int8_t>(size << 1));
     }
 
-    CordRep *tree() const { return self()->as_tree.rep; }
-    void set_tree(CordRep *rhs) { self()->as_tree.rep = rhs; }
+    CordRep* tree() const { return self()->as_tree.rep; }
+    void set_tree(CordRep* rhs) { self()->as_tree.rep = rhs; }
 
     cordz_info_t cordz_info() const { return self()->as_tree.cordz_info; }
     void set_cordz_info(cordz_info_t rhs) { self()->as_tree.cordz_info = rhs; }
 
-    void make_tree(CordRep *tree) {
+    void make_tree(CordRep* tree) {
       self()->as_tree.rep = tree;
       self()->as_tree.cordz_info = kNullCordzInfo;
     }
@@ -777,7 +778,7 @@ private:
       }
     }
 #else
-    constexpr const Rep &SanitizerSafeCopy() const { return *this; }
+    constexpr const Rep& SanitizerSafeCopy() const { return *this; }
 #endif
 
     // If the data has length <= kMaxInline, we store it in `data`, and
@@ -790,14 +791,14 @@ private:
     };
 
     // TODO(b/145829486): see swap(InlineData, InlineData) for more info.
-    inline void SwapValue(Rep rhs, Rep &refrhs) {
+    inline void SwapValue(Rep rhs, Rep& refrhs) {
       memcpy(&refrhs, this, sizeof(*this));
       memcpy(this, &rhs, sizeof(*this));
     }
   };
 
   // Private implementation of `Compare()`
-  static inline int Compare(const Rep &lhs, const Rep &rhs) {
+  static inline int Compare(const Rep& lhs, const Rep& rhs) {
     uint64_t x, y;
     memcpy(&x, lhs.as_chars(), sizeof(x));
     memcpy(&y, rhs.as_chars(), sizeof(y));
@@ -805,8 +806,7 @@ private:
       memcpy(&x, lhs.as_chars() + 7, sizeof(x));
       memcpy(&y, rhs.as_chars() + 7, sizeof(y));
       if (x == y) {
-        if (lhs.inline_size() == rhs.inline_size())
-          return 0;
+        if (lhs.inline_size() == rhs.inline_size()) return 0;
         return lhs.inline_size() < rhs.inline_size() ? -1 : 1;
       }
     }
@@ -822,12 +822,12 @@ static_assert(sizeof(InlineData) == kMaxInline + 1, "");
 
 #ifdef ABSL_INTERNAL_CORD_HAVE_SANITIZER
 
-constexpr InlineData::InlineData(const InlineData &rhs) noexcept
+constexpr InlineData::InlineData(const InlineData& rhs) noexcept
     : rep_(rhs.rep_.SanitizerSafeCopy()) {
   poison();
 }
 
-inline InlineData &InlineData::operator=(const InlineData &rhs) noexcept {
+inline InlineData& InlineData::operator=(const InlineData& rhs) noexcept {
   unpoison();
   rep_ = rhs.rep_.SanitizerSafeCopy();
   poison();
@@ -852,7 +852,7 @@ constexpr void InlineData::poison() {
       container_internal::SanitizerUnpoisonObject(this);
     } else if (const size_t size = inline_size()) {
       if (size < kMaxInline) {
-        const char *end = rep_.as_chars() + size;
+        const char* end = rep_.as_chars() + size;
         container_internal::SanitizerPoisonMemoryRegion(end, kMaxInline - size);
       }
     } else {
@@ -861,38 +861,38 @@ constexpr void InlineData::poison() {
   }
 }
 
-#else // ABSL_INTERNAL_CORD_HAVE_SANITIZER
+#else  // ABSL_INTERNAL_CORD_HAVE_SANITIZER
 
-constexpr InlineData::InlineData(const InlineData &) noexcept = default;
-inline InlineData &InlineData::operator=(const InlineData &) noexcept = default;
+constexpr InlineData::InlineData(const InlineData&) noexcept = default;
+inline InlineData& InlineData::operator=(const InlineData&) noexcept = default;
 
 constexpr void InlineData::poison_this() {}
 constexpr void InlineData::unpoison() {}
 constexpr void InlineData::poison() {}
 
-#endif // ABSL_INTERNAL_CORD_HAVE_SANITIZER
+#endif  // ABSL_INTERNAL_CORD_HAVE_SANITIZER
 
-inline CordRepSubstring *CordRep::substring() {
+inline CordRepSubstring* CordRep::substring() {
   assert(IsSubstring());
-  return static_cast<CordRepSubstring *>(this);
+  return static_cast<CordRepSubstring*>(this);
 }
 
-inline const CordRepSubstring *CordRep::substring() const {
+inline const CordRepSubstring* CordRep::substring() const {
   assert(IsSubstring());
-  return static_cast<const CordRepSubstring *>(this);
+  return static_cast<const CordRepSubstring*>(this);
 }
 
-inline CordRepExternal *CordRep::external() {
+inline CordRepExternal* CordRep::external() {
   assert(IsExternal());
-  return static_cast<CordRepExternal *>(this);
+  return static_cast<CordRepExternal*>(this);
 }
 
-inline const CordRepExternal *CordRep::external() const {
+inline const CordRepExternal* CordRep::external() const {
   assert(IsExternal());
-  return static_cast<const CordRepExternal *>(this);
+  return static_cast<const CordRepExternal*>(this);
 }
 
-inline CordRep *CordRep::Ref(CordRep *rep) {
+inline CordRep* CordRep::Ref(CordRep* rep) {
   // ABSL_ASSUME is a workaround for
   // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105585
   ABSL_ASSUME(rep != nullptr);
@@ -900,7 +900,7 @@ inline CordRep *CordRep::Ref(CordRep *rep) {
   return rep;
 }
 
-inline void CordRep::Unref(CordRep *rep) {
+inline void CordRep::Unref(CordRep* rep) {
   assert(rep != nullptr);
   // Expect refcount to be 0. Avoiding the cost of an atomic decrement should
   // typically outweigh the cost of an extra branch checking for ref == 1.
@@ -909,7 +909,7 @@ inline void CordRep::Unref(CordRep *rep) {
   }
 }
 
-inline void swap(InlineData &lhs, InlineData &rhs) noexcept {
+inline void swap(InlineData& lhs, InlineData& rhs) noexcept {
   lhs.unpoison();
   rhs.unpoison();
   // TODO(b/145829486): `std::swap(lhs.rep_, rhs.rep_)` results in bad codegen
@@ -922,8 +922,8 @@ inline void swap(InlineData &lhs, InlineData &rhs) noexcept {
   lhs.poison();
 }
 
-} // namespace cord_internal
+}  // namespace cord_internal
 
 ABSL_NAMESPACE_END
-} // namespace absl
-#endif // ABSL_STRINGS_INTERNAL_CORD_INTERNAL_H_
+}  // namespace absl
+#endif  // ABSL_STRINGS_INTERNAL_CORD_INTERNAL_H_

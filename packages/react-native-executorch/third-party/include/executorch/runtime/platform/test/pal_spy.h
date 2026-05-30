@@ -13,10 +13,12 @@
 #include <string>
 
 class PalSpy : public PlatformIntercept {
-public:
+ public:
   PalSpy() = default;
 
-  void init() override { ++init_call_count; }
+  void init() override {
+    ++init_call_count;
+  }
 
   static constexpr et_timestamp_t kTimestamp = 1234;
 
@@ -29,9 +31,14 @@ public:
     return tick_ns_multiplier;
   }
 
-  void emit_log_message(et_timestamp_t timestamp, et_pal_log_level_t level,
-                        const char *filename, const char *function, size_t line,
-                        const char *message, size_t length) override {
+  void emit_log_message(
+      et_timestamp_t timestamp,
+      et_pal_log_level_t level,
+      const char* filename,
+      const char* function,
+      size_t line,
+      const char* message,
+      size_t length) override {
     ++emit_log_message_call_count;
     last_log_message_args.timestamp = timestamp;
     last_log_message_args.level = level;
@@ -42,14 +49,14 @@ public:
     last_log_message_args.length = length;
   }
 
-  void *allocate(size_t size) override {
+  void* allocate(size_t size) override {
     ++allocate_call_count;
     last_allocated_size = size;
-    last_allocated_ptr = (void *)0x1234;
+    last_allocated_ptr = (void*)0x1234;
     return nullptr;
   }
 
-  void free(void *ptr) override {
+  void free(void* ptr) override {
     ++free_call_count;
     last_freed_ptr = ptr;
   }
@@ -63,8 +70,8 @@ public:
   size_t allocate_call_count = 0;
   size_t free_call_count = 0;
   size_t last_allocated_size = 0;
-  void *last_allocated_ptr = nullptr;
-  void *last_freed_ptr = nullptr;
+  void* last_allocated_ptr = nullptr;
+  void* last_freed_ptr = nullptr;
 
   /// The args that were passed to the most recent call to emit_log_message().
   struct {

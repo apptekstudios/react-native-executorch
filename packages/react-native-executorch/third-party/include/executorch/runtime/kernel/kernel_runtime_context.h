@@ -24,7 +24,7 @@ namespace ET_RUNTIME_NAMESPACE {
  * operators do not expect to receive a KernelRuntimeContext argument.
  */
 class KernelRuntimeContext {
-public:
+ public:
   /**
    * Construct a new kernel runtime context.
    *
@@ -37,8 +37,9 @@ public:
    *     temporary memory for the kernel. If not provided, an error will be
    *     returned when calling allocate_temp.
    */
-  KernelRuntimeContext(EventTracer *event_tracer = nullptr,
-                       MemoryAllocator *temp_allocator = nullptr)
+  KernelRuntimeContext(
+      EventTracer* event_tracer = nullptr,
+      MemoryAllocator* temp_allocator = nullptr)
       : event_tracer_(event_tracer), temp_allocator_(temp_allocator) {}
   /**
    * Tells the runtime that the kernel call has failed. Prefer this over
@@ -52,10 +53,14 @@ public:
    * compatible with core PyTorch ATen kernel signatures, which use exceptions
    * to report errors. But, ExecuTorch does not use exceptions.
    */
-  void fail(Error error) { failure_state_ = error; }
+  void fail(Error error) {
+    failure_state_ = error;
+  }
 
   /// Returns the current failure state.
-  ET_NODISCARD Error failure_state() const { return failure_state_; }
+  ET_NODISCARD Error failure_state() const {
+    return failure_state_;
+  }
 
   /**
    * INTERNAL ONLY
@@ -64,7 +69,9 @@ public:
    * logging inside the codegen layer. This is only for internal usage inside
    * the codegen layer and users should not be accessing this.
    */
-  EventTracer *internal_event_tracer() { return event_tracer_; }
+  EventTracer* internal_event_tracer() {
+    return event_tracer_;
+  }
 
   /**
    * Allocates temporary memory that will be freed when the kernel returns. This
@@ -78,23 +85,25 @@ public:
    * @returns A result object containing either a pointer to the allocated
    *     memory or an error to indicate failure
    */
-  Result<void *>
-  allocate_temp(size_t size,
-                size_t alignment = MemoryAllocator::kDefaultAlignment) {
-    ET_CHECK_OR_RETURN_ERROR(temp_allocator_ != nullptr, NotFound,
-                             "No temp allocator provided");
-    void *temp_memory = temp_allocator_->allocate(size, alignment);
+  Result<void*> allocate_temp(
+      size_t size,
+      size_t alignment = MemoryAllocator::kDefaultAlignment) {
     ET_CHECK_OR_RETURN_ERROR(
-        temp_memory != nullptr, MemoryAllocationFailed,
-        "Failed to allocate temp memory. Bytes requested: %zu", size);
+        temp_allocator_ != nullptr, NotFound, "No temp allocator provided");
+    void* temp_memory = temp_allocator_->allocate(size, alignment);
+    ET_CHECK_OR_RETURN_ERROR(
+        temp_memory != nullptr,
+        MemoryAllocationFailed,
+        "Failed to allocate temp memory. Bytes requested: %zu",
+        size);
     return temp_memory;
   }
 
   // TODO(T147221312): Add a way to resize a tensor.
 
-private:
-  EventTracer *event_tracer_ = nullptr;
-  MemoryAllocator *temp_allocator_ = nullptr;
+ private:
+  EventTracer* event_tracer_ = nullptr;
+  MemoryAllocator* temp_allocator_ = nullptr;
   Error failure_state_ = Error::Ok;
 };
 

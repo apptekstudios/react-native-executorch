@@ -62,7 +62,8 @@
             "deploymentTarget": "17.0"
           }
         }
-      ]
+      ],
+      "../with-mac-catalyst"
     ]
   }
 }

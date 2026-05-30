@@ -23,6 +23,7 @@
 #include <executorch/runtime/executor/memory_manager.h>
 #include <executorch/runtime/executor/merged_data_map.h>
 #include <executorch/runtime/executor/method_meta.h>
+#include <executorch/runtime/kernel/operator_registry.h>
 #include <executorch/runtime/platform/compiler.h>
 
 // Forward declare flatbuffer types. This is a public header and must not
@@ -49,10 +50,10 @@ class Program;
 class BackendDelegate;
 struct Chain;
 class KernelRuntimeContext;
-using OpFunction = void (*)(KernelRuntimeContext &, Span<EValue *>);
+using OpFunction = void (*)(KernelRuntimeContext&, Span<EValue*>);
 /// A list of pointers into the master values table that together compose the
 /// argument list for a single instruction
-using InstructionArgs = Span<EValue *>;
+using InstructionArgs = Span<EValue*>;
 using deserialization::NamedData;
 
 /**
@@ -60,23 +61,29 @@ using deserialization::NamedData;
  * `forward()` on the original nn.Module.
  */
 class Method final {
-public:
+ public:
   /**
    * Move ctor. Takes ownership of resources previously owned by `rhs`,
    * and leaves `rhs` in an uninitialized state.
    */
-  Method(Method &&rhs) noexcept
-      : step_state_(rhs.step_state_), program_(rhs.program_),
+  Method(Method&& rhs) noexcept
+      : step_state_(rhs.step_state_),
+        program_(rhs.program_),
         memory_manager_(rhs.memory_manager_),
         temp_allocator_(rhs.temp_allocator_),
         serialization_plan_(rhs.serialization_plan_),
-        event_tracer_(rhs.event_tracer_), n_value_(rhs.n_value_),
-        values_(rhs.values_), input_set_(rhs.input_set_),
-        n_delegate_(rhs.n_delegate_), delegates_(rhs.delegates_),
-        n_chains_(rhs.n_chains_), chains_(rhs.chains_),
+        event_tracer_(rhs.event_tracer_),
+        n_value_(rhs.n_value_),
+        values_(rhs.values_),
+        input_set_(rhs.input_set_),
+        n_delegate_(rhs.n_delegate_),
+        delegates_(rhs.delegates_),
+        n_chains_(rhs.n_chains_),
+        chains_(rhs.chains_),
         merged_data_map_(std::move(rhs.merged_data_map_)),
         external_constants_(rhs.external_constants_),
         n_external_constants_(rhs.n_external_constants_),
+        kernel_registry_(rhs.kernel_registry_),
         init_state_(rhs.init_state_) {
     // Required: clear out fields that the dtor looks at, so that we don't free
     // anything twice.
@@ -120,7 +127,7 @@ public:
    *
    * @returns Error::Ok on success, non-Ok on failure.
    */
-  ET_NODISCARD Error set_input(const EValue &input_evalue, size_t input_idx);
+  ET_NODISCARD Error set_input(const EValue& input_evalue, size_t input_idx);
 
   /**
    * Sets the values of all method inputs.
@@ -135,7 +142,7 @@ public:
    * @returns Error::Ok on success, non-Ok on failure.
    */
   ET_NODISCARD Error
-  set_inputs(const executorch::aten::ArrayRef<EValue> &input_evalues);
+  set_inputs(const executorch::aten::ArrayRef<EValue>& input_evalues);
 
   /**
    * Sets the data buffer of the specified method output to the provided value.
@@ -156,8 +163,8 @@ public:
    *
    * @returns Error::Ok on success, non-Ok on failure.
    */
-  ET_NODISCARD Error set_output_data_ptr(void *buffer, size_t size,
-                                         size_t output_idx);
+  ET_NODISCARD Error
+  set_output_data_ptr(void* buffer, size_t size, size_t output_idx);
 
   /**
    * Copies the method's outputs into the provided array.
@@ -176,7 +183,7 @@ public:
    *
    * @returns Error::Ok on success, non-Ok on failure.
    */
-  ET_NODISCARD Error get_outputs(EValue *output_evalues, size_t length);
+  ET_NODISCARD Error get_outputs(EValue* output_evalues, size_t length);
 
   /**
    * DEPRECATED: Use MethodMeta instead to access metadata, and set_input to
@@ -195,8 +202,8 @@ public:
    *
    * @returns Error::Ok on success, non-Ok on failure.
    */
-  ET_DEPRECATED ET_NODISCARD Error get_inputs(EValue *input_evalues,
-                                              size_t length);
+  ET_DEPRECATED ET_NODISCARD Error
+  get_inputs(EValue* input_evalues, size_t length);
 
   /**
    *
@@ -207,8 +214,8 @@ public:
    * @returns Result containing the attribute tensor on success, non-Ok on
    * failure.
    */
-  ET_NODISCARD Result<executorch::aten::Tensor>
-  get_attribute(std::string_view name);
+  ET_NODISCARD Result<executorch::aten::Tensor> get_attribute(
+      std::string_view name);
 
   /**
    * Execute the method.
@@ -283,27 +290,27 @@ public:
   /**
    * Retrieves the output at the specified index.
    */
-  const EValue &get_output(size_t i) const;
+  const EValue& get_output(size_t i) const;
 
-  EventTracer *get_event_tracer();
+  EventTracer* get_event_tracer();
 
   /// DEPRECATED: Use MethodMeta instead to access metadata, and set_input to
   /// update Method inputs.
-  ET_DEPRECATED const EValue &get_input(size_t i) const;
+  ET_DEPRECATED const EValue& get_input(size_t i) const;
   /// DEPRECATED: Use MethodMeta instead to access metadata, and set_input to
   /// update Method inputs.
-  ET_DEPRECATED EValue &mutable_input(size_t i);
+  ET_DEPRECATED EValue& mutable_input(size_t i);
   /// DEPRECATED: Use MethodMeta instead to access metadata, and get_output to
   /// retrieve Method outputs.
-  ET_DEPRECATED EValue &mutable_output(size_t i);
+  ET_DEPRECATED EValue& mutable_output(size_t i);
 
   ~Method();
 
-private:
+ private:
   // Delete other rule-of-five methods.
-  Method(const Method &) = delete;
-  Method &operator=(const Method &) noexcept = delete;
-  Method &operator=(Method &&) = delete;
+  Method(const Method&) = delete;
+  Method& operator=(const Method&) noexcept = delete;
+  Method& operator=(Method&&) = delete;
 
   // Let Program call load().
   friend class Program;
@@ -322,39 +329,58 @@ private:
     size_t instr_idx;
   };
 
-  Method(const Program *program, MemoryManager *memory_manager,
-         EventTracer *event_tracer, MemoryAllocator *temp_allocator)
-      : step_state_(), program_(program), memory_manager_(memory_manager),
-        temp_allocator_(temp_allocator), serialization_plan_(nullptr),
-        event_tracer_(event_tracer), n_value_(0), values_(nullptr),
-        input_set_(nullptr), n_delegate_(0), delegates_(nullptr), n_chains_(0),
-        chains_(nullptr), merged_data_map_(nullptr),
-        external_constants_(nullptr), n_external_constants_(0),
+  Method(
+      const Program* program,
+      MemoryManager* memory_manager,
+      EventTracer* event_tracer,
+      MemoryAllocator* temp_allocator,
+      Span<const Kernel> kernel_registry = {})
+      : step_state_(),
+        program_(program),
+        memory_manager_(memory_manager),
+        temp_allocator_(temp_allocator),
+        serialization_plan_(nullptr),
+        event_tracer_(event_tracer),
+        n_value_(0),
+        values_(nullptr),
+        input_set_(nullptr),
+        n_delegate_(0),
+        delegates_(nullptr),
+        n_chains_(0),
+        chains_(nullptr),
+        merged_data_map_(nullptr),
+        external_constants_(nullptr),
+        n_external_constants_(0),
+        kernel_registry_(kernel_registry),
         init_state_(InitializationState::Uninitialized) {}
 
   /// Static factory used by Program.
-  ET_NODISCARD static Result<Method>
-  load(executorch_flatbuffer::ExecutionPlan *s_plan, const Program *program,
-       MemoryManager *memory_manager, EventTracer *event_tracer,
-       const NamedDataMap *named_data_map,
-       const LoadBackendOptionsMap *backend_options = nullptr);
+  ET_NODISCARD static Result<Method> load(
+      executorch_flatbuffer::ExecutionPlan* s_plan,
+      const Program* program,
+      MemoryManager* memory_manager,
+      EventTracer* event_tracer,
+      const NamedDataMap* named_data_map,
+      const LoadBackendOptionsMap* backend_options = nullptr,
+      Span<const Kernel> kernel_registry = {});
 
   /**
    * Initialize the method from its serialized representation.
    *
    * @returns Error::Ok on success, non-Ok on failure.
    */
-  ET_NODISCARD Error init(executorch_flatbuffer::ExecutionPlan *s_plan,
-                          const NamedDataMap *named_data_map,
-                          const LoadBackendOptionsMap *backend_options);
+  ET_NODISCARD Error init(
+      executorch_flatbuffer::ExecutionPlan* s_plan,
+      const NamedDataMap* named_data_map,
+      const LoadBackendOptionsMap* backend_options);
 
   /// Returns true if the Method was successfully initialized.
   inline bool initialized() const {
     return init_state_ == InitializationState::Initialized;
   }
 
-  const EValue &get_value(size_t i) const;
-  EValue &mutable_value(size_t i);
+  const EValue& get_value(size_t i) const;
+  EValue& mutable_value(size_t i);
   size_t get_input_index(size_t i) const;
   size_t get_output_index(size_t i) const;
 
@@ -362,25 +388,27 @@ private:
   ET_NODISCARD Error execute_instruction();
 
   StepState step_state_;
-  const Program *program_;
-  MemoryManager *memory_manager_;
-  MemoryAllocator *temp_allocator_;
-  executorch_flatbuffer::ExecutionPlan *serialization_plan_;
-  EventTracer *event_tracer_;
+  const Program* program_;
+  MemoryManager* memory_manager_;
+  MemoryAllocator* temp_allocator_;
+  executorch_flatbuffer::ExecutionPlan* serialization_plan_;
+  EventTracer* event_tracer_;
 
   size_t n_value_;
-  EValue *values_;
-  bool *input_set_;
+  EValue* values_;
+  bool* input_set_;
 
   size_t n_delegate_;
-  BackendDelegate *delegates_;
+  BackendDelegate* delegates_;
 
   size_t n_chains_;
-  Chain *chains_;
+  Chain* chains_;
 
-  internal::MergedDataMap *merged_data_map_;
-  NamedData *external_constants_;
+  internal::MergedDataMap* merged_data_map_;
+  NamedData* external_constants_;
   size_t n_external_constants_ = 0;
+
+  Span<const Kernel> kernel_registry_;
 
   InitializationState init_state_;
 
@@ -402,18 +430,21 @@ private:
    * @returns Error::Ok on success, non-Ok on failure.
    */
   ET_NODISCARD Error
-  parse_external_constants(const NamedDataMap *named_data_map);
+  parse_external_constants(const NamedDataMap* named_data_map);
 
   /**
    * Parses the elements of the values_ array. On error, n_value_ will be set to
    * the number of successfully-initialized entries so that ~Method doesn't try
    * to clean up uninitialized entries.
    */
-  ET_NODISCARD Error parse_values(const NamedDataMap *named_data_map);
+  ET_NODISCARD Error parse_values(const NamedDataMap* named_data_map);
 
-  ET_NODISCARD Error resolve_operator(int32_t op_index, OpFunction *kernels,
-                                      size_t kernel_index, InstructionArgs args,
-                                      size_t n_args);
+  ET_NODISCARD Error resolve_operator(
+      int32_t op_index,
+      OpFunction* kernels,
+      size_t kernel_index,
+      InstructionArgs args,
+      size_t n_args);
 
   void log_outputs();
 };

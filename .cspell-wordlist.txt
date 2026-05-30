@@ -251,3 +251,9 @@ NFKC
 NFKD
 tolower
 cpts
+prereqs
+flatc
+flatcc
+mmacosx
+venv
+xcrun

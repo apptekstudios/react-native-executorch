@@ -6,8 +6,7 @@ this repo ships in
 — iOS device, iOS Simulator, and Mac Catalyst slices — from a single
 upstream ref. The bundled C++ headers under
 `packages/react-native-executorch/third-party/include/` are also (re)generated
-from the same source tree so headers and `.a` archives can never drift apart
-again.
+from the same source tree so headers and `.a` archives can never drift apart.
 
 They must run on **macOS with Xcode 15+ installed and selected via
 `xcode-select`**. Apple Silicon host strongly recommended (the target arch
@@ -23,200 +22,202 @@ run the verification builds.
 Run them in numeric order from the repo root:
 
 ```
-scripts/executorch/01-build-upstream-libs.sh   # ~90-180 min (3 platforms), network + disk heavy
-scripts/executorch/02-stage-and-verify-libs.sh # copies artifacts in, lipo/otool checks
-scripts/executorch/03-build-xcframework.sh     # regenerates ExecutorchLib.xcframework
-scripts/executorch/04-verify-example-app.sh    # pod install + Catalyst + simulator builds of bare-rn
-scripts/executorch/05-reinstall-app-pods.sh    # pod install across every apps/* and prints `open …xcworkspace` lines
+scripts/executorch/01-build.sh                            # ~90-180 min — clones, overlays, builds three slices, stages, repackages xcframework
+scripts/executorch/02-reinstall-pods-for-example-apps.sh  # pod install across every apps/* and prints `open …xcworkspace` lines
+scripts/executorch/03-test-bare-rn-build.sh               # xcodebuild apps/bare-rn for Mac Catalyst + iOS Simulator
 ```
 
 Each script is idempotent and bails on the first failure (`set -euo pipefail`).
 
-## Prerequisites
+## `01-build.sh` — the unified build driver
 
-- Xcode 15+ (`xcode-select -p` should resolve to a real Xcode, not just CLT)
-- CMake ≥ 3.24 (`brew install cmake`)
-- Ninja (`brew install ninja`) — the ExecuTorch sub-build uses the Ninja
-  generator because `ios.toolchain.cmake` only injects the macabi target
-  triple + iOSSupport paths under non-Xcode generators
-- Python in the range `>=3.10,<3.14` with `pip` (`brew install python@3.12`)
-  — required by upstream ExecuTorch's setup. 01 picks the newest installed
-  3.10–3.13 automatically; override with `EXECUTORCH_PYTHON=/path/to/python`
-  if needed.
-- Node + Yarn already configured at repo root (used elsewhere in this repo)
-- ~15 GB free disk for the upstream checkout + three CMake build trees
+Runs **21 numbered steps**; each step is announced before it runs, a green
+check is printed when it finishes, and the active step is the one reported
+in the failure banner if anything goes wrong.
 
-## What each script does
+```bash
+$ scripts/executorch/01-build.sh --list
+Step table
+   1. prereqs                Verify host toolchain (xcode-select, ninja, python)
+   2. sync-executorch        Clone or sync ExecuTorch to v1.3.0
+   3. patch-flatc            Pin flatc host deployment target to macOS 12.0
+   4. sync-tokenizers        Bump tokenizers submodule to origin/main
+   5. overlay-tokenizers     Overlay local tokenizer ops (Bert/Metaspace/WordPiece/…)
+   6. python-venv            Bootstrap ExecuTorch Python venv + install_requirements.sh
+   7. sync-pthreadpool       Clone or sync pthreadpool
+   8. build-et-ios           Build ExecuTorch for iOS device
+   9. build-et-sim           Build ExecuTorch for iOS Simulator
+  10. build-et-cat           Build ExecuTorch for Mac Catalyst
+  11. build-ptp-ios          Build pthreadpool for iOS device
+  12. build-ptp-sim          Build pthreadpool for iOS Simulator
+  13. build-ptp-cat          Build pthreadpool for Mac Catalyst
+  14. stage-ios              Stage iOS slice (libtool-merge + verify Mach-O platform)
+  15. stage-sim              Stage iOS Simulator slice
+  16. stage-cat              Stage Mac Catalyst slice
+  17. verify-cpuinfo         Verify cpuinfo lib carries arm64
+  18. vendor-headers         Re-vendor overlaid tokenizers headers into the bundled include tree
+  19. xcf-build              Run ExecutorchLib/build.sh to (re)build the xcframework
+  20. xcf-install            Replace third-party/ios/ExecutorchLib.xcframework
+  21. xcf-verify             Verify Info.plist lists all three slices
+```
 
-### 01-build-upstream-libs.sh
+**Resume after a failure.** The ERR trap prints
+`✗ FAILED at step N/M: <id>` with the exit code and an exact
+`--from N` command to resume after fixing the root cause. So if the
+30-minute Mac Catalyst ExecuTorch build (step 10) crashes you don't need
+to rerun the seven cheap setup steps:
 
-Clones `pytorch/executorch` and `Maratyszcza/pthreadpool` into
-`scripts/executorch/.build/` (gitignored), then runs three full ExecuTorch
-builds — one per Apple platform slice — from the same source tree at the
-same ref. Default `EXECUTORCH_REF=v1.3.0`; override only if you also
-update the bridge consumer code to match the new API.
+```bash
+scripts/executorch/01-build.sh --from 10
+```
 
-After ExecuTorch is checked out and its submodules are initialised, the
-script bumps `extension/llm/tokenizers` to `TOKENIZERS_REF` (default
-`origin/main`, currently `4834da0`) — ExecuTorch v1.3.0 ships an older
-tokenizers pin (b642403) that lacks several normalizer types HuggingFace
-`tokenizer.json` files routinely contain. It then overlays
-`scripts/executorch/patches/tokenizers/{normalizer,pre_tokenizer}.{h,cpp}`
-on top of the tokenizers source, adding:
+Other flags:
+- `--to N` — stop after step N (e.g. `--to 13` to just build the binaries, not stage them)
+- `--only N[,M,…]` — run only the listed steps (e.g. `--only 18,19,20,21` to
+  re-vendor headers + repackage the xcframework without rebuilding anything)
+- `--list` — print the step table without running anything
+- `--help` — full usage
 
-- **Normalizers**: `BertNormalizer`, `LowercaseNormalizer`,
-  `NFDNormalizer`, `NFKC`/`NFKDNormalizer`, `StripNormalizer`,
-  `StripAccentsNormalizer`, `NmtNormalizer`, `ByteLevelNormalizer`, and a
-  passthrough `PrecompiledNormalizer`.
+### What the steps actually do
+
+**Steps 1-7 (setup).** `prereqs` resolves all the SDK sysroots, clangs, and
+libtool from `xcrun` and confirms ninja + a 3.10-3.13 Python are on PATH.
+`sync-executorch` clones `pytorch/executorch.git` into
+`scripts/executorch/.build/executorch/` and checks out `EXECUTORCH_REF`
+(default `v1.3.0`). `patch-flatc` flips `third-party/CMakeLists.txt` so
+flatc/flatcc target macOS 12.0 instead of inheriting the project's iOS 17.0
+deployment target (Xcode 26 / SDK 26 host clang rejects
+`-mmacosx-version-min=17.0` because macOS 17 doesn't exist).
+
+`sync-tokenizers` + `overlay-tokenizers` bump
+`extension/llm/tokenizers` to `TOKENIZERS_REF` (default `origin/main`) —
+ExecuTorch v1.3.0 pins meta-pytorch/tokenizers at `b642403`, which lacks
+most of the HuggingFace tokenizer ops real models ship — then overlay our
+own `.h`/`.cpp` files from `patches/tokenizers/` on top:
+
+- **Normalizers**: `BertNormalizer`, `LowercaseNormalizer`, `NFDNormalizer`,
+  `NFKC`/`NFKDNormalizer`, `StripNormalizer`, `StripAccentsNormalizer`,
+  `NmtNormalizer`, `ByteLevelNormalizer`, passthrough `PrecompiledNormalizer`.
 - **Pre-tokenizers**: `BertPreTokenizer` (whitespace split → punctuation
-  isolation, per `huggingface/tokenizers/src/pre_tokenizers/bert.rs`) and
-  `MetaspacePreTokenizer` (substitute spaces with `▁`/U+2581, optional
-  prepend, optional split-on-replacement, per `metaspace.rs`).
+  isolation, per `pre_tokenizers/bert.rs`) and `MetaspacePreTokenizer`
+  (`space → ▁` with optional prepend/split, per `metaspace.rs`).
 - **Decoders**: `WordPiece` (strip `##` continuation prefix, optional
   cleanup of contraction/punctuation spacing, per `decoders/wordpiece.rs`).
 - **Post-processors**: `BertProcessing` and `RobertaProcessing` (per
-  `processors/bert.rs` / `roberta.rs`). Both wrap a single sequence as
+  `processors/{bert,roberta}.rs`). Both wrap a single sequence as
   `[cls, …, sep]`; pair form is `[cls, A, sep, B, sep]` for Bert and
-  `[cls, A, sep, sep, B, sep]` for Roberta (duplicated separator).
-  `trim_offsets` / `add_prefix_space` are accepted but no-op because our
-  PostProcessor interface only carries token IDs, not offsets.
-- **HFTokenizer**: a small fix to `parse_merges` so non-BPE models
-  (WordPiece / Unigram / WordLevel) load cleanly. Upstream unconditionally
-  reads `/model/merges` and throws `key 'merges' not found` for BERT-family
-  tokenizer.json files; the overlay returns `Error::Ok` early when the
-  model self-identifies as non-BPE or has no `merges` field.
+  `[cls, A, sep, sep, B, sep]` for Roberta. `trim_offsets` /
+  `add_prefix_space` are accepted but no-op (offsets aren't carried).
+- **HFTokenizer**: `parse_merges` short-circuits to `Error::Ok` when the
+  model self-identifies as non-BPE or has no `merges` field, so WordPiece /
+  Unigram / WordLevel tokenizer.json files load cleanly.
 
-Together these cover all tokenizer.json variants used by the example apps
-(BERT-family SentenceTransformer embeddings → BertPreTokenizer + WordPiece +
-BertProcessing/RobertaProcessing; SentencePiece LLMs like Hammer 2.1 →
-Metaspace).
+Together these cover every tokenizer.json variant used by the example apps
+(BERT-family SentenceTransformer embeddings, Hammer 2.1 SentencePiece LLM,
+and the existing ByteLevel-based LLMs).
 
-Behaviour matches the HuggingFace Rust `tokenizers` crate; implementations
-lean on the bundled `llama.cpp-unicode` primitives (`unicode_tolower`,
-`unicode_cpts_normalize_nfd`, `unicode_byte_to_utf8`, `unicode_cpt_flags`).
-Without the overlay, loading any tokenizer.json with one of these types
-fails with `Unsupported Normalizer type: …` or `Unsupported PreTokenizer
-type: …` and the JS layer surfaces error code 122.
+`python-venv` bootstraps `scripts/executorch/.build/executorch/.venv` and
+runs `install_requirements.sh` once (it's a no-op on subsequent runs).
+`sync-pthreadpool` shallow-clones `Maratyszcza/pthreadpool`.
 
-Each platform gets its own `cmake-out-{name}` build dir, freshly wiped per
-configure pass (`ios.toolchain.cmake` prepends to `CMAKE_C_FLAGS … CACHE
-INTERNAL` so leftover state poisons subsequent reconfigures). After the
-build, `cmake --install` lays down a clean install tree at
-`scripts/executorch/.build/install/{name}/` — both headers and merged
-archives — which 02 (libs) and Phase 2 of the unification plan (headers)
-consume.
+**Steps 8-13 (per-platform CMake builds).** Three ExecuTorch builds + three
+pthreadpool builds. Each ExecuTorch build is 30-60 minutes wall clock.
 
-Per-platform parameters:
-
-| name        | PLATFORM            | sysroot         | triple                                    |
-| ----------- | ------------------- | --------------- | ----------------------------------------- |
-| ios         | OS64                | iphoneos        | arm64-apple-ios{TARGET}                   |
-| simulator   | SIMULATORARM64      | iphonesimulator | arm64-apple-ios{TARGET}-simulator         |
-| maccatalyst | MAC_CATALYST_ARM64  | macosx          | arm64-apple-ios{TARGET}-macabi            |
+| step name      | PLATFORM            | sysroot         | triple                                    |
+| -------------- | ------------------- | --------------- | ----------------------------------------- |
+| build-et-ios   | OS64                | iphoneos        | arm64-apple-ios{TARGET}                   |
+| build-et-sim   | SIMULATORARM64      | iphonesimulator | arm64-apple-ios{TARGET}-simulator         |
+| build-et-cat   | MAC_CATALYST_ARM64  | macosx          | arm64-apple-ios{TARGET}-macabi            |
 
 ExecuTorch is built with the Ninja generator using `ios.toolchain.cmake`.
 The Xcode generator path through that toolchain is structurally broken for
 Catalyst: line 901 of `ios.toolchain.cmake` documents that under Xcode it
 "modifies build-settings directly instead" of injecting `-target …-macabi`,
-but the project-level build settings get clobbered by ExecuTorch's
-per-target compile options. Ninja triggers the toolchain's compile-flag
-injection codepath, which works correctly. Ninja also supports Swift
-(required if `extension_apple` is re-enabled in the future).
+but the project-level settings get clobbered by ExecuTorch's per-target
+compile options. Ninja triggers the toolchain's compile-flag injection
+codepath, which works correctly.
 
-Override the deployment targets with `IOS_DEPLOYMENT_TARGET=17.0` and
+All three slices intentionally omit `EXTENSION_APPLE` and
+`EXTENSION_LLM_APPLE` (the `ExecuTorch` / `ExecuTorchLLM` Swift wrappers).
+The bridge uses the C++ API directly, so the wrappers aren't required;
+including them tangles the build with project-wide C-only flags leaking
+into swiftc.
+
+Override deployment targets with `IOS_DEPLOYMENT_TARGET=17.0` and
 `MACABI_DEPLOYMENT_TARGET=17.0` (defaults).
 
-**Known scope limitation.** All three slices intentionally omit
-`EXTENSION_APPLE` and `EXTENSION_LLM_APPLE` (the `ExecuTorch` and
-`ExecuTorchLLM` Swift wrapper modules). CMake's Ninja generator doesn't
-cleanly split flags by language for mixed Swift+C++ targets, so project-
-wide C-only flags (`-Wno-deprecated-declarations`, `-ffile-prefix-map=…`)
-leak into swiftc and fail with "unknown argument". The bridge in this repo
-uses the C++ API directly, so the wrappers aren't required.
-
-pthreadpool is built as a separate cmake project (with a manual
-`-target …` triple per platform) because the podspec links
-`libpthreadpool.a` directly for each slice rather than going through the
-merged archives.
-
-### 02-stage-and-verify-libs.sh
-
-For each of `ios`, `simulator`, and `maccatalyst`, uses `libtool -static`
-to merge the per-target archives from `.build/executorch/cmake-out-{name}/`
-into the consolidated `lib*_{name}.a` files the ExecutorchLib xcodeproj
-links against. Then runs `lipo -archs` and `otool -l ... | grep platform`
-on each to confirm:
-- single arm64 slice
-- correct `LC_BUILD_VERSION` platform (2=IOS, 6=MACCATALYST, 7=IOS_SIMULATOR)
-
-Outputs:
-
-```
-packages/react-native-executorch/third-party/ios/libs/executorch/lib*_ios.a
-packages/react-native-executorch/third-party/ios/libs/executorch/lib*_simulator.a
-packages/react-native-executorch/third-party/ios/libs/executorch/lib*_maccatalyst.a
-packages/react-native-executorch/third-party/ios/libs/pthreadpool/physical-arm64-release/libpthreadpool.a
-packages/react-native-executorch/third-party/ios/libs/pthreadpool/simulator-arm64-debug/libpthreadpool.a
-packages/react-native-executorch/third-party/ios/libs/pthreadpool/maccatalyst-arm64-release/libpthreadpool.a
-```
-
-The composition (which raw archives feed each consolidated output) mirrors
+**Steps 14-17 (staging + verify).** For each slice, `libtool -static`
+merges the per-target archives from `.build/executorch/cmake-out-{name}/`
+into consolidated `lib*_{name}.a` files the ExecutorchLib xcodeproj links
+against, then `lipo -archs` + `otool -l | grep platform` confirms each is
+single-arch arm64 on the expected `LC_BUILD_VERSION` platform code
+(2=IOS, 6=MACCATALYST, 7=IOS_SIMULATOR). The composition mirrors
 upstream's `executorch/scripts/build_apple_frameworks.sh` `FRAMEWORK_*`
-definitions. Source archives are resolved by basename within the build
-tree, so the script tolerates upstream layout shifts but fails fast on a
-true rename or missing target.
+definitions. Source archives are resolved by basename so the script
+tolerates upstream layout shifts but fails fast on a true rename or
+missing target. `verify-cpuinfo` confirms the existing shared
+`libcpuinfo.a` carries an arm64 slice.
 
-Also verifies that
-`packages/react-native-executorch/third-party/ios/libs/cpuinfo/libcpuinfo.a`
-contains an arm64 slice usable for all three platforms.
+**Step 18 (vendor-headers).** Mirrors the overlaid tokenizer headers from
+`.build/install/simulator/include/pytorch/tokenizers/` back into the
+bundled
+`packages/react-native-executorch/third-party/include/pytorch/tokenizers/`
+so consumer code sees the API the libs were compiled against. (Picking
+simulator is arbitrary — headers are platform-independent.)
 
-### 03-build-xcframework.sh
+**Steps 19-21 (xcframework).** Runs
+`packages/react-native-executorch/third-party/ios/ExecutorchLib/build.sh`
+(which builds all three xcarchive slices via `xcodebuild`), replaces the
+bundled `ExecutorchLib.xcframework`, and confirms the regenerated
+`Info.plist` lists all three `AvailableLibraries` entries
+(`ios-arm64`, `ios-arm64-simulator`, `ios-arm64-maccatalyst`).
 
-Runs `packages/react-native-executorch/third-party/ios/ExecutorchLib/build.sh`
-(which builds all three xcarchive slices via `xcodebuild`) and verifies the
-regenerated xcframework's `Info.plist` lists three `AvailableLibraries`
-entries with `LibraryIdentifier` values `ios-arm64`, `ios-arm64-simulator`,
-and `ios-arm64-maccatalyst`.
+### Environment overrides
 
-The freshly built xcframework lands at:
-`packages/react-native-executorch/third-party/ios/ExecutorchLib.xcframework/`
+| variable                   | default       | purpose                                            |
+| -------------------------- | ------------- | -------------------------------------------------- |
+| `EXECUTORCH_REF`           | `v1.3.0`      | upstream ExecuTorch ref to check out               |
+| `TOKENIZERS_REF`           | `origin/main` | tokenizers submodule pin (override at your peril)  |
+| `PTHREADPOOL_REF`          | `master`      | pthreadpool ref                                    |
+| `EXECUTORCH_PYTHON`        | auto          | force a specific python interpreter                |
+| `IOS_DEPLOYMENT_TARGET`    | `17.0`        | iOS / simulator deployment target                  |
+| `MACABI_DEPLOYMENT_TARGET` | `17.0`        | Mac Catalyst deployment target                     |
 
-Commit it after this step (the repo tracks the xcframework as binary via
-Git LFS).
+## `02-reinstall-pods-for-example-apps.sh`
 
-### 04-verify-example-app.sh
+Runs `pod install` for every `apps/*/ios` that has a `Podfile`
+(currently bare-rn, computer-vision, llm, speech, text-embeddings), forcing
+each Pods project to re-link against the freshly rebuilt
+`ExecutorchLib.xcframework` and `.a` archives. After all installs succeed,
+prints one `open <abs-path>.xcworkspace` line per app under an
+"Open in Xcode:" header so the workspaces can be opened in a single
+copy-paste batch.
+
+## `03-test-bare-rn-build.sh`
 
 From `apps/bare-rn/ios/`:
 
-1. Runs `pod install`.
-2. Runs `xcodebuild ... -destination 'platform=macOS,variant=Mac Catalyst,arch=arm64'`
-   in Debug. Success means the catalyst slice links cleanly into a real
+1. Runs `pod install` (redundant if you just ran `02`, but safe).
+2. Runs `xcodebuild … -destination 'platform=macOS,variant=Mac Catalyst,arch=arm64'`
+   in Debug. Success means the Catalyst slice links cleanly into a real
    consumer.
 3. Runs the same build for `iphonesimulator,arch=arm64` as a regression
    check.
 
 Both builds use `CODE_SIGNING_ALLOWED=NO` so no signing identity is needed.
-Actually launching the app on the host Mac / simulator (for runtime
-verification of model inference) is a manual step described at the bottom
-of the script.
+Launching the app on the host Mac / simulator (for runtime verification of
+model inference) is a manual step described at the bottom of the script.
 
-## Replacing the bundled C++ headers
+## Prerequisites
 
-After 01 finishes, refresh the bundled C++ include tree from the install
-output (headers are platform-independent; any of the three installs works,
-we use simulator by convention):
-
-```
-rm -rf packages/react-native-executorch/third-party/include/executorch
-rm -rf packages/react-native-executorch/third-party/include/pytorch
-rm -rf packages/react-native-executorch/third-party/include/nlohmann
-cp -R scripts/executorch/.build/install/simulator/include/executorch  packages/react-native-executorch/third-party/include/
-cp -R scripts/executorch/.build/install/simulator/include/pytorch     packages/react-native-executorch/third-party/include/
-cp -R scripts/executorch/.build/install/simulator/include/nlohmann    packages/react-native-executorch/third-party/include/ 2>/dev/null || true
-```
-
-Keep the `cpuinfo/`, `pthreadpool/`, and any other non-executorch headers
-already in `third-party/include/` unless the install populated them.
+- Xcode 15+ (`xcode-select -p` should resolve to a real Xcode, not just CLT)
+- CMake ≥ 3.24 (`brew install cmake`)
+- Ninja (`brew install ninja`) — `01-build.sh` step 1 verifies this
+- Python in the range `>=3.10,<3.14` with `pip` (`brew install python@3.12`).
+  Step 1 picks the newest installed 3.10-3.13 automatically; override with
+  `EXECUTORCH_PYTHON=/path/to/python`.
+- Node + Yarn already configured at repo root (used by `02`/`03`)
+- ~15 GB free disk for the upstream checkout + three CMake build trees
 
 ## Cleaning up
 
